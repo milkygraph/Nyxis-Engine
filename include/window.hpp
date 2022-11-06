@@ -15,7 +15,8 @@ namespace ve
         veWindow(const veWindow &) = delete;
         veWindow &operator=(const veWindow &) = delete;
 
-        bool shouldClose(){ return glfwWindowShouldClose(pWindow); }
+        VkExtent2D getExtent() { return {static_cast<uint32_t>(pWidth), static_cast<uint32_t>(pHeight)}; }
+        bool shouldClose() { return glfwWindowShouldClose(pWindow); }
         void CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
 
     private:

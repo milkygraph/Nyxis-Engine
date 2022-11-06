@@ -11,7 +11,7 @@
 namespace ve
 {
 
-    SwapChain::SwapChain(veDevice &deviceRef, VkExtent2D extent)
+    veSwapChain::veSwapChain(veDevice &deviceRef, VkExtent2D extent)
         : device{deviceRef}, windowExtent{extent}
     {
         createSwapChain();
@@ -22,7 +22,7 @@ namespace ve
         createSyncObjects();
     }
 
-    SwapChain::~SwapChain()
+    veSwapChain::~veSwapChain()
     {
         for (auto imageView : swapChainImageViews)
         {
@@ -59,7 +59,7 @@ namespace ve
         }
     }
 
-    VkResult SwapChain::acquireNextImage(uint32_t *imageIndex)
+    VkResult veSwapChain::acquireNextImage(uint32_t *imageIndex)
     {
         vkWaitForFences(
             device.device(),
@@ -79,7 +79,7 @@ namespace ve
         return result;
     }
 
-    VkResult SwapChain::submitCommandBuffers(
+    VkResult veSwapChain::submitCommandBuffers(
         const VkCommandBuffer *buffers, uint32_t *imageIndex)
     {
         if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
@@ -130,7 +130,7 @@ namespace ve
         return result;
     }
 
-    void SwapChain::createSwapChain()
+    void veSwapChain::createSwapChain()
     {
         SwapChainSupportDetails swapChainSupport = device.getSwapChainSupport();
 
@@ -197,7 +197,7 @@ namespace ve
         swapChainExtent = extent;
     }
 
-    void SwapChain::createImageViews()
+    void veSwapChain::createImageViews()
     {
         swapChainImageViews.resize(swapChainImages.size());
         for (size_t i = 0; i < swapChainImages.size(); i++)
@@ -221,7 +221,7 @@ namespace ve
         }
     }
 
-    void SwapChain::createRenderPass()
+    void veSwapChain::createRenderPass()
     {
         VkAttachmentDescription depthAttachment{};
         depthAttachment.format = findDepthFormat();
@@ -284,7 +284,7 @@ namespace ve
         }
     }
 
-    void SwapChain::createFramebuffers()
+    void veSwapChain::createFramebuffers()
     {
         swapChainFramebuffers.resize(imageCount());
         for (size_t i = 0; i < imageCount(); i++)
@@ -312,7 +312,7 @@ namespace ve
         }
     }
 
-    void SwapChain::createDepthResources()
+    void veSwapChain::createDepthResources()
     {
         VkFormat depthFormat = findDepthFormat();
         VkExtent2D swapChainExtent = getSwapChainExtent();
@@ -363,7 +363,7 @@ namespace ve
         }
     }
 
-    void SwapChain::createSyncObjects()
+    void veSwapChain::createSyncObjects()
     {
         imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -390,7 +390,7 @@ namespace ve
         }
     }
 
-    VkSurfaceFormatKHR SwapChain::chooseSwapSurfaceFormat(
+    VkSurfaceFormatKHR veSwapChain::chooseSwapSurfaceFormat(
         const std::vector<VkSurfaceFormatKHR> &availableFormats)
     {
         for (const auto &availableFormat : availableFormats)
@@ -405,7 +405,7 @@ namespace ve
         return availableFormats[0];
     }
 
-    VkPresentModeKHR SwapChain::chooseSwapPresentMode(
+    VkPresentModeKHR veSwapChain::chooseSwapPresentMode(
         const std::vector<VkPresentModeKHR> &availablePresentModes)
     {
         for (const auto &availablePresentMode : availablePresentModes)
@@ -428,7 +428,7 @@ namespace ve
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
-    VkExtent2D SwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities)
+    VkExtent2D veSwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities)
     {
         if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
         {
@@ -448,7 +448,7 @@ namespace ve
         }
     }
 
-    VkFormat SwapChain::findDepthFormat()
+    VkFormat veSwapChain::findDepthFormat()
     {
         return device.findSupportedFormat(
             {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
