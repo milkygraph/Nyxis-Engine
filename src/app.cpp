@@ -11,7 +11,6 @@ namespace ve
     {
         createPipelineLayout();
         createPipeline();
-        std::cout << "devbufhasufasasdgadhashasgasfasfhdgkjsahf klasjfh ljkasdhf askldhfkjsah fskajfh klasjdhfklasjfh lsf" << std::endl;
         createCommandBuffers();
     }
 
@@ -55,8 +54,8 @@ namespace ve
         pipelineConfig.pipelineLayout = pipelineLayout;
         pPipeline = std::make_unique<vePipeline>(
             pDevice,
-            "shaders/simple_fragment.spv",
-            "shaders/simple_vertex.spv",
+            "shaders/simple_shader.vert.spv",
+            "shaders/simple_shader.frag.spv",
             pipelineConfig);
     }
     void App::createCommandBuffers()
@@ -92,7 +91,7 @@ namespace ve
             renderPassInfo.renderArea.extent = pSwapChain.getSwapChainExtent();
 
             std::array<VkClearValue, 2> clearValues{};
-            clearValues[0].color = {0.2f, 0.6f, 0.2f};
+            clearValues[0].color = {0.2f, 0.1f, 0.2f};
             clearValues[1].depthStencil = {1.0f, 0};
             
             renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
