@@ -2,6 +2,7 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan.hpp>
 #include <string>
 
 namespace ve
@@ -18,13 +19,21 @@ namespace ve
         VkExtent2D getExtent() { return {static_cast<uint32_t>(pWidth), static_cast<uint32_t>(pHeight)}; }
         bool shouldClose() { return glfwWindowShouldClose(pWindow); }
         void CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
+        bool windowResized() { return framebufferResized; }
+        void resetWindowResizedFlag() { framebufferResized = false; };
+
 
     private:
-        GLFWwindow *pWindow;
-        const int pWidth;
-        const int pHeight;
-        std::string pTitle;
-        bool framebufferResized_ = false;
         void initveWindow();
+        static void frameBufferResizedCallback(GLFWwindow *window, int width, int height);
+
+        GLFWwindow *pWindow;
+        
+        int pWidth;
+        int pHeight;
+        bool framebufferResized = false;
+
+
+        std::string pTitle;
     };
 }

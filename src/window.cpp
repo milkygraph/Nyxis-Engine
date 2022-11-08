@@ -1,4 +1,4 @@
-#include <window.hpp>
+#include "window.hpp"
 
 #include <stdexcept>
 
@@ -22,6 +22,9 @@ namespace ve
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
         pWindow = glfwCreateWindow(pWidth, pHeight, pTitle.c_str(), nullptr, nullptr);
+        glfwSetWindowSizeLimits(pWindow, 200, 200, GLFW_DONT_CARE, GLFW_DONT_CARE);
+        glfwSetWindowUserPointer(pWindow, this);
+        glfwSetFramebufferSizeCallback(pWindow, frameBufferResizedCallback);
     }
 
     void veWindow::CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface) {
@@ -29,4 +32,13 @@ namespace ve
             throw std::runtime_error("failed to create window surface!");
         }
     }
+
+    void veWindow::frameBufferResizedCallback(GLFWwindow *window, int width, int height)
+    {
+        auto pWindow = reinterpret_cast<veWindow*>(glfwGetWindowUserPointer(window));
+        pWindow->framebufferResized = true;
+        pWindow->pWidth = width;
+        pWindow->pHeight = height;
+    }
+
 } // namespace ve

@@ -13,7 +13,6 @@ int main()
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
-    std::cout << "Bye" << std::endl;
 
     return 0;
 }

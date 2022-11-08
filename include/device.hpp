@@ -34,7 +34,8 @@ namespace ve
         ~veDevice();
         // Not copyable or movable
         veDevice(const veDevice &) = delete;
-        void operator=(const veDevice &) = delete;
+        veDevice& operator=(const veDevice &) = delete;
+        
         veDevice(veDevice &&) = delete;
         veDevice &operator=(veDevice &&) = delete;
 

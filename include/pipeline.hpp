@@ -8,16 +8,21 @@ namespace ve
 {
     struct PipelineConfigInfo
     {
-        VkViewport viewport;
-        VkRect2D scissor;
+        PipelineConfigInfo() = default;
+        PipelineConfigInfo(const PipelineConfigInfo &) = delete;
+        PipelineConfigInfo &operator=(const PipelineConfigInfo &) = delete;
 
         VkPipelineViewportStateCreateInfo viewportInfo;
-        VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo; // specifying parameters of the input assembly stage
-        VkPipelineRasterizationStateCreateInfo rasterizationInfo; // specifying parameters of the rasterization stage
-        VkPipelineMultisampleStateCreateInfo multisamplingInfo;   // specifying parameters of the multisampling stage
-        VkPipelineColorBlendStateCreateInfo colorBlendInfo;         // specifying parameters of the color blending stage
-        VkPipelineColorBlendAttachmentState colorBlendAttachment; // specifying parameters of the color blending stage
-        VkPipelineDepthStencilStateCreateInfo depthStencilInfo;   // specifying parameters of the depth and stencil testing stage
+        VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
+        VkPipelineRasterizationStateCreateInfo rasterizationInfo;
+        VkPipelineMultisampleStateCreateInfo multisamplingInfo;
+        VkPipelineColorBlendAttachmentState colorBlendAttachment;
+        VkPipelineColorBlendStateCreateInfo colorBlendInfo;
+        VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
+
+        std::vector<VkDynamicState> dynamicStateEnables;
+        VkPipelineDynamicStateCreateInfo dynamicStateInfo;
+
         VkPipelineLayout pipelineLayout = nullptr;
         VkRenderPass renderPass = nullptr;
         uint32_t subpass = 0; // No idead what this is
@@ -26,19 +31,16 @@ namespace ve
     class vePipeline
     {
     public:
-        vePipeline(veDevice &device,
-                   const std::string &vertPath,
-                   const std::string &fragPath,
-                   const PipelineConfigInfo &config);
+        vePipeline(veDevice &device, const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);
         ~vePipeline();
 
         // copy constructors and destructors
 
         vePipeline(const vePipeline &) = delete;
-        void operator=(const vePipeline &) = delete;
+        vePipeline &operator=(const vePipeline &) = delete;
 
-        static void defaultPipelineConfigInfo(PipelineConfigInfo &config, uint32_t width, uint32_t height);
         void bind(VkCommandBuffer commandBuffer);
+        static void defaultPipelineConfigInfo(PipelineConfigInfo &config, uint32_t width, uint32_t height);
 
     private:
         std::vector<char> readFile(const std::string &filename);

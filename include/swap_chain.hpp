@@ -8,6 +8,7 @@
 // std lib headers
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace ve
 {
@@ -18,10 +19,12 @@ namespace ve
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
         veSwapChain(veDevice &deviceRef, VkExtent2D windowExtent);
+        veSwapChain(veDevice &deviceRef, VkExtent2D windowExtent, std::shared_ptr<veSwapChain> previous);
+
         ~veSwapChain();
 
         veSwapChain(const veSwapChain &) = delete;
-        void operator=(const veSwapChain &) = delete;
+        veSwapChain &operator=(const veSwapChain &) = delete;
 
         VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
         VkRenderPass getRenderPass() { return renderPass; }
@@ -42,6 +45,7 @@ namespace ve
         VkResult submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex);
 
     private:
+        void init();
         void createSwapChain();
         void createImageViews();
         void createDepthResources();
@@ -50,10 +54,8 @@ namespace ve
         void createSyncObjects();
 
         // Helper functions
-        VkSurfaceFormatKHR chooseSwapSurfaceFormat(
-            const std::vector<VkSurfaceFormatKHR> &availableFormats);
-        VkPresentModeKHR chooseSwapPresentMode(
-            const std::vector<VkPresentModeKHR> &availablePresentModes);
+        VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
+        VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
         VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
 
         VkFormat swapChainImageFormat;
@@ -72,6 +74,7 @@ namespace ve
         VkExtent2D windowExtent;
 
         VkSwapchainKHR swapChain;
+        std::shared_ptr<veSwapChain> oldSwapChain;
 
         std::vector<VkSemaphore> imageAvailableSemaphores;
         std::vector<VkSemaphore> renderFinishedSemaphores;

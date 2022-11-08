@@ -1,5 +1,6 @@
 #include "pipeline.hpp"
 #include "device.hpp"
+#include "model.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -66,12 +67,16 @@ namespace ve
         shaderStages[1].pNext = nullptr;
         shaderStages[1].pSpecializationInfo = nullptr;
 
+        auto bindingDescription = veModel::Vertex::getBindingDescriptions();
+        auto attributeDescriptions = veModel::Vertex::getAttributeDescriptions();
+
+
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        vertexInputInfo.vertexAttributeDescriptionCount = 0;
-        vertexInputInfo.vertexBindingDescriptionCount = 0;
-        vertexInputInfo.pVertexAttributeDescriptions = nullptr;
-        vertexInputInfo.pVertexBindingDescriptions = nullptr;
+        vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescription.size());
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+        vertexInputInfo.pVertexBindingDescriptions = bindingDescription.data();
+        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -84,7 +89,7 @@ namespace ve
         pipelineInfo.pMultisampleState = &config.multisamplingInfo;
         pipelineInfo.pColorBlendState = &config.colorBlendInfo;
         pipelineInfo.pDepthStencilState = &config.depthStencilInfo;
-        pipelineInfo.pDynamicState = nullptr;
+        pipelineInfo.pDynamicState = &config.dynamicStateInfo;
 
         pipelineInfo.layout = config.pipelineLayout;
         pipelineInfo.renderPass = config.renderPass;
@@ -123,21 +128,11 @@ namespace ve
         config.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         config.inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
 
-        config.viewport.x = 0.0f;
-        config.viewport.y = 0.0f;
-        config.viewport.width = static_cast<float>(width);
-        config.viewport.height = static_cast<float>(height);
-        config.viewport.minDepth = 0.0f;
-        config.viewport.maxDepth = 1.0f;
-
-        config.scissor.offset = {0, 0};
-        config.scissor.extent = {width, height};
-
         config.viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         config.viewportInfo.viewportCount = 1;
-        config.viewportInfo.pViewports = &config.viewport;
+        config.viewportInfo.pViewports = nullptr;
         config.viewportInfo.scissorCount = 1;
-        config.viewportInfo.pScissors = &config.scissor;
+        config.viewportInfo.pScissors = nullptr;
 
         config.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         config.rasterizationInfo.depthClampEnable = VK_FALSE;
@@ -190,5 +185,11 @@ namespace ve
         config.depthStencilInfo.stencilTestEnable = VK_FALSE;
         config.depthStencilInfo.front = {}; // Optional
         config.depthStencilInfo.back = {};  // Optional
+
+        config.dynamicStateEnables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+        config.dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        config.dynamicStateInfo.pDynamicStates = config.dynamicStateEnables.data(); 
+        config.dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(config.dynamicStateEnables.size());
+        config.dynamicStateInfo.flags = 0;
     }
 }
