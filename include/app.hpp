@@ -1,9 +1,9 @@
 #pragma once
 #include "window.hpp"
-#include "pipeline.hpp"
 #include "device.hpp"
-#include "swap_chain.hpp"
 #include "model.hpp"
+#include "gameObject.hpp"
+#include "renderer.hpp"
 
 #include <memory>
 #include <vector>
@@ -11,6 +11,7 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_structs.hpp>
 #include <imgui/imgui.h>
@@ -19,6 +20,14 @@
 
 namespace ve
 {
+    struct SimplePushConstantData
+    {
+        glm::mat2 transform{1.f};
+        glm::vec2 offset;
+        alignas(16) glm::vec3 color;
+    };
+
+
     class App
     {
     public:
@@ -36,23 +45,13 @@ namespace ve
         void run();
 
     private:
-        void loadModels();
-        void createPipelineLayout();
-        void createPipeline();
-        void createCommandBuffers();
-        void freeCommandBuffers();
-        void drawFrame();
-        void recreateSwapChain();
-        void recordCommandBuffer(int ImageIndex);
+        void loadGameObjects();
+        void renderGameObjects(VkCommandBuffer commandBuffer);
 
         veWindow pWindow{WIDTH, HEIGHT, "VulkanApp"};
         veDevice pDevice{pWindow};
+        veRenderer pRenderer{pWindow, pDevice};
 
-        std::unique_ptr<veSwapChain> pSwapChain; 
-        std::unique_ptr<vePipeline> pPipeline; 
-        std::unique_ptr<veModel> pModel;
-
-        std::vector<VkCommandBuffer> commandBuffers;
-        VkPipelineLayout pipelineLayout;
+        std::vector<veGameObject> gameObjects;
     }; // class App
 } // namespace ve
