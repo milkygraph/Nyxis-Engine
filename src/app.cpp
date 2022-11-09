@@ -1,3 +1,4 @@
+
 #include "app.hpp"
 #include "model.hpp"
 #include "swap_chain.hpp"
@@ -7,10 +8,15 @@
 #include <stdexcept>
 #include <array>
 
-#include <vulkan/vulkan_core.h>
-#include <vulkan/vulkan_structs.hpp>
+
 namespace ve
 {
+    struct SimplePushConstantData
+    {
+        glm::vec2 offset;
+        alignas(16) glm::vec3 color;
+    };
+
     App::App()
     {
         loadModels();
@@ -47,12 +53,17 @@ namespace ve
 
     void App::createPipelineLayout()
     {
+        VkPushConstantRange pushConstantRange{};
+        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        pushConstantRange.offset = 0;
+        pushConstantRange.size = sizeof(SimplePushConstantData);
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 0;
         pipelineLayoutInfo.pSetLayouts = nullptr;
-        pipelineLayoutInfo.pushConstantRangeCount = 0;
-        pipelineLayoutInfo.pPushConstantRanges = nullptr;
+        pipelineLayoutInfo.pushConstantRangeCount = 1;
+        pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
         if (vkCreatePipelineLayout(pDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
         {
@@ -124,6 +135,9 @@ namespace ve
 
     void App::recordCommandBuffer(int ImageIndex)
     {
+        static int frame = 0;
+        frame = (frame + 1) % 300;
+
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -163,7 +177,18 @@ namespace ve
 
         pPipeline->bind(commandBuffers[ImageIndex]);
         pModel->bind(commandBuffers[ImageIndex]);
-        pModel->draw(commandBuffers[ImageIndex]);
+
+        for(int i = 0; i < 5; i++)
+        {
+            SimplePushConstantData push{};
+            push.offset = {-2.0f + frame * 0.02f, -0.4 + i * 0.2};
+            push.color = {1.0f, 0.05 + 0.1f * i, 0.01f};
+            
+            vkCmdPushConstants(commandBuffers[ImageIndex], pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
+            pModel->draw(commandBuffers[ImageIndex]);
+
+        }
+
 
         vkCmdEndRenderPass(commandBuffers[ImageIndex]);
 

@@ -27,15 +27,17 @@ namespace ve
         glfwSetFramebufferSizeCallback(pWindow, frameBufferResizedCallback);
     }
 
-    void veWindow::CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface) {
-        if (glfwCreateWindowSurface(instance, pWindow, nullptr, surface) != VK_SUCCESS) {
+    void veWindow::CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface)
+    {
+        if (glfwCreateWindowSurface(instance, pWindow, nullptr, surface) != VK_SUCCESS)
+        {
             throw std::runtime_error("failed to create window surface!");
         }
     }
 
     void veWindow::frameBufferResizedCallback(GLFWwindow *window, int width, int height)
     {
-        auto pWindow = reinterpret_cast<veWindow*>(glfwGetWindowUserPointer(window));
+        auto pWindow = reinterpret_cast<veWindow *>(glfwGetWindowUserPointer(window));
         pWindow->framebufferResized = true;
         pWindow->pWidth = width;
         pWindow->pHeight = height;

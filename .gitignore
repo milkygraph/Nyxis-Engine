@@ -6,3 +6,5 @@ Vulkan_APP
 Makefile
 tutorial08/
 Vulkan
+lines.py
+vendor/

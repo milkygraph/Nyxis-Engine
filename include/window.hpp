@@ -3,6 +3,10 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_glfw.h>
+#include <imgui/imgui_impl_vulkan.h>
+
 #include <string>
 
 namespace ve
@@ -22,17 +26,15 @@ namespace ve
         bool windowResized() { return framebufferResized; }
         void resetWindowResizedFlag() { framebufferResized = false; };
 
-
     private:
         void initveWindow();
         static void frameBufferResizedCallback(GLFWwindow *window, int width, int height);
 
         GLFWwindow *pWindow;
-        
+
         int pWidth;
         int pHeight;
         bool framebufferResized = false;
-
 
         std::string pTitle;
     };
