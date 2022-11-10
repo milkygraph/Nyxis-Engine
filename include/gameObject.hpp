@@ -2,24 +2,48 @@
 
 #include "model.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <memory>
 
 
 namespace ve
 {
-    struct Transform2dComponent
+    struct TransformComponent
     {
-        glm::vec2 translation{};
-        glm::vec2 scale{1.f, 1.f};
-        float rotation;
-        glm::mat2 mat2()
-        {
-            auto cos = glm::cos(rotation);
-            auto sin = glm::sin(rotation);
+        glm::vec3 translation{};
+        glm::vec3 scale{1.f, 1.f, 1.f};
+        glm::vec3 rotation{};
 
-            glm::mat2 rotMat{{cos, sin}, {-sin, cos}};
-            glm::mat2 scaleMat{{scale.x, .0f}, {.0f ,scale.y}};
-            return rotMat * scaleMat; 
+        glm::mat4 mat4()
+        {
+            const float s1 = glm::sin(rotation.y);
+            const float s2 = glm::sin(rotation.x); 
+            const float s3 = glm::sin(rotation.z); 
+
+            const float c1 = glm::cos(rotation.y); 
+            const float c2 = glm::cos(rotation.x); 
+            const float c3 = glm::cos(rotation.z); 
+            return glm::mat4{
+            {
+                scale.x * (c1*c3 + s1*s2*s3),
+                scale.x * (c2 * s3),
+                scale.x * (c1*s2*s3 - c3*s1),
+                0.0f
+            },
+            {
+                scale.y * (c3*s1*s2 - c1*s3),
+                scale.y * (c2*c3),
+                scale.y * (c1*c3*s2 + s1*s3),
+                0.0f
+            },
+            {
+                scale.z * (c2*s1),
+                scale.z * (-s2),
+                scale.z * (c1*c3),
+                0.0f
+            },
+            {translation.x, translation.y, translation.z, 1.0f}};
         }
     };
 
@@ -44,7 +68,7 @@ namespace ve
 
         std::shared_ptr<veModel> model{};
         glm::vec3 color{};
-        Transform2dComponent transform2d;
+        TransformComponent transform;
 
     private:
         veGameObject(id_t objId) : id{objId} {}

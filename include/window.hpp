@@ -26,6 +26,9 @@ namespace ve
         bool windowResized() { return framebufferResized; }
         void resetWindowResizedFlag() { framebufferResized = false; };
 
+        GLFWwindow* getGLFWwindow() const { return pWindow; }
+
+
     private:
         void initveWindow();
         static void frameBufferResizedCallback(GLFWwindow *window, int width, int height);

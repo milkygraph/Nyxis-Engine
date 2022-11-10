@@ -6,6 +6,7 @@
 #include "gameObject.hpp"
 #include "renderer.hpp"
 #include "simpleRenderSystem.hpp"
+#include "camera.hpp"
 
 #include <memory>
 #include <vector>
@@ -32,7 +33,7 @@ namespace ve
 
         SimpleRenderSystem(const SimpleRenderSystem &) = delete;
         SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
-        void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<veGameObject>& gameObjects);
+        void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<veGameObject>& gameObjects, veCamera& camera);
 
 
     private:

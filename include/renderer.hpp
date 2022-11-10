@@ -35,6 +35,7 @@ namespace ve
         {
             return pSwapChain->getRenderPass();
         }
+        float getAspectRatio() const { return pSwapChain->extentAspectRatio(); }
         bool isFrameInProgress() const { return isFrameStarted; }
 
         VkCommandBuffer getCurrentCommandBuffer()

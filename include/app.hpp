@@ -20,13 +20,6 @@
 
 namespace ve
 {
-    struct SimplePushConstantData
-    {
-        glm::mat2 transform{1.f};
-        glm::vec2 offset;
-        alignas(16) glm::vec3 color;
-    };
-
 
     class App
     {
@@ -39,7 +32,7 @@ namespace ve
         App(const App &) = delete;
         App &operator=(const App &) = delete;
 
-        static constexpr int HEIGHT = 600;
+        static constexpr int HEIGHT = 800;
         static constexpr int WIDTH = 800;
 
         void run();

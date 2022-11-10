@@ -4,6 +4,7 @@
 #include "renderer.hpp"
 #include "swap_chain.hpp"
 
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -13,8 +14,7 @@ namespace ve
 {
     struct SimplePushConstantData
     {
-        glm::mat2 transform{1.f};
-        glm::vec2 offset;
+        glm::mat4 transform{1.f};
         alignas(16) glm::vec3 color;
     };
 
@@ -65,19 +65,28 @@ namespace ve
             pipelineConfig);
     }
 
-    void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<veGameObject>& gameObjects)
+    void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<veGameObject>& gameObjects, veCamera& camera)
     {
         pPipeline->bind(commandBuffer);
-        static float scale_x = 0.01f;
-        static float angle = 0.005f;
+
+        auto projectionView = camera.getProjectionMatrx() * camera.getViewMatrix();
 
         for (auto &obj : gameObjects)
         {
-            obj.transform2d.rotation = obj.transform2d.rotation + 0.01f;
+            static bool flag = true;
+            if(flag)
+            {
+            obj.transform.rotation.y = obj.transform.rotation.x + 1;
+            flag = false;
+            }
+            //srand(time(NULL));
+            //auto angle = static_cast<float>(std::rand() % 100 - 50) / 3000;
+            obj.transform.rotation.y = obj.transform.rotation.y + 0.005;
+            obj.transform.rotation.z = obj.transform.rotation.z + 0.005;
+            obj.transform.rotation.x = obj.transform.rotation.x + 0.005;
             SimplePushConstantData push{};
-            push.offset = obj.transform2d.translation;
             push.color = obj.color;
-            push.transform = obj.transform2d.mat2();
+            push.transform = projectionView * obj.transform.mat4();
 
             vkCmdPushConstants(
                 commandBuffer,
