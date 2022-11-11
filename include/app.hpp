@@ -14,10 +14,6 @@
 #include <glm/gtc/constants.hpp>
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_structs.hpp>
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_vulkan.h>
-#include <imgui/imgui_impl_glfw.h>
-
 namespace ve
 {
 

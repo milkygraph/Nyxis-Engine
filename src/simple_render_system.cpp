@@ -15,7 +15,8 @@ namespace ve
     struct SimplePushConstantData
     {
         glm::mat4 transform{1.f};
-        alignas(16) glm::vec3 color;
+        glm::mat4 modelMatrix{1.f};
+        //alignas(16) glm::vec3 color;
     };
 
     SimpleRenderSystem::SimpleRenderSystem(veDevice& device, VkRenderPass renderPass)
@@ -73,20 +74,11 @@ namespace ve
 
         for (auto &obj : gameObjects)
         {
-            static bool flag = true;
-            if(flag)
-            {
-            obj.transform.rotation.y = obj.transform.rotation.x + 1;
-            flag = false;
-            }
-            //srand(time(NULL));
-            //auto angle = static_cast<float>(std::rand() % 100 - 50) / 3000;
-            obj.transform.rotation.y = obj.transform.rotation.y + 0.005;
-            obj.transform.rotation.z = obj.transform.rotation.z + 0.005;
-            obj.transform.rotation.x = obj.transform.rotation.x + 0.005;
             SimplePushConstantData push{};
-            push.color = obj.color;
+            //push.color = obj.color;
+            auto modelMatrix = obj.transform.mat4();
             push.transform = projectionView * obj.transform.mat4();
+            push.modelMatrix = modelMatrix;
 
             vkCmdPushConstants(
                 commandBuffer,

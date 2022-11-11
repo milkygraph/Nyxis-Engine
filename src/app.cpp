@@ -110,12 +110,13 @@ namespace ve
     }
     void App::loadGameObjects()
     {
-        std::shared_ptr<veModel> model = createCubeModel(pDevice, {.0f, .0f, .0f});
+        std::shared_ptr<veModel> model = veModel::createModelFromFile(pDevice, "models/Srad 750.obj");
 
         auto cube = veGameObject::createGameObject();
         cube.model = model;
-        cube.transform.translation = {.0f, .0f, 2.f};
-        cube.transform.scale = {.5f, .5f, .5f};
+        cube.transform.translation = {.0f, .0f, .0f};
+        cube.transform.rotation = {.0f, .0f, 0.0f};
+        cube.transform.scale = {1.f, 1.f, 1.f};
 
         gameObjects.push_back(std::move(cube));
     }
