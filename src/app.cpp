@@ -1,5 +1,6 @@
 #include "app.hpp"
 #include "descriptors.hpp"
+#include "gameObject.hpp"
 #include "model.hpp"
 #include "renderer.hpp"
 #include "simpleRenderSystem.hpp"
@@ -13,8 +14,10 @@
 #include <memory>
 #include <stdexcept>
 #include <array>
-#include <vulkan/vulkan_core.h>
+#include <string>
+#include <typeinfo>
 
+#include <vulkan/vulkan_core.h>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_vulkan.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -83,15 +86,37 @@ namespace ve
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        ImGui::ShowDemoWindow();
+
         bool show_window = true;
         static float sliderFloat = 0.0f;
 
-        ImGui::Begin("Object", &show_window); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        ImGui::Text("Hello from another window!");
-        if (ImGui::Button("Close Me"))
-            show_window = false;
+        ImGui::Begin("Object"); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 
-        ImGui::SliderFloat("Slider Float", &sliderFloat, 0.f, 4.f);
+        static int selectedItem = 0;
+
+
+        static int selectedObject = 0;
+        static std::vector<char *> items(gameObjects.size());
+
+        for (int i = 0; i < gameObjects.size(); i++)
+        {
+            items[i] = new char[2];
+            for (int j = 0; j < 1; j++)
+            {
+                items[i][j] = '0' + i;
+            }
+            items[i][1] = '\0';
+        }
+
+        ImGui::Combo("Objects", &selectedObject, items.data(), items.size(), 4);
+
+        auto object = &gameObjects.at(selectedObject);
+        // std::cout << translation << std::endl;
+
+        ImGui::SliderFloat("X", &object->transform.translation.x, -10.0f, 10.0f);
+        ImGui::SliderFloat("Y", &object->transform.translation.y, -10.0f, 10.0f);
+        ImGui::SliderFloat("Z", &object->transform.translation.z, -10.0f, 10.0f);
 
         ImGui::End();
         ImGui::Render();
@@ -184,7 +209,6 @@ namespace ve
                     firstFrame = false;
                 }
 
-
                 int frameIndex = pRenderer.getFrameIndex();
                 FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
 
@@ -209,7 +233,6 @@ namespace ve
 
     void App::loadGameObjects()
     {
-        auto time1 = std::chrono::high_resolution_clock::now();
 
         std::shared_ptr<veModel> model1 = veModel::createModelFromFile(pDevice, "/home/milk/Vulkan_APP/models/smooth_vase.obj");
 
@@ -219,12 +242,6 @@ namespace ve
         obj1.transform.rotation = {.0f, .0f, 0.0f};
         obj1.transform.scale = {1.5f, 1.5f, 1.5f};
 
-        auto newTime = std::chrono::high_resolution_clock::now();
-        auto duration1 = std::chrono::duration<float, std::chrono::seconds::period>(newTime - time1).count();
-        std::cout << duration1 << std::endl;
-
-        time1 = std::chrono::high_resolution_clock::now();
-
         std::shared_ptr<veModel> model2 = veModel::createModelFromFile(pDevice, "/home/milk/Vulkan_APP/models/pose.obj");
 
         auto obj2 = veGameObject::createGameObject();
@@ -233,25 +250,28 @@ namespace ve
         obj2.transform.rotation = {.0f, .0f, 0.0f};
         obj2.transform.scale = {1.5f, 1.5f, 1.5f};
 
-        newTime = std::chrono::high_resolution_clock::now();
-        duration1 = std::chrono::duration<float, std::chrono::seconds::period>(newTime - time1).count();
-        std::cout << duration1 << std::endl;
-
         std::shared_ptr<veModel> floorModel = veModel::createModelFromFile(pDevice, "/home/milk/Vulkan_APP/models/floor.obj");
         auto floor = veGameObject::createGameObject();
         floor.model = floorModel;
         floor.transform.translation = {0.f, .5f, 0.f};
         floor.transform.rotation = {0.f, 0.f, 0.f};
         floor.transform.scale = {3.f, 1.f, 3.f};
+        std::cout << obj1.getId();
 
         gameObjects.emplace(obj1.getId(), std::move(floor));
         gameObjects.emplace(obj2.getId(), std::move(obj1));
         gameObjects.emplace(floor.getId(), std::move(obj2));
+        // print gameObjects ids
     }
 
-    void App::addGameObject()
+    void App::addGameObject(std::string &model)
     {
-
+        auto obj = veGameObject::createGameObject();
+        obj.model = veModel::createModelFromFile(pDevice, "/home/milk/Vulkan_APP/models/" + model);
+        obj.transform.translation = {0.f, 0.f, 0.f};
+        obj.transform.rotation = {0.f, 0.f, 0.f};
+        obj.transform.scale = {1.f, 1.f, 1.f};
+        gameObjects.emplace(obj.getId(), std::move(obj));
     }
 
 } // namespace ve

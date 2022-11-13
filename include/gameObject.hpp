@@ -13,7 +13,7 @@ namespace ve
     {
         glm::vec3 translation{};
         glm::vec3 scale{1.f, 1.f, 1.f};
-        glm::vec3 rotation{};
+        glm::vec3 rotation{0.0f, 0.0f, 0.0f};
 
 
     glm::mat4 mat4();
@@ -43,7 +43,7 @@ namespace ve
         std::shared_ptr<veModel> model{};
         glm::vec3 color{};
         TransformComponent transform;
-
+    
     private:
         veGameObject(id_t objId) : id{objId} {}
 

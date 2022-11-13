@@ -39,7 +39,7 @@ namespace ve
 
     private:
         void loadGameObjects();
-        void addGameObject();
+        void addGameObject(std::string& model);
         void renderGameObjects(VkCommandBuffer commandBuffer);
 
         veWindow pWindow{WIDTH, HEIGHT, "VulkanApp"};
