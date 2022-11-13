@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
 
-file (GLOB_RECURSE SOURCES src/*.cpp )
+file (GLOB_RECURSE SOURCES src/*.cpp libs/*/*.cpp)
 file (GLOB_RECURSE HEADERS include/*.hpp )
 file (GLOB_RECURSE VENDOR )
 file (GLOB_RECURSE VERTEX_SHADERS shaders/*.vert)

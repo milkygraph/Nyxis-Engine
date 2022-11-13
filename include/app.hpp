@@ -1,4 +1,5 @@
 #pragma once
+#include "descriptors.hpp"
 #include "window.hpp"
 #include "device.hpp"
 #include "model.hpp"
@@ -32,15 +33,21 @@ namespace ve
         static constexpr int WIDTH = 800;
 
         void run();
+        void init_imgui(VkCommandBuffer commandBuffer);
+        void render_imgui();
+        void close_imgui();
 
     private:
         void loadGameObjects();
+        void addGameObject();
         void renderGameObjects(VkCommandBuffer commandBuffer);
 
         veWindow pWindow{WIDTH, HEIGHT, "VulkanApp"};
         veDevice pDevice{pWindow};
         veRenderer pRenderer{pWindow, pDevice};
 
-        std::vector<veGameObject> gameObjects;
+        std::unique_ptr<veDescriptorPool> globalPool{};
+        std::unique_ptr<veDescriptorPool> imguiPool{};
+        veGameObject::Map gameObjects;
     }; // class App
 } // namespace ve

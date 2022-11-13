@@ -1,5 +1,7 @@
 #pragma once
 #include "device.hpp"
+#include "buffer.hpp"
+
 #include <cstdint>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_core.h>
@@ -59,12 +61,10 @@ namespace ve
         bool hasIndexBuffer = false;
 
         veDevice &device;
-        VkBuffer vertexBuffer;
-        VkDeviceMemory vertexBufferMemory;
+        std::unique_ptr<veBuffer> vertexBuffer;
         uint32_t vertexCount;
 
-        VkBuffer indexBuffer;
-        VkDeviceMemory indexBufferMemory;
+        std::unique_ptr<veBuffer> indexBuffer;
         uint32_t indexCount;
     };
 }

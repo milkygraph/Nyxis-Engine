@@ -14,7 +14,7 @@ namespace ve
     class veSwapChain
     {
     public:
-        static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+        static constexpr int MAX_FRAMES_IN_FLIGHT = 3;
 
         veSwapChain(veDevice &deviceRef, VkExtent2D windowExtent);
         veSwapChain(veDevice &deviceRef, VkExtent2D windowExtent, std::shared_ptr<veSwapChain> previous);

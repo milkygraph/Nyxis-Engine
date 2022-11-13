@@ -7,6 +7,7 @@
 #include "renderer.hpp"
 #include "simpleRenderSystem.hpp"
 #include "camera.hpp"
+#include "frameInfo.hpp"
 
 #include <memory>
 #include <vector>
@@ -23,18 +24,18 @@ namespace ve
     class SimpleRenderSystem
     {
     public:
-        SimpleRenderSystem(veDevice &device, VkRenderPass renderPass);
+        SimpleRenderSystem(veDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalDescriptorSetLayout);
         ~SimpleRenderSystem();
 
         // copy constructor and destructors
 
         SimpleRenderSystem(const SimpleRenderSystem &) = delete;
         SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
-        void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<veGameObject>& gameObjects, veCamera& camera);
+        void renderGameObjects(FrameInfo &frameInfo);
 
 
     private:
-        void createPipelineLayout();
+        void createPipelineLayout(VkDescriptorSetLayout globalDescriptorSetLayout);
         void createPipeline(VkRenderPass renderPass);
 
         veDevice &pDevice;

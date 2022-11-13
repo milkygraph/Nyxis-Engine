@@ -1,7 +1,12 @@
 #pragma once
 #include "window.hpp"
+
 #include <string>
 #include <vector>
+
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_vulkan.h>
+#include <imgui/imgui_impl_glfw.h>
 
 namespace ve
 {
@@ -24,18 +29,18 @@ namespace ve
     class veDevice
     {
     public:
-        #ifdef NDEBUG
+#ifdef NDEBUG
         const bool enableValidationLayers = false;
-        #else
+#else
         const bool enableValidationLayers = true;
-        #endif
+#endif
 
         veDevice(veWindow &Window);
         ~veDevice();
         // Not copyable or movable
         veDevice(const veDevice &) = delete;
-        veDevice& operator=(const veDevice &) = delete;
-        
+        veDevice &operator=(const veDevice &) = delete;
+
         veDevice(veDevice &&) = delete;
         veDevice &operator=(veDevice &&) = delete;
 
@@ -70,6 +75,8 @@ namespace ve
             VkDeviceMemory &imageMemory);
 
         VkPhysicalDeviceProperties properties;
+
+        void createImGuiInitInfo(ImGui_ImplVulkan_InitInfo &init_info);
 
     private:
         void createInstance();

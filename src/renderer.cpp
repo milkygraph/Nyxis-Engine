@@ -159,6 +159,7 @@ namespace ve
         assert(isFrameStarted && "Can't call beginSwapChainRenderPass while in progress");
         assert(commandBuffer == getCurrentCommandBuffer() && "Can't end render pass on command buffer from another frame");
 
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
         vkCmdEndRenderPass(commandBuffer);
     }
 
