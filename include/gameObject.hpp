@@ -15,11 +15,10 @@ namespace ve
         glm::vec3 scale{1.f, 1.f, 1.f};
         glm::vec3 rotation{0.0f, 0.0f, 0.0f};
 
-
-    glm::mat4 mat4();
-    glm::mat3 normalMatrix();
+        glm::mat4 mat4();
+        glm::mat3 normalMatrix();
     };
-    
+
     class veGameObject
     {
     public:
@@ -41,9 +40,9 @@ namespace ve
         id_t getId() { return id; }
 
         std::shared_ptr<veModel> model{};
-        glm::vec3 color{};
+        glm::vec3 color{1.0f, 1.0f , 1.0f};
         TransformComponent transform;
-    
+
     private:
         veGameObject(id_t objId) : id{objId} {}
 

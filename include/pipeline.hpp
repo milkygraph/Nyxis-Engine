@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 #include <string>
 #include <vector>
+#include <vulkan/vulkan_core.h>
 
 namespace ve
 {
@@ -22,6 +23,9 @@ namespace ve
 
         std::vector<VkDynamicState> dynamicStateEnables;
         VkPipelineDynamicStateCreateInfo dynamicStateInfo;
+
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+        std::vector<VkVertexInputBindingDescription> bindingDescriptions;
 
         VkPipelineLayout pipelineLayout = nullptr;
         VkRenderPass renderPass = nullptr;

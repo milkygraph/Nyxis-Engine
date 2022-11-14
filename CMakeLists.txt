@@ -12,8 +12,12 @@ file (GLOB_RECURSE VENDOR )
 file (GLOB_RECURSE VERTEX_SHADERS shaders/*.vert)
 file (GLOB_RECURSE FRAGMENT_SHADERS shaders/*.frag)
 
-execute_process(COMMAND glslc ${VERTEX_SHADERS} -o ${VERTEX_SHADERS}.spv)
-execute_process(COMMAND glslc ${FRAGMENT_SHADERS} -o ../shaders/simple_shader.frag.spv)
+set(DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+execute_process(COMMAND glslc ${DIR}/shaders/simple_shader.vert -o ${DIR}/shaders/simple_shader.vert.spv)
+execute_process(COMMAND glslc ${DIR}/shaders/simple_shader.frag -o ${DIR}/shaders/simple_shader.frag.spv)
+execute_process(COMMAND glslc ${DIR}/shaders/point_light.vert -o ${DIR}/shaders/point_light.vert.spv)
+execute_process(COMMAND glslc ${DIR}/shaders/point_light.frag -o ${DIR}/shaders/point_light.frag.spv)
 
 
 add_executable(Vulkan ${SOURCES} ${HEADERS})

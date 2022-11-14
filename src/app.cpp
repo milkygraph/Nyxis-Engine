@@ -8,6 +8,7 @@
 #include "camera.hpp"
 #include "keyboardInput.hpp"
 #include "frameInfo.hpp"
+#include "pointLightSystem.hpp"
 
 #include <iostream>
 #include <chrono>
@@ -24,6 +25,14 @@
 
 namespace ve
 {
+    struct GlobalUbo
+    {
+        glm::mat4 projection{1.f};
+        glm::mat4 view{1.f};
+        glm::vec4 ambientLightColor{1.0f, 0.4f, 0.2f, 0.02f};
+        glm::vec3 lightPosition{-1.f};
+        alignas(16) glm::vec4 lightColor{1.f}; // color of light above
+    };
 
     void App::init_imgui(VkCommandBuffer commandBuffer)
     {
@@ -95,7 +104,6 @@ namespace ve
 
         static int selectedItem = 0;
 
-
         static int selectedObject = 0;
         static std::vector<char *> items(gameObjects.size());
 
@@ -113,10 +121,20 @@ namespace ve
 
         auto object = &gameObjects.at(selectedObject);
         // std::cout << translation << std::endl;
+        ImGui::Text("Translation");
+        ImGui::InputFloat3(" ", &object->transform.translation.x);
+        ImGui::SliderFloat3("  ", &object->transform.translation.x, -10.0f, 10.0f);
+        ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
-        ImGui::SliderFloat("X", &object->transform.translation.x, -10.0f, 10.0f);
-        ImGui::SliderFloat("Y", &object->transform.translation.y, -10.0f, 10.0f);
-        ImGui::SliderFloat("Z", &object->transform.translation.z, -10.0f, 10.0f);
+        ImGui::Text("Rotation");
+        ImGui::InputFloat3("   ", &object->transform.rotation.x);
+        ImGui::SliderFloat3("    ", &object->transform.rotation.x, -10.0f, 10.0f);
+        ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+        ImGui::Text("Scale");
+        ImGui::InputFloat3("     ", &object->transform.scale.x);
+        ImGui::SliderFloat3("      ", &object->transform.scale.x, -10.0f, 10.0f);
+        ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
         ImGui::End();
         ImGui::Render();
@@ -128,14 +146,6 @@ namespace ve
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
     }
-
-    struct GlobalUbo
-    {
-        glm::mat4 projectionView{1.f};
-        glm::vec4 ambientLightColor{1.0f, 0.4f, 0.2f, 0.02f};
-        glm::vec3 lightPosition{-1.f};
-        alignas(16) glm::vec4 lightColor{-1.f}; // color of light above
-    };
 
     App::App()
     {
@@ -177,6 +187,7 @@ namespace ve
         }
 
         SimpleRenderSystem srs{pDevice, pRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()}; // srs - simpleRenderSystem
+        PointLightSystem pls{pDevice, pRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};   // pls - pointLightSystem
         veCamera camera{};
 
         auto viewerObject = veGameObject::createGameObject();
@@ -214,7 +225,8 @@ namespace ve
 
                 // updating buffers
                 GlobalUbo ubo{};
-                ubo.projectionView = camera.getProjectionMatrix() * camera.getViewMatrix();
+                ubo.projection = camera.getProjectionMatrix();
+                ubo.view = camera.getViewMatrix();
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
 
@@ -222,6 +234,7 @@ namespace ve
                 render_imgui();
                 pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
                 srs.renderGameObjects(frameInfo);
+                pls.render(frameInfo);
                 pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
                 pRenderer.endFrame();
             }
