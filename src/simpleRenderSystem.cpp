@@ -78,6 +78,10 @@ namespace ve
                                 &frameInfo.globalDescriptorSet, 0, nullptr);
         for (auto &kv : frameInfo.gameObjects)
         {
+            if(kv.second.pointLight != nullptr)
+            {
+                continue;
+            }
             auto &obj = kv.second;
             SimplePushConstantData push{};
             // push.color = obj.color;

@@ -3,11 +3,11 @@
 #include "gameObject.hpp"
 #include "model.hpp"
 #include "renderer.hpp"
-#include "simpleRenderSystem.hpp"
 #include "swap_chain.hpp"
 #include "camera.hpp"
 #include "keyboardInput.hpp"
 #include "frameInfo.hpp"
+#include "simpleRenderSystem.hpp"
 #include "pointLightSystem.hpp"
 
 #include <iostream>
@@ -25,14 +25,6 @@
 
 namespace ve
 {
-    struct GlobalUbo
-    {
-        glm::mat4 projection{1.f};
-        glm::mat4 view{1.f};
-        glm::vec4 ambientLightColor{1.0f, 0.4f, 0.2f, 0.02f};
-        glm::vec3 lightPosition{-1.f};
-        alignas(16) glm::vec4 lightColor{1.f}; // color of light above
-    };
 
     void App::init_imgui(VkCommandBuffer commandBuffer)
     {
@@ -227,6 +219,7 @@ namespace ve
                 GlobalUbo ubo{};
                 ubo.projection = camera.getProjectionMatrix();
                 ubo.view = camera.getViewMatrix();
+                pls.update(frameInfo, ubo);
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
 
@@ -259,7 +252,7 @@ namespace ve
 
         auto obj2 = veGameObject::createGameObject();
         obj2.model = model2;
-        obj2.transform.translation = {.5f, .5f, 0.f};
+        obj2.transform.translation = {.2f, .5f, 0.f};
         obj2.transform.rotation = {.0f, .0f, 0.0f};
         obj2.transform.scale = {1.5f, 1.5f, 1.5f};
 
@@ -268,13 +261,40 @@ namespace ve
         floor.model = floorModel;
         floor.transform.translation = {0.f, .5f, 0.f};
         floor.transform.rotation = {0.f, 0.f, 0.f};
-        floor.transform.scale = {3.f, 1.f, 3.f};
-        std::cout << obj1.getId();
+        floor.transform.scale = {20.f, 1.f, 20.f};
 
-        gameObjects.emplace(obj1.getId(), std::move(floor));
-        gameObjects.emplace(obj2.getId(), std::move(obj1));
-        gameObjects.emplace(floor.getId(), std::move(obj2));
-        // print gameObjects ids
+        std::shared_ptr<veModel> motoModel = veModel::createModelFromFile(pDevice, "/home/milk/Vulkan_APP/models/Srad 750.obj");
+        auto moto = veGameObject::createGameObject();
+        moto.model = motoModel;
+        moto.transform.translation = {1.f, .5f, 0.f};
+        moto.transform.rotation = {0.f, 0.f, 0.f};
+        moto.transform.scale = {1.f, 1.f, 1.f};
+
+        gameObjects.emplace(obj1.getId(), std::move(obj1));
+        gameObjects.emplace(obj2.getId(), std::move(obj2));
+        gameObjects.emplace(floor.getId(), std::move(floor));
+        gameObjects.emplace(moto.getId(), std::move(moto));
+
+        std::vector<glm::vec3> lightColors{
+            {1.f, .1f, .1f},
+            {.1f, .1f, 1.f},
+            {.1f, 1.f, .1f},
+            {1.f, 1.f, .1f},
+            {.1f, 1.f, 1.f},
+            {1.f, 1.f, 1.f}
+        };
+
+        for (int i = 0; i < lightColors.size(); i++)
+        {
+            auto pointLight = veGameObject::makePointLight(0.8f);
+            pointLight.color = lightColors[i];
+            auto rotateLight = glm::rotate(
+            glm::mat4(1.f),
+                (i * glm::two_pi<float>()) / lightColors.size(),
+                {0.f, -1.f, 0.f});
+            pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
+            gameObjects.emplace(pointLight.getId(), std::move(pointLight));
+        }
     }
 
     void App::addGameObject(std::string &model)

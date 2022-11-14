@@ -9,6 +9,12 @@
 
 namespace ve
 {
+
+    struct PointLightComponent
+    {
+        float lightIntensity = 1.0f;
+    };
+
     struct TransformComponent
     {
         glm::vec3 translation{};
@@ -38,10 +44,13 @@ namespace ve
         veGameObject &operator=(const veGameObject &&) = delete;
 
         id_t getId() { return id; }
+        static veGameObject makePointLight(float intensity = 1.0, float radius = 0.2, glm::vec3 color = glm::vec3{1.0});
+
+        glm::vec3 color{1.0f, 1.0f, 1.0f};
+        TransformComponent transform;
 
         std::shared_ptr<veModel> model{};
-        glm::vec3 color{1.0f, 1.0f , 1.0f};
-        TransformComponent transform;
+        std::unique_ptr<PointLightComponent> pointLight = nullptr;
 
     private:
         veGameObject(id_t objId) : id{objId} {}
