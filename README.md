@@ -33,9 +33,8 @@ The generated app will be in bin folder.
     brew install glm
 ```
 To Build:
+```
     cd Vulkan_Engine
     chmod +x UnixBuild.sh
     ./UnixBuild.sh
-```
-    
 ```
