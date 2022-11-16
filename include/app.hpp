@@ -48,6 +48,8 @@ namespace ve
         veWindow pWindow{WIDTH, HEIGHT, "VulkanApp"};
         veDevice pDevice{pWindow};
         veRenderer pRenderer{pWindow, pDevice};
+        // TODO:
+        // std::unique_ptr<veGameObject> Player;
 
         std::unique_ptr<veDescriptorPool> globalPool{};
         std::unique_ptr<veDescriptorPool> imguiPool{};

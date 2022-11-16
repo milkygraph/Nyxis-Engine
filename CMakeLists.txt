@@ -17,6 +17,16 @@ file (GLOB_RECURSE FRAGMENT_SHADERS shaders/*.frag)
 
 set(DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+foreach(SHADER ${VERTEX_SHADERS})
+    get_filename_component(FILE_NAME ${SHADER} NAME)
+    add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bin/shaders/${FILE_NAME}.spv
+            COMMAND glslc -c ${FILE_NAME}
+            DEPENDS ${SHADER}
+    )
+endforeach(SHADER)
+
+
 add_executable(${PROJECT} ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT} PUBLIC include libs)
 target_link_libraries(${PROJECT} Vulkan::Vulkan glfw)

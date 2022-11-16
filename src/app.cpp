@@ -119,7 +119,7 @@ namespace ve
         ImGui::Begin("Object"); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 
         static int selectedObject = 0;
-        static std::vector<char *> items;
+        static std::vector<char *> items(gameObjects.size() * 2);
 
         static bool firstFrame = true;
         static std::vector<const char *> models;
@@ -145,6 +145,7 @@ namespace ve
         //     firstFrame = false;
         // }
 
+        // Fixed bug altough it is still slow!!!
         if (newObject)
         {
             items.push_back(intToChar(new_id));
@@ -170,12 +171,11 @@ namespace ve
         ImGui::SliderFloat3("      ", &object->transform.scale.x, -10.0f, 10.0f);
         ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
-        // This is buggy for now
-        // if (ImGui::Button("Load Game Object"))
-        // {
-        //     std::string model = "cube.obj";
-        //     new_id = addGameObject(model);
-        // }
+        if (ImGui::Button("Load Game Object"))
+        {
+            std::string model = "flat_vase.obj";
+            new_id = addGameObject(model);
+        }
 
         ImGui::End();
         ImGui::Render();
@@ -342,13 +342,13 @@ namespace ve
     id_t App::addGameObject(std::string &model)
     {
         auto obj = veGameObject::createGameObject();
-        obj.model = veModel::createModelFromFile(pDevice, currentPath() + "../models/" + model);
+        auto path = currentPath() + "/../models/" + model;
+        obj.model = veModel::createModelFromFile(pDevice, currentPath() + "/../models/" + model);
         obj.transform.translation = {0.f, 0.f, 0.f};
         obj.transform.rotation = {0.f, 0.f, 0.f};
         obj.transform.scale = {1.f, 1.f, 1.f};
         
         gameObjects.emplace(obj.getId(), std::move(obj));
-
         newObject = true;
 
         return obj.getId();
