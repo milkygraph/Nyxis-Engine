@@ -20,9 +20,11 @@ namespace ve
         glm::vec3 translation{};
         glm::vec3 scale{1.f, 1.f, 1.f};
         glm::vec3 rotation{0.0f, 0.0f, 0.0f};
-
+    
         glm::mat4 mat4();
         glm::mat3 normalMatrix();
+
+        float roughness{0.0f};
     };
 
     class veGameObject
@@ -51,6 +53,9 @@ namespace ve
 
         std::shared_ptr<veModel> model{};
         std::unique_ptr<PointLightComponent> pointLight = nullptr;
+        
+        //TODO: maybe add a string name to each game object to help identification by imgui?
+        // will leave the unwanted game objects' names empty 
 
     private:
         veGameObject(id_t objId) : id{objId} {}
