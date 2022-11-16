@@ -3,6 +3,7 @@
 #include "model.hpp"
 #include "renderer.hpp"
 #include "swap_chain.hpp"
+#include "path.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -62,8 +63,8 @@ namespace ve
         pipelineConfig.pipelineLayout = pipelineLayout;
         pPipeline = std::make_unique<vePipeline>(
             pDevice,
-            "/home/milk/Vulkan_APP/shaders/simple_shader.vert.spv",
-            "/home/milk/Vulkan_APP/shaders/simple_shader.frag.spv",
+            currentPath() + "/../shaders/simple_shader.vert.spv",
+            currentPath() + "/../shaders/simple_shader.frag.spv",
             pipelineConfig);
     }
 
@@ -79,9 +80,8 @@ namespace ve
         for (auto &kv : frameInfo.gameObjects)
         {
             if(kv.second.pointLight != nullptr)
-            {
                 continue;
-            }
+
             auto &obj = kv.second;
             SimplePushConstantData push{};
             // push.color = obj.color;

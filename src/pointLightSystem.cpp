@@ -1,5 +1,5 @@
 #include "pointLightSystem.hpp"
-
+#include "path.hpp"
 // libs
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -68,8 +68,8 @@ namespace ve
         pipelineConfig.pipelineLayout = pipelineLayout;
         pipeline = std::make_unique<vePipeline>(
             device,
-            "/home/milk/Vulkan_APP/shaders/point_light.vert.spv",
-            "/home/milk/Vulkan_APP/shaders/point_light.frag.spv",
+            currentPath() + "/../shaders/point_light.vert.spv",
+            currentPath() + "/../shaders/point_light.frag.spv",
             pipelineConfig);
     }
 

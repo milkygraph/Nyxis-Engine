@@ -11,3 +11,5 @@ vendor/
 imgui.ini
 OpenSans-Light.ttf
 resources/Learning Vulkan.pdf
+CMakeCache.txt
+cmake_install.cmake

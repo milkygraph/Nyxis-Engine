@@ -5,6 +5,7 @@
 #include "model.hpp"
 #include "gameObject.hpp"
 #include "renderer.hpp"
+#include "frameInfo.hpp"
 
 #include <memory>
 #include <vector>
@@ -34,13 +35,15 @@ namespace ve
 
         void run();
         void init_imgui(VkCommandBuffer commandBuffer);
-        void render_imgui();
+        void render_imgui(FrameInfo& frameInfo);
         void close_imgui();
 
     private:
         void loadGameObjects();
-        void addGameObject(std::string& model);
         void renderGameObjects(VkCommandBuffer commandBuffer);
+        id_t addGameObject(std::string& model);
+
+        bool newObject = false;
 
         veWindow pWindow{WIDTH, HEIGHT, "VulkanApp"};
         veDevice pDevice{pWindow};
