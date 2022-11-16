@@ -48,7 +48,8 @@ namespace ve
         veWindow pWindow{WIDTH, HEIGHT, "VulkanApp"};
         veDevice pDevice{pWindow};
         veRenderer pRenderer{pWindow, pDevice};
-        // TODO:
+
+        // TODO: Create third(or first) person Player View
         // std::unique_ptr<veGameObject> Player;
 
         std::unique_ptr<veDescriptorPool> globalPool{};

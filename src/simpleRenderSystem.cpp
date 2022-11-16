@@ -17,6 +17,7 @@ namespace ve
     {
         glm::mat4 modelMatrix{1.f};
         glm::mat4 normalMatrix{1.f};
+        float roughness{0.0f};
     };
 
     SimpleRenderSystem::SimpleRenderSystem(veDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalDescriptorSetLayout)
@@ -87,6 +88,7 @@ namespace ve
             // push.color = obj.color;
             push.modelMatrix = obj.transform.mat4();
             push.normalMatrix = obj.transform.normalMatrix();
+            push.roughness = obj.transform.roughness;
 
             vkCmdPushConstants(
                 frameInfo.commandBuffer,

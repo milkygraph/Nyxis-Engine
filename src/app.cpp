@@ -104,13 +104,15 @@ namespace ve
         // ImGui_ImplVulkan_Shutdown();
     }
 
-    void App::render_imgui(FrameInfo& frameInfo)
+    // TODO: Fix object adding functionality
+    // TODO: Create abstraction layer for ImGui
+    void App::render_imgui(FrameInfo &frameInfo)
     {
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::ShowDemoWindow();
+        // ImGui::ShowDemoWindow();
 
         static id_t new_id;
         bool show_window = true;
@@ -118,44 +120,36 @@ namespace ve
 
         ImGui::Begin("Object"); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 
-        static int selectedObject = 0;
-        static std::vector<char *> items(gameObjects.size() * 2);
+        static std::vector<char *> items;
 
         static bool firstFrame = true;
-        static std::vector<const char *> models;
 
         // use this implementaion if you don't care about the order of items in Objects ComboList
+        // if (firstFrame)
+        // {
+        // std::for_each(gameObjects.begin(), gameObjects.end(), [](auto &pair)
+        //   { items.insert(items.begin(), (intToChar(pair.first))); });
+        // std::string path = "models";
+        // for (const auto &entry : std::filesystem::directory_iterator(path))
+        //     models.push_back(entry.path().std::filesystem::path::c_str());
+
+        // firstFrame = false;
+        // }
+
+        // This is a faster version of if statement above
         if (firstFrame)
         {
             std::for_each(gameObjects.begin(), gameObjects.end(), [](auto &pair)
-                          { items.insert(items.begin(), (intToChar(pair.first))); });
-
-            // std::string path = "models";
-            // for (const auto &entry : std::filesystem::directory_iterator(path))
-            //     models.push_back(entry.path().std::filesystem::path::c_str());
-
+                          { items.push_back(intToChar(pair.first)); });
+            items.resize(gameObjects.size());
             firstFrame = false;
         }
 
-        // This is a faster version of above if statement
-        // if (firstFrame)
-        // {
-        //     std::for_each(gameObjects.begin(), gameObjects.end(), [](auto &pair)
-        //                   { items.push_back(intToChar(pair.first)); });
-        //     firstFrame = false;
-        // }
+        static int selectedObject = atoi(items[0]);
 
-        // Fixed bug altough it is still slow!!!
-        if (newObject)
-        {
-            items.push_back(intToChar(new_id));
-            newObject = false;
-        }
-
-        ImGui::Combo("Objects", &selectedObject, items.data(), items.size(), 4);
-
+        ImGui::Combo("Objects", &selectedObject, items.data(), gameObjects.size(), 4);
         auto object = &gameObjects.at(selectedObject);
-        // std::cout << translation << std::endl;
+
         ImGui::Text("Translation");
         ImGui::InputFloat3(" ", &object->transform.translation.x);
         ImGui::SliderFloat3("  ", &object->transform.translation.x, -10.0f, 10.0f);
@@ -171,16 +165,14 @@ namespace ve
         ImGui::SliderFloat3("      ", &object->transform.scale.x, -10.0f, 10.0f);
         ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
-        if (ImGui::Button("Load Game Object"))
-        {
-            std::string model = "flat_vase.obj";
-            new_id = addGameObject(model);
-        }
+        ImGui::Text("Roughness");
+        ImGui::InputFloat("      ", &object->transform.roughness);
+        ImGui::SliderFloat("       ", &object->transform.roughness, -1.0f, 1.0f);
+        ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
         ImGui::End();
         ImGui::Render();
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
-
     }
 
     void App::close_imgui()
@@ -270,6 +262,7 @@ namespace ve
                 GlobalUbo ubo{};
                 ubo.projection = camera.getProjectionMatrix();
                 ubo.view = camera.getViewMatrix();
+                ubo.inverseViewMatrix = camera.getInverseViewMatrix();
                 pls.update(frameInfo, ubo);
                 uboBuffers[frameIndex]->writeToBuffer(&ubo);
                 uboBuffers[frameIndex]->flush();
@@ -298,6 +291,7 @@ namespace ve
         obj1.transform.translation = {-.5f, .5f, 0.f};
         obj1.transform.rotation = {.0f, .0f, 0.0f};
         obj1.transform.scale = {1.5f, 1.5f, 1.5f};
+        obj1.transform.roughness = 0.8f;
 
         std::shared_ptr<veModel> model2 = veModel::createModelFromFile(pDevice, currentPath() + "/../models/pose.obj");
 
@@ -306,6 +300,7 @@ namespace ve
         obj2.transform.translation = {.2f, .5f, 0.f};
         obj2.transform.rotation = {.0f, .0f, 0.0f};
         obj2.transform.scale = {1.5f, 1.5f, 1.5f};
+        obj2.transform.roughness = 0.0f;
 
         std::shared_ptr<veModel> floorModel = veModel::createModelFromFile(pDevice, currentPath() + "/../models/floor.obj");
         auto floor = veGameObject::createGameObject();
@@ -313,10 +308,29 @@ namespace ve
         floor.transform.translation = {0.f, .5f, 0.f};
         floor.transform.rotation = {0.f, 0.f, 0.f};
         floor.transform.scale = {20.f, 1.f, 20.f};
+        floor.transform.roughness = 0.8f;
+
+        std::shared_ptr<veModel> motoModel = veModel::createModelFromFile(pDevice, currentPath() + "/../models/Srad 750.obj");
+        auto moto1 = veGameObject::createGameObject();
+        moto1.model = motoModel;
+        moto1.transform.translation = {0.f, .5f, 0.f};
+        moto1.transform.rotation = {0.f, 0.f, 0.f};
+        moto1.transform.scale = {1.f, 1.f, 1.f};
+        moto1.transform.roughness = 0.0f;
+
+        auto moto2 = veGameObject::createGameObject();
+        moto2.model = motoModel;
+        moto2.transform.translation = {-1.f, .5f, 0.f};
+        moto2.transform.rotation = {0.f, 0.f, 0.f};
+        moto2.transform.scale = {1.f, 1.f, 1.f};
+        moto2.transform.roughness = 0.0f;
+
 
         gameObjects.emplace(obj1.getId(), std::move(obj1));
         gameObjects.emplace(obj2.getId(), std::move(obj2));
         gameObjects.emplace(floor.getId(), std::move(floor));
+        gameObjects.emplace(moto1.getId(), std::move(moto1));
+        gameObjects.emplace(moto2.getId(), std::move(moto2));
 
         std::vector<glm::vec3> lightColors{
             {1.f, .1f, .1f},
@@ -347,7 +361,7 @@ namespace ve
         obj.transform.translation = {0.f, 0.f, 0.f};
         obj.transform.rotation = {0.f, 0.f, 0.f};
         obj.transform.scale = {1.f, 1.f, 1.f};
-        
+
         gameObjects.emplace(obj.getId(), std::move(obj));
         newObject = true;
 
