@@ -25,6 +25,11 @@ namespace ve
         const glm::vec3 rightDir{forwardDir.z, 0.f, -forwardDir.x};
         const glm::vec3 upDir{0.f, -.5f, 0.f};
 
+        if(glfwGetKey(window, keys.fast) == GLFW_PRESS)
+            moveSpeed = 5.f;
+        else
+            moveSpeed = 3.f;
+
         glm::vec3 moveDir{0.f};
         if (glfwGetKey(window, keys.moveForward) == GLFW_PRESS)
             moveDir += forwardDir;
