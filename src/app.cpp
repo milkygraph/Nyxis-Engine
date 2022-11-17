@@ -144,7 +144,7 @@ namespace ve
 
         // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
         // because it would be confusing to have two docking targets within each others.
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
         if (opt_fullscreen)
         {
             const ImGuiViewport *viewport = ImGui::GetMainViewport();
@@ -395,26 +395,26 @@ namespace ve
         floor.transform.scale = {20.f, 1.f, 20.f};
         floor.transform.roughness = 0.8f;
 
-        // std::shared_ptr<veModel> motoModel = veModel::createModelFromFile(pDevice, currentPath() + "/../models/Srad 750.obj");
-        // auto moto1 = veGameObject::createGameObject();
-        // moto1.model = motoModel;
-        // moto1.transform.translation = {0.f, .5f, 0.f};
-        // moto1.transform.rotation = {0.f, 0.f, 0.f};
-        // moto1.transform.scale = {1.f, 1.f, 1.f};
-        // moto1.transform.roughness = 0.0f;
+        std::shared_ptr<veModel> motoModel = veModel::createModelFromFile(pDevice, currentPath() + "/../models/Srad 750.obj");
+        auto moto1 = veGameObject::createGameObject();
+        moto1.model = motoModel;
+        moto1.transform.translation = {0.f, .5f, 0.f};
+        moto1.transform.rotation = {0.f, 0.f, 0.f};
+        moto1.transform.scale = {1.f, 1.f, 1.f};
+        moto1.transform.roughness = 0.0f;
 
-        // auto moto2 = veGameObject::createGameObject();
-        // moto2.model = motoModel;
-        // moto2.transform.translation = {-1.f, .5f, 0.f};
-        // moto2.transform.rotation = {0.f, 0.f, 0.f};
-        // moto2.transform.scale = {1.f, 1.f, 1.f};
-        // moto2.transform.roughness = 0.0f;
+        auto moto2 = veGameObject::createGameObject();
+        moto2.model = motoModel;
+        moto2.transform.translation = {-1.f, .5f, 0.f};
+        moto2.transform.rotation = {0.f, 0.f, 0.f};
+        moto2.transform.scale = {1.f, 1.f, 1.f};
+        moto2.transform.roughness = 0.0f;
 
         gameObjects.emplace(obj1.getId(), std::move(obj1));
         gameObjects.emplace(obj2.getId(), std::move(obj2));
         gameObjects.emplace(floor.getId(), std::move(floor));
-        // gameObjects.emplace(moto1.getId(), std::move(moto1));
-        // gameObjects.emplace(moto2.getId(), std::move(moto2));
+        gameObjects.emplace(moto1.getId(), std::move(moto1));
+        gameObjects.emplace(moto2.getId(), std::move(moto2));
 
         std::vector<glm::vec3> lightColors{
             {1.f, .1f, .1f},
