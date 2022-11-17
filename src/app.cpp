@@ -77,6 +77,8 @@ namespace ve
         ImGuiIO *IO = &ImGui::GetIO();
         IO->WantCaptureMouse = true;
         IO->WantCaptureKeyboard = true;
+        IO->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable  Docking
+        IO->ConfigDockingWithShift = true;
         ImGui::StyleColorsDark();
 
         // this initializes imgui for SDL
@@ -100,8 +102,88 @@ namespace ve
 
         // vkDestroyDescriptorPool(pDevice.device(), imguiPool->getDescriptorPool(), nullptr);
 
+        ImVec4 *colors = ImGui::GetStyle().Colors;
+        colors[ImGuiCol_WindowBg] = ImVec4(0.00f, 0.00f, 0.02f, 1.00f);
+        colors[ImGuiCol_FrameBg] = ImVec4(0.28f, 0.42f, 0.62f, 0.54f);
+        colors[ImGuiCol_PopupBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.94f);
+        colors[ImGuiCol_TitleBgActive] = ImVec4(0.12f, 0.22f, 0.36f, 1.00f);
+        colors[ImGuiCol_FrameBgHovered] = ImVec4(0.09f, 0.11f, 0.14f, 0.40f);
+        colors[ImGuiCol_TitleBg] = ImVec4(0.06f, 0.06f, 0.09f, 1.00f);
+
+        ImGui::GetStyle().WindowBorderSize = 0.0f;
+        ImGui::GetStyle().FrameBorderSize = 0.0f;
+        ImGui::GetStyle().PopupBorderSize = 0.0f;
+        ImGui::GetStyle().ChildBorderSize = 0.0f;
+        ImGui::GetStyle().FrameRounding = 5;
+        ImGui::GetStyle().WindowRounding = 5;
+        ImGui::GetStyle().PopupRounding = 5;
+        ImGui::GetStyle().ChildRounding = 5;
+
         // add the destroy the imgui created structures
         // ImGui_ImplVulkan_Shutdown();
+    }
+
+    void ShowExampleAppDockSpace(bool *p_open)
+    {
+        // If you strip some features of, this demo is pretty much equivalent to calling DockSpaceOverViewport()!
+        // In most cases you should be able to just call DockSpaceOverViewport() and ignore all the code below!
+        // In this specific demo, we are not using DockSpaceOverViewport() because:
+        // - we allow the host window to be floating/moveable instead of filling the viewport (when opt_fullscreen == false)
+        // - we allow the host window to have padding (when opt_padding == true)
+        // - we have a local menu bar in the host window (vs. you could use BeginMainMenuBar() + DockSpaceOverViewport() in your code!)
+        // TL;DR; this demo is more complicated than what you would normally use.
+        // If we removed all the options we are showcasing, this demo would become:
+        //     void ShowExampleAppDockSpace()
+        //     {
+        //         ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+        //     }
+
+        static bool opt_fullscreen = true;
+        static bool opt_padding = false;
+        static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
+
+        // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+        // because it would be confusing to have two docking targets within each others.
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+        if (opt_fullscreen)
+        {
+            const ImGuiViewport *viewport = ImGui::GetMainViewport();
+            ImGui::SetNextWindowPos(viewport->WorkPos);
+            ImGui::SetNextWindowSize(viewport->WorkSize);
+            ImGui::SetNextWindowViewport(viewport->ID);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+            window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+            window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+        }
+        else
+        {
+            dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
+        }
+
+        // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
+        // and handle the pass-thru hole, so we ask Begin() to not render a background.
+        if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+            window_flags |= ImGuiWindowFlags_NoBackground;
+
+        if (!opt_padding)
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        ImGui::Begin("DockSpace Demo", p_open, window_flags);
+        if (!opt_padding)
+            ImGui::PopStyleVar();
+
+        if (opt_fullscreen)
+            ImGui::PopStyleVar(2);
+
+        // Submit the DockSpace
+        ImGuiIO &io = ImGui::GetIO();
+        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+        {
+            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+        }
+
+        ImGui::End();
     }
 
     // TODO: Fix object adding functionality
@@ -112,7 +194,9 @@ namespace ve
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // ImGui::ShowDemoWindow();
+        static bool dock = false;
+
+        ShowExampleAppDockSpace(&dock);
 
         static id_t new_id;
         bool show_window = true;
@@ -147,7 +231,7 @@ namespace ve
 
         static int selectedObject = atoi(items[0]);
 
-        ImGui::Combo("Objects", &selectedObject, items.data(), gameObjects.size(), 4);
+        ImGui::Combo(" ", &selectedObject, items.data(), gameObjects.size(), 4);
         auto object = &gameObjects.at(selectedObject);
 
         ImGui::Text("Translation");
@@ -171,6 +255,7 @@ namespace ve
         ImGui::Dummy(ImVec2(0.0f, 10.0f));
 
         ImGui::End();
+
         ImGui::Render();
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
     }
@@ -310,27 +395,26 @@ namespace ve
         floor.transform.scale = {20.f, 1.f, 20.f};
         floor.transform.roughness = 0.8f;
 
-        std::shared_ptr<veModel> motoModel = veModel::createModelFromFile(pDevice, currentPath() + "/../models/Srad 750.obj");
-        auto moto1 = veGameObject::createGameObject();
-        moto1.model = motoModel;
-        moto1.transform.translation = {0.f, .5f, 0.f};
-        moto1.transform.rotation = {0.f, 0.f, 0.f};
-        moto1.transform.scale = {1.f, 1.f, 1.f};
-        moto1.transform.roughness = 0.0f;
+        // std::shared_ptr<veModel> motoModel = veModel::createModelFromFile(pDevice, currentPath() + "/../models/Srad 750.obj");
+        // auto moto1 = veGameObject::createGameObject();
+        // moto1.model = motoModel;
+        // moto1.transform.translation = {0.f, .5f, 0.f};
+        // moto1.transform.rotation = {0.f, 0.f, 0.f};
+        // moto1.transform.scale = {1.f, 1.f, 1.f};
+        // moto1.transform.roughness = 0.0f;
 
-        auto moto2 = veGameObject::createGameObject();
-        moto2.model = motoModel;
-        moto2.transform.translation = {-1.f, .5f, 0.f};
-        moto2.transform.rotation = {0.f, 0.f, 0.f};
-        moto2.transform.scale = {1.f, 1.f, 1.f};
-        moto2.transform.roughness = 0.0f;
-
+        // auto moto2 = veGameObject::createGameObject();
+        // moto2.model = motoModel;
+        // moto2.transform.translation = {-1.f, .5f, 0.f};
+        // moto2.transform.rotation = {0.f, 0.f, 0.f};
+        // moto2.transform.scale = {1.f, 1.f, 1.f};
+        // moto2.transform.roughness = 0.0f;
 
         gameObjects.emplace(obj1.getId(), std::move(obj1));
         gameObjects.emplace(obj2.getId(), std::move(obj2));
         gameObjects.emplace(floor.getId(), std::move(floor));
-        gameObjects.emplace(moto1.getId(), std::move(moto1));
-        gameObjects.emplace(moto2.getId(), std::move(moto2));
+        // gameObjects.emplace(moto1.getId(), std::move(moto1));
+        // gameObjects.emplace(moto2.getId(), std::move(moto2));
 
         std::vector<glm::vec3> lightColors{
             {1.f, .1f, .1f},

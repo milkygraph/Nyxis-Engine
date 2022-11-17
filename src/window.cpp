@@ -20,6 +20,7 @@ namespace ve
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        // glfwSetInputMode(pWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
         pWindow = glfwCreateWindow(pWidth, pHeight, pTitle.c_str(), nullptr, nullptr);
         glfwSetWindowSizeLimits(pWindow, 200, 200, GLFW_DONT_CARE, GLFW_DONT_CARE);

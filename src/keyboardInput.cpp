@@ -1,4 +1,5 @@
 #include "keyboardInput.hpp"
+#include <GLFW/glfw3.h>
 
 namespace ve
 {
@@ -43,6 +44,9 @@ namespace ve
             moveDir += upDir;
         if (glfwGetKey(window, keys.moveDown) == GLFW_PRESS)
             moveDir -= upDir;
+
+        static double xpos, ypos;
+        // glfwGetCursorPos(window, xpos, ypos);
 
         if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon())
         {
