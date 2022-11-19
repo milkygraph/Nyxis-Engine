@@ -96,7 +96,6 @@ namespace ve
 
         VkInstanceCreateInfo createInfo = {};
         
-        createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
         #ifdef __APPLE__
