@@ -8,6 +8,7 @@
 #include "simpleRenderSystem.hpp"
 #include "camera.hpp"
 #include "frameInfo.hpp"
+#include "scene.hpp"
 
 #include <memory>
 #include <vector>
@@ -33,14 +34,13 @@ namespace ve
         SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
         void renderGameObjects(FrameInfo &frameInfo);
 
-
     private:
         void createPipelineLayout(VkDescriptorSetLayout globalDescriptorSetLayout);
         void createPipeline(VkRenderPass renderPass);
 
         veDevice &pDevice;
 
-        std::unique_ptr<vePipeline> pPipeline; 
+        std::unique_ptr<vePipeline> pPipeline;
         VkPipelineLayout pipelineLayout;
     }; // class SimpleRenderSystem
 } // namespace ve

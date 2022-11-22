@@ -4,6 +4,7 @@
 #include "renderer.hpp"
 #include "swap_chain.hpp"
 #include "path.hpp"
+#include "components.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -80,7 +81,7 @@ namespace ve
                                 &frameInfo.globalDescriptorSet, 0, nullptr);
         for (auto &kv : frameInfo.gameObjects)
         {
-            if(kv.second.pointLight != nullptr)
+            if (kv.second.pointLight != nullptr)
                 continue;
 
             auto &obj = kv.second;
@@ -99,6 +100,28 @@ namespace ve
                 &push);
             obj.model->bind(frameInfo.commandBuffer);
             obj.model->draw(frameInfo.commandBuffer);
+        }
+
+        auto view = frameInfo.scene.getComponentView<TransformComponentStuff, Mesh>();
+
+        for (auto entity : view)
+        {
+            SimplePushConstantData push{};
+            auto transform = view.get<TransformComponentStuff>(entity);
+            push.modelMatrix = transform.mat4();
+            push.normalMatrix = transform.normalMatrix();
+            push.roughness = transform.roughness;
+
+            vkCmdPushConstants(
+                frameInfo.commandBuffer,
+                pipelineLayout,
+                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                0,
+                sizeof(SimplePushConstantData),
+                &push);
+            auto &mesh = view.get<Mesh>(entity);
+            mesh.model->bind(frameInfo.commandBuffer);
+            mesh.model->draw(frameInfo.commandBuffer);
         }
     }
 } // namespace ve

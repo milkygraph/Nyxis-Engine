@@ -2,6 +2,8 @@
 
 #include "camera.hpp"
 #include "gameObject.hpp"
+#include "scene.hpp"
+#include "components.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_core.h>
@@ -10,12 +12,6 @@ namespace ve
 {
 
 #define MAX_LIGHTS 10
-
-    struct PointLight
-    {
-        glm::vec4 position{}; // ignore w
-        glm::vec4 color{};    // w is intensity
-    };
 
     struct GlobalUbo
     {
@@ -35,5 +31,6 @@ namespace ve
         veCamera &camera;
         VkDescriptorSet globalDescriptorSet;
         veGameObject::Map &gameObjects;
+        Scene& scene;
     };
 }

@@ -6,6 +6,7 @@
 #include "gameObject.hpp"
 #include "renderer.hpp"
 #include "frameInfo.hpp"
+#include "scene.hpp"
 
 #include <memory>
 #include <vector>
@@ -55,5 +56,7 @@ namespace ve
         std::unique_ptr<veDescriptorPool> globalPool{};
         std::unique_ptr<veDescriptorPool> imguiPool{};
         veGameObject::Map gameObjects;
+
+        Scene m_Scene;
     }; // class App
 } // namespace ve

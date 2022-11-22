@@ -341,7 +341,7 @@ namespace ve
                 }
 
                 int frameIndex = pRenderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects, m_Scene};
 
                 // updating buffers
                 GlobalUbo ubo{};
@@ -369,52 +369,17 @@ namespace ve
     void App::loadGameObjects()
     {
 
-        std::shared_ptr<veModel> model1 = veModel::createModelFromFile(pDevice, currentPath() + "/../models/smooth_vase.obj");
+        auto vase = m_Scene.createEntity("Vase");
+        m_Scene.addComponent<TransformComponentStuff>(vase, glm::vec3(-.5f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
+        m_Scene.addComponent<Mesh>(vase, pDevice, "smooth_vase.obj");
 
-        auto obj1 = veGameObject::createGameObject();
-        obj1.model = model1;
-        obj1.transform.translation = {-.5f, .5f, 0.f};
-        obj1.transform.rotation = {.0f, .0f, 0.0f};
-        obj1.transform.scale = {1.5f, 1.5f, 1.5f};
-        obj1.transform.roughness = 0.8f;
+        auto pose = m_Scene.createEntity("Pose");
+        m_Scene.addComponent<TransformComponentStuff>(pose, glm::vec3(.2f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
+        m_Scene.addComponent<Mesh>(pose, pDevice, "pose.obj");
 
-        std::shared_ptr<veModel> model2 = veModel::createModelFromFile(pDevice, currentPath() + "/../models/pose.obj");
-
-        auto obj2 = veGameObject::createGameObject();
-        obj2.model = model2;
-        obj2.transform.translation = {.2f, .5f, 0.f};
-        obj2.transform.rotation = {.0f, .0f, 0.0f};
-        obj2.transform.scale = {1.5f, 1.5f, 1.5f};
-        obj2.transform.roughness = 0.0f;
-
-        std::shared_ptr<veModel> floorModel = veModel::createModelFromFile(pDevice, currentPath() + "/../models/floor.obj");
-        auto floor = veGameObject::createGameObject();
-        floor.model = floorModel;
-        floor.transform.translation = {0.f, .5f, 0.f};
-        floor.transform.rotation = {0.f, 0.f, 0.f};
-        floor.transform.scale = {20.f, 1.f, 20.f};
-        floor.transform.roughness = 0.8f;
-
-        std::shared_ptr<veModel> motoModel = veModel::createModelFromFile(pDevice, currentPath() + "/../models/Srad 750.obj");
-        auto moto1 = veGameObject::createGameObject();
-        moto1.model = motoModel;
-        moto1.transform.translation = {0.f, .5f, 0.f};
-        moto1.transform.rotation = {0.f, 0.f, 0.f};
-        moto1.transform.scale = {1.f, 1.f, 1.f};
-        moto1.transform.roughness = 0.0f;
-
-        auto moto2 = veGameObject::createGameObject();
-        moto2.model = motoModel;
-        moto2.transform.translation = {-1.f, .5f, 0.f};
-        moto2.transform.rotation = {0.f, 0.f, 0.f};
-        moto2.transform.scale = {1.f, 1.f, 1.f};
-        moto2.transform.roughness = 0.0f;
-
-        gameObjects.emplace(obj1.getId(), std::move(obj1));
-        gameObjects.emplace(obj2.getId(), std::move(obj2));
-        gameObjects.emplace(floor.getId(), std::move(floor));
-        gameObjects.emplace(moto1.getId(), std::move(moto1));
-        gameObjects.emplace(moto2.getId(), std::move(moto2));
+        auto floor = m_Scene.createEntity("Floor");
+        m_Scene.addComponent<TransformComponentStuff>(floor, glm::vec3(0.f, 0.5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(10.f, 10.f, 10.f), 0.0f);
+        m_Scene.addComponent<Mesh>(floor, pDevice, "floor.obj");
 
         std::vector<glm::vec3> lightColors{
             {1.f, .1f, .1f},
@@ -438,17 +403,6 @@ namespace ve
     }
 
     id_t App::addGameObject(std::string &model)
-    {
-        auto obj = veGameObject::createGameObject();
-        auto path = currentPath() + "/../models/" + model;
-        obj.model = veModel::createModelFromFile(pDevice, currentPath() + "/../models/" + model);
-        obj.transform.translation = {0.f, 0.f, 0.f};
-        obj.transform.rotation = {0.f, 0.f, 0.f};
-        obj.transform.scale = {1.f, 1.f, 1.f};
-
-        gameObjects.emplace(obj.getId(), std::move(obj));
-        newObject = true;
-
-        return obj.getId();
+    {   return 1;
     }
 } // namespace ve
