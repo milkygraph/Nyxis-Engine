@@ -58,4 +58,4 @@ namespace ve
         VkMemoryPropertyFlags memoryPropertyFlags;
     };
 
-} // namespace lve
+} // namespace ve

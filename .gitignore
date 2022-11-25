@@ -2,7 +2,9 @@ build/
 bin/
 .vscode/
 .cache/
-Vulkan_APP
+.idea/
+.cmake/
+CMakeFiles/
 Makefile
 tutorial08/
 Vulkan

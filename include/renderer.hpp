@@ -3,6 +3,8 @@
 #include "window.hpp"
 #include "device.hpp"
 #include "swap_chain.hpp"
+#include "scene.hpp"
+
 
 #include <memory>
 #include <vector>
@@ -20,7 +22,7 @@ namespace ve
     class veRenderer
     {
     public:
-        veRenderer(veWindow &window, veDevice &device);
+        veRenderer(veWindow &window, veDevice &device, Scene &scene);
         ~veRenderer();
 
         // copy constructor and destructors
@@ -59,8 +61,9 @@ namespace ve
         void freeCommandBuffers();
         void recreateSwapChain();
 
-        veWindow &pWindow;
-        veDevice &pDevice;
+        veWindow &window;
+        veDevice &device;
+        Scene& scene;
         std::unique_ptr<veSwapChain> pSwapChain;
         std::vector<VkCommandBuffer> commandBuffers;
 

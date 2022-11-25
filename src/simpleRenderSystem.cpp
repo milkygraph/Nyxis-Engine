@@ -1,4 +1,3 @@
-
 #include "simpleRenderSystem.hpp"
 #include "model.hpp"
 #include "renderer.hpp"
@@ -79,35 +78,13 @@ namespace ve
                                 pipelineLayout,
                                 0, 1,
                                 &frameInfo.globalDescriptorSet, 0, nullptr);
-        for (auto &kv : frameInfo.gameObjects)
-        {
-            if (kv.second.pointLight != nullptr)
-                continue;
 
-            auto &obj = kv.second;
-            SimplePushConstantData push{};
-            // push.color = obj.color;
-            push.modelMatrix = obj.transform.mat4();
-            push.normalMatrix = obj.transform.normalMatrix();
-            push.roughness = obj.transform.roughness;
+        auto view = frameInfo.scene.getComponentView<TransformComponent, MeshComponent>();
 
-            vkCmdPushConstants(
-                frameInfo.commandBuffer,
-                pipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                0,
-                sizeof(SimplePushConstantData),
-                &push);
-            obj.model->bind(frameInfo.commandBuffer);
-            obj.model->draw(frameInfo.commandBuffer);
-        }
-
-        auto view = frameInfo.scene.getComponentView<TransformComponentStuff, Mesh>();
-
-        for (auto entity : view)
+        for (auto& entity : view)
         {
             SimplePushConstantData push{};
-            auto transform = view.get<TransformComponentStuff>(entity);
+            auto transform = view.get<TransformComponent>(entity);
             push.modelMatrix = transform.mat4();
             push.normalMatrix = transform.normalMatrix();
             push.roughness = transform.roughness;
@@ -119,7 +96,7 @@ namespace ve
                 0,
                 sizeof(SimplePushConstantData),
                 &push);
-            auto &mesh = view.get<Mesh>(entity);
+            auto &mesh = view.get<MeshComponent>(entity);
             mesh.model->bind(frameInfo.commandBuffer);
             mesh.model->draw(frameInfo.commandBuffer);
         }

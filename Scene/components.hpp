@@ -26,39 +26,42 @@ namespace ve
     };
 
     // transform component
-    struct TransformComponentStuff
+    struct TransformComponent
     {
         glm::vec3 translation = {0.0f, 0.0f, 0.0f};
         glm::vec3 rotation = {0.0f, 0.0f, 0.0f};
         glm::vec3 scale = {1.0f, 1.0f, 1.0f};
         float roughness = 0.0f;
 
-        TransformComponentStuff() = default;
-        TransformComponentStuff(glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale, float roughness)
+        TransformComponent() = default;
+        TransformComponent(glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale, float roughness)
             : translation(translation), rotation(rotation), scale(scale), roughness(roughness) {}
 
-        TransformComponentStuff(const TransformComponentStuff &) = default;
-        TransformComponentStuff &operator=(const TransformComponentStuff &) = default;
-        TransformComponentStuff(TransformComponentStuff &&) = default;
-        TransformComponentStuff &operator=(TransformComponentStuff &&) = default;
-        ~TransformComponentStuff() = default;
+        TransformComponent(const TransformComponent &) = default;
+        TransformComponent &operator=(const TransformComponent &) = default;
+        TransformComponent(TransformComponent &&) = default;
+        TransformComponent &operator=(TransformComponent &&) = default;
+        ~TransformComponent() = default;
 
         glm::mat4 mat4();
         glm::mat3 normalMatrix();
     };
 
-    struct Mesh
+
+    static std::unordered_map<std::string, std::shared_ptr<veModel>> meshstuff();
+    struct MeshComponent
     {
-        Mesh(veDevice &device, std::string &modelName)
-        {
-            model = veModel::createModelFromFile(device, currentPath() + "/../models/" + modelName);
-        }
-        Mesh(veDevice &device, std::string modelName)
+        MeshComponent(veDevice &device, std::string &modelName)
         {
             model = veModel::createModelFromFile(device, currentPath() + "/../models/" + modelName);
         }
 
-        std::unique_ptr<veModel> model;
+        MeshComponent(veDevice &device, std::string modelName)
+        {
+            model = veModel::createModelFromFile(device, currentPath() + "/../models/" + modelName);
+        }
+
+        std::shared_ptr<veModel> model;
     };
 
     struct PointLight

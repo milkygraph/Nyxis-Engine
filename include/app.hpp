@@ -42,13 +42,13 @@ namespace ve
     private:
         void loadGameObjects();
         void renderGameObjects(VkCommandBuffer commandBuffer);
-        id_t addGameObject(std::string& model);
+        std::pair<std::string, entt::entity> addGameObject(const std::string &path);
 
         bool newObject = false;
 
         veWindow pWindow{WIDTH, HEIGHT, "VulkanApp"};
         veDevice pDevice{pWindow};
-        veRenderer pRenderer{pWindow, pDevice};
+        veRenderer pRenderer{pWindow, pDevice, pScene};
 
         // TODO: Create third(or first) person Player View
         // std::unique_ptr<veGameObject> Player;
@@ -57,6 +57,6 @@ namespace ve
         std::unique_ptr<veDescriptorPool> imguiPool{};
         veGameObject::Map gameObjects;
 
-        Scene m_Scene;
+        Scene pScene{pDevice};
     }; // class App
 } // namespace ve
