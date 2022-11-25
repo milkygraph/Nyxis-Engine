@@ -9,7 +9,7 @@ find_package(Vulkan REQUIRED)
 
 find_package(glfw3 REQUIRED)
 
-file (GLOB_RECURSE SOURCES src/*.cpp libs/*/*.cpp)
+file (GLOB_RECURSE SOURCES src/*.cpp libs/*/*.cpp Scene/*.cpp)
 file (GLOB_RECURSE HEADERS include/*.hpp )
 file (GLOB_RECURSE VENDOR )
 file (GLOB_RECURSE VERTEX_SHADERS shaders/*.vert)
@@ -28,5 +28,5 @@ endforeach(SHADER)
 
 
 add_executable(${PROJECT} ${SOURCES} ${HEADERS})
-target_include_directories(${PROJECT} PUBLIC include libs)
+target_include_directories(${PROJECT} PUBLIC include libs Scene)
 target_link_libraries(${PROJECT} Vulkan::Vulkan glfw)

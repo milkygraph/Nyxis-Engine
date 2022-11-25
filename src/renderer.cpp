@@ -2,7 +2,6 @@
 
 #include "app.hpp"
 #include "model.hpp"
-#include "swap_chain.hpp"
 
 #include <iostream>
 #include <memory>
@@ -11,8 +10,8 @@
 
 namespace ve
 {
-    veRenderer::veRenderer(veWindow &window, veDevice &device)
-        : pWindow(window), pDevice{device}
+    veRenderer::veRenderer(veWindow &window, veDevice &device, Scene& scene)
+        : window(window), device{device}, scene{scene}
     {
         recreateSwapChain();
         createCommandBuffers();
@@ -25,21 +24,21 @@ namespace ve
 
     void veRenderer::recreateSwapChain()
     {
-        auto extent = pWindow.getExtent();
+        auto extent = window.getExtent();
         while (extent.width == 0 || extent.height == 0)
         {
-            extent = pWindow.getExtent();
+            extent = window.getExtent();
             glfwWaitEvents();
         }
 
-        vkDeviceWaitIdle(pDevice.device());
+        vkDeviceWaitIdle(device.device());
         if (pSwapChain == nullptr)
         {
-            pSwapChain = std::make_unique<veSwapChain>(pDevice, extent);
+            pSwapChain = std::make_unique<veSwapChain>(device, extent);
         }
         else
         {
-            pSwapChain = std::make_unique<veSwapChain>(pDevice, extent, std::move(pSwapChain));
+            pSwapChain = std::make_unique<veSwapChain>(device, extent, std::move(pSwapChain));
             if (pSwapChain->imageCount() != commandBuffers.size())
             {
                 freeCommandBuffers();
@@ -55,10 +54,10 @@ namespace ve
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = pDevice.getCommandPool();
+        allocInfo.commandPool = device.getCommandPool();
         allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-        if (vkAllocateCommandBuffers(pDevice.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+        if (vkAllocateCommandBuffers(device.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to allocate command buffer!");
         }
@@ -66,7 +65,7 @@ namespace ve
 
     void veRenderer::freeCommandBuffers()
     {
-        vkFreeCommandBuffers(pDevice.device(), pDevice.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+        vkFreeCommandBuffers(device.device(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
         commandBuffers.clear();
     }
 
@@ -109,9 +108,9 @@ namespace ve
 
         auto result = pSwapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || pWindow.windowResized())
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.windowResized())
         {
-            pWindow.resetWindowResizedFlag();
+            window.resetWindowResizedFlag();
             recreateSwapChain();
         }
         else if (result != VK_SUCCESS)
@@ -134,7 +133,7 @@ namespace ve
         renderPassInfo.renderArea.extent = pSwapChain->getSwapChainExtent();
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {0.0f, 0.0f, 0.007f, 1.0f};
+        clearValues[0].color = {0.3f, 0.3f, 0.3f, 1.0f};
         clearValues[1].depthStencil = {1.0f, 0};
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());

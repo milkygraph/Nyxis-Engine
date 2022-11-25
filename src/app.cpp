@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "components.hpp"
 #include "descriptors.hpp"
 #include "gameObject.hpp"
 #include "model.hpp"
@@ -26,28 +27,81 @@
 #include <imgui/imgui_impl_vulkan.h>
 #include <imgui/imgui_impl_glfw.h>
 
+void ShowExampleAppDockSpace()
+{
+    // this is a copy of the imgui demo code
+    bool p_open = true;
+    static bool opt_fullscreen = true;
+    static bool opt_padding = false;
+    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
+
+    // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+    // because it would be confusing to have two docking targets within each others.
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
+    if (opt_fullscreen)
+    {
+        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    }
+    else
+    {
+        dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
+    }
+
+    // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
+    // and handle the pass-thru hole, so we ask Begin() to not render a background.
+    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+        window_flags |= ImGuiWindowFlags_NoBackground;
+
+    if (!opt_padding)
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("DockSpace Demo", &p_open, window_flags);
+    if (!opt_padding)
+        ImGui::PopStyleVar();
+
+    if (opt_fullscreen)
+        ImGui::PopStyleVar(2);
+
+    // Submit the DockSpace
+    ImGuiIO &io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+    {
+        ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+    }
+
+    ImGui::End();
+}
+
+std::vector<std::string> getModelNames()
+{
+    std::vector<std::string> modelNames;
+    for (const auto &entry : std::filesystem::directory_iterator(ve::currentPath() + "/../models"))
+    {
+        modelNames.push_back(entry.path().filename().string());
+    }
+    return modelNames;
+}
+
 namespace ve
 {
-
-    static char *intToChar(id_t id)
+    App::App()
     {
-        std::vector<char> vec;
-        id_t mask = 1e9;
+        globalPool = veDescriptorPool::Builder(pDevice)
+                         .setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
+                         .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
+                         .build();
 
-        while (mask > id && mask > 9)
-            mask /= 10;
-        // id 1e5, reduce mask to 1e5
-        while (mask > 0)
-        {
-            vec.push_back(id / mask + '0');
-            id %= mask;
-            mask /= 10;
-        }
-        vec.push_back('\0');
-        auto res = new char[vec.size()];
-        strncpy(res, vec.data(), vec.size());
-        return res;
+        loadGameObjects();
     }
+
+    App::~App() {}
 
     void App::init_imgui(VkCommandBuffer commandBuffer)
     {
@@ -81,10 +135,8 @@ namespace ve
         IO->ConfigDockingWithShift = true;
         ImGui::StyleColorsDark();
 
-        // this initializes imgui for SDL
         ImGui_ImplGlfw_InitForVulkan(pWindow.getGLFWwindow(), true);
 
-        // this initializes imgui for Vulkan
         ImGui_ImplVulkan_InitInfo init_info = {};
 
         pDevice.createImGuiInitInfo(init_info);
@@ -118,72 +170,6 @@ namespace ve
         ImGui::GetStyle().WindowRounding = 5;
         ImGui::GetStyle().PopupRounding = 5;
         ImGui::GetStyle().ChildRounding = 5;
-
-        // add the destroy the imgui created structures
-        // ImGui_ImplVulkan_Shutdown();
-    }
-
-    void ShowExampleAppDockSpace(bool *p_open)
-    {
-        // If you strip some features of, this demo is pretty much equivalent to calling DockSpaceOverViewport()!
-        // In most cases you should be able to just call DockSpaceOverViewport() and ignore all the code below!
-        // In this specific demo, we are not using DockSpaceOverViewport() because:
-        // - we allow the host window to be floating/moveable instead of filling the viewport (when opt_fullscreen == false)
-        // - we allow the host window to have padding (when opt_padding == true)
-        // - we have a local menu bar in the host window (vs. you could use BeginMainMenuBar() + DockSpaceOverViewport() in your code!)
-        // TL;DR; this demo is more complicated than what you would normally use.
-        // If we removed all the options we are showcasing, this demo would become:
-        //     void ShowExampleAppDockSpace()
-        //     {
-        //         ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
-        //     }
-
-        static bool opt_fullscreen = true;
-        static bool opt_padding = false;
-        static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
-
-        // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-        // because it would be confusing to have two docking targets within each others.
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
-        if (opt_fullscreen)
-        {
-            const ImGuiViewport *viewport = ImGui::GetMainViewport();
-            ImGui::SetNextWindowPos(viewport->WorkPos);
-            ImGui::SetNextWindowSize(viewport->WorkSize);
-            ImGui::SetNextWindowViewport(viewport->ID);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-            window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-            window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-        }
-        else
-        {
-            dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
-        }
-
-        // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
-        // and handle the pass-thru hole, so we ask Begin() to not render a background.
-        if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-            window_flags |= ImGuiWindowFlags_NoBackground;
-
-        if (!opt_padding)
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-        ImGui::Begin("DockSpace Demo", p_open, window_flags);
-        if (!opt_padding)
-            ImGui::PopStyleVar();
-
-        if (opt_fullscreen)
-            ImGui::PopStyleVar(2);
-
-        // Submit the DockSpace
-        ImGuiIO &io = ImGui::GetIO();
-        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-        {
-            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-        }
-
-        ImGui::End();
     }
 
     // TODO: Fix object adding functionality
@@ -194,65 +180,70 @@ namespace ve
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        static bool dock = false;
-
-        ShowExampleAppDockSpace(&dock);
-
-        static id_t new_id;
-        bool show_window = true;
-        static float sliderFloat = 0.0f;
+        ShowExampleAppDockSpace();
 
         ImGui::Begin("Object"); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 
-        static std::vector<char *> items;
+        static std::unordered_map<std::string, Entity> entity_names;
 
         static bool firstFrame = true;
 
-        // use this implementaion if you don't care about the order of items in Objects ComboList
-        // if (firstFrame)
-        // {
-        // std::for_each(gameObjects.begin(), gameObjects.end(), [](auto &pair)
-        //   { items.insert(items.begin(), (intToChar(pair.first))); });
-        // std::string path = "models";
-        // for (const auto &entry : std::filesystem::directory_iterator(path))
-        //     models.push_back(entry.path().std::filesystem::path::c_str());
-
-        // firstFrame = false;
-        // }
-
-        // This is a faster version of if statement above
+        auto view = pScene.getComponentView<TagComponent>();
         if (firstFrame)
         {
-            std::for_each(gameObjects.begin(), gameObjects.end(), [](auto &pair)
-                          { items.push_back(intToChar(pair.first)); });
-            items.resize(gameObjects.size());
+            for (auto entity : view)
+            {
+                auto tag = view.get<TagComponent>(entity);
+                entity_names[tag.Tag] = entity;
+            }
             firstFrame = false;
         }
 
-        static int selectedObject = atoi(items[0]);
+        static std::string current_item = entity_names.begin()->first;
 
-        ImGui::Combo(" ", &selectedObject, items.data(), gameObjects.size(), 4);
-        auto object = &gameObjects.at(selectedObject);
+        if (ImGui::BeginCombo("Objects", current_item.c_str()))
+        { // The second parameter is the label previewed before opening the combo.
+            for (auto &kv : entity_names)
+            {
+                bool is_selected = (current_item == kv.first); // You can store your selection however you want, outside or inside your objects
+                if (ImGui::Selectable(kv.first.c_str(), is_selected))
+                    current_item = kv.first;
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus(); // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
+            }
+            ImGui::EndCombo();
+        }
 
-        ImGui::Text("Translation");
-        ImGui::InputFloat3(" ", &object->transform.translation.x);
-        ImGui::SliderFloat3("  ", &object->transform.translation.x, -10.0f, 10.0f);
-        ImGui::Dummy(ImVec2(0.0f, 10.0f));
+        auto &transform = pScene.getComponent<TransformComponent>(entity_names[current_item]);
+        ImGui::DragFloat3("Position", &transform.translation.x, 0.1f);
+        ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.1f);
+        ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f);
+        ImGui::DragFloat("Roughness", &transform.roughness, 0.1f);
 
-        ImGui::Text("Rotation");
-        ImGui::InputFloat3("   ", &object->transform.rotation.x);
-        ImGui::SliderFloat3("    ", &object->transform.rotation.x, -10.0f, 10.0f);
-        ImGui::Dummy(ImVec2(0.0f, 10.0f));
+        static auto modelNames = getModelNames();
 
-        ImGui::Text("Scale");
-        ImGui::InputFloat3("     ", &object->transform.scale.x);
-        ImGui::SliderFloat3("      ", &object->transform.scale.x, -10.0f, 10.0f);
-        ImGui::Dummy(ImVec2(0.0f, 10.0f));
+        static auto &currentModel = modelNames[0];
+        if (ImGui::BeginCombo("Models", currentModel.c_str()))
+        { // The second parameter is the label previewed before opening the combo.
+            for (auto &model : modelNames)
+            {
+                bool is_selected = (currentModel == model); // You can store your selection however you want, outside or inside your objects
+                if (ImGui::Selectable(model.c_str(), is_selected))
+                    currentModel = model;
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus(); // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
+            }
+            ImGui::EndCombo();
+        }
 
-        ImGui::Text("Roughness");
-        ImGui::InputFloat("      ", &object->transform.roughness);
-        ImGui::SliderFloat("       ", &object->transform.roughness, -1.0f, 1.0f);
-        ImGui::Dummy(ImVec2(0.0f, 10.0f));
+        if (ImGui::Button("Add Object"))
+        {
+            // use addGameObject() to add a new object to the scene
+            auto [name, entity] = addGameObject(currentModel);
+            entity_names[name] = entity;
+        }
+
+        // ImGui::ColorPicker3("Sky Color", pScene.m_SkyColor);
 
         ImGui::End();
 
@@ -266,18 +257,6 @@ namespace ve
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
     }
-
-    App::App()
-    {
-        globalPool = veDescriptorPool::Builder(pDevice)
-                         .setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
-                         .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
-                         .build();
-
-        loadGameObjects();
-    }
-
-    App::~App() {}
 
     void App::run()
     {
@@ -317,6 +296,8 @@ namespace ve
         auto currentTime = std::chrono::high_resolution_clock::now();
 
         bool firstFrame = true;
+        double lastTime = glfwGetTime();
+        int nbFrames = 0;
 
         while (!pWindow.shouldClose())
         {
@@ -341,7 +322,7 @@ namespace ve
                 }
 
                 int frameIndex = pRenderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
+                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects, pScene};
 
                 // updating buffers
                 GlobalUbo ubo{};
@@ -360,6 +341,15 @@ namespace ve
                 pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
                 pRenderer.endFrame();
             }
+
+            double time = glfwGetTime();
+            nbFrames++;
+            if (time - lastTime >= 1.0)
+            { // If last prinf() was more than 1 sec ago
+                std::cout << "FPS: " << nbFrames << std::endl;
+                nbFrames = 0;
+                lastTime += 1.0;
+            }
         }
 
         vkDeviceWaitIdle(pDevice.device());
@@ -369,52 +359,17 @@ namespace ve
     void App::loadGameObjects()
     {
 
-        std::shared_ptr<veModel> model1 = veModel::createModelFromFile(pDevice, currentPath() + "/../models/smooth_vase.obj");
+        auto vase = pScene.createEntity("Vase");
+        pScene.addComponent<TransformComponent>(vase, glm::vec3(-.5f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
+        pScene.addComponent<MeshComponent>(vase, pDevice, "smooth_vase.obj");
 
-        auto obj1 = veGameObject::createGameObject();
-        obj1.model = model1;
-        obj1.transform.translation = {-.5f, .5f, 0.f};
-        obj1.transform.rotation = {.0f, .0f, 0.0f};
-        obj1.transform.scale = {1.5f, 1.5f, 1.5f};
-        obj1.transform.roughness = 0.8f;
+        auto pose = pScene.createEntity("Pose");
+        pScene.addComponent<TransformComponent>(pose, glm::vec3(.2f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
+        pScene.addComponent<MeshComponent>(pose, pDevice, "pose.obj");
 
-        std::shared_ptr<veModel> model2 = veModel::createModelFromFile(pDevice, currentPath() + "/../models/pose.obj");
-
-        auto obj2 = veGameObject::createGameObject();
-        obj2.model = model2;
-        obj2.transform.translation = {.2f, .5f, 0.f};
-        obj2.transform.rotation = {.0f, .0f, 0.0f};
-        obj2.transform.scale = {1.5f, 1.5f, 1.5f};
-        obj2.transform.roughness = 0.0f;
-
-        std::shared_ptr<veModel> floorModel = veModel::createModelFromFile(pDevice, currentPath() + "/../models/floor.obj");
-        auto floor = veGameObject::createGameObject();
-        floor.model = floorModel;
-        floor.transform.translation = {0.f, .5f, 0.f};
-        floor.transform.rotation = {0.f, 0.f, 0.f};
-        floor.transform.scale = {20.f, 1.f, 20.f};
-        floor.transform.roughness = 0.8f;
-
-        std::shared_ptr<veModel> motoModel = veModel::createModelFromFile(pDevice, currentPath() + "/../models/Srad 750.obj");
-        auto moto1 = veGameObject::createGameObject();
-        moto1.model = motoModel;
-        moto1.transform.translation = {0.f, .5f, 0.f};
-        moto1.transform.rotation = {0.f, 0.f, 0.f};
-        moto1.transform.scale = {1.f, 1.f, 1.f};
-        moto1.transform.roughness = 0.0f;
-
-        auto moto2 = veGameObject::createGameObject();
-        moto2.model = motoModel;
-        moto2.transform.translation = {-1.f, .5f, 0.f};
-        moto2.transform.rotation = {0.f, 0.f, 0.f};
-        moto2.transform.scale = {1.f, 1.f, 1.f};
-        moto2.transform.roughness = 0.0f;
-
-        gameObjects.emplace(obj1.getId(), std::move(obj1));
-        gameObjects.emplace(obj2.getId(), std::move(obj2));
-        gameObjects.emplace(floor.getId(), std::move(floor));
-        gameObjects.emplace(moto1.getId(), std::move(moto1));
-        gameObjects.emplace(moto2.getId(), std::move(moto2));
+        auto floor = pScene.createEntity("Floor");
+        pScene.addComponent<TransformComponent>(floor, glm::vec3(0.f, 0.5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(10.f, 10.f, 10.f), 0.0f);
+        pScene.addComponent<MeshComponent>(floor, pDevice, "floor.obj");
 
         std::vector<glm::vec3> lightColors{
             {1.f, .1f, .1f},
@@ -437,18 +392,18 @@ namespace ve
         }
     }
 
-    id_t App::addGameObject(std::string &model)
+    /**
+     * @note - It makes sense to use this function only for imgui interface which will have its own class in the future
+     *
+     * @param filename - path to the file with .obj extension
+     * @return std::pair<std::string, Entity> - pair of the name of the object and the entity
+     */
+    std::pair<std::string, Entity> App::addGameObject(const std::string &filename)
     {
-        auto obj = veGameObject::createGameObject();
-        auto path = currentPath() + "/../models/" + model;
-        obj.model = veModel::createModelFromFile(pDevice, currentPath() + "/../models/" + model);
-        obj.transform.translation = {0.f, 0.f, 0.f};
-        obj.transform.rotation = {0.f, 0.f, 0.f};
-        obj.transform.scale = {1.f, 1.f, 1.f};
-
-        gameObjects.emplace(obj.getId(), std::move(obj));
-        newObject = true;
-
-        return obj.getId();
+        auto name = filename.substr(0, filename.find_last_of('.'));
+        auto entity = pScene.createEntity(name);
+        pScene.addComponent<TransformComponent>(entity, glm::vec3(0.f, 0.f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.f, 1.f, 1.f), 0.0f);
+        pScene.addComponent<MeshComponent>(entity, pDevice, filename);
+        return {name, entity};
     }
 } // namespace ve

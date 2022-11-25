@@ -49,7 +49,7 @@ namespace ve
         veModel(const veModel &) = delete;
         veModel &operator=(const veModel &) = delete;
 
-        static std::unique_ptr<veModel> createModelFromFile(veDevice& device, const std::string& filepath);
+        static std::shared_ptr<veModel> createModelFromFile(veDevice& device, const std::string& filepath);
 
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer);

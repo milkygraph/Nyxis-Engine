@@ -34,12 +34,12 @@ namespace ve
 
     veModel::~veModel() {}
 
-    std::unique_ptr<veModel> veModel::createModelFromFile(veDevice &device, const std::string &filepath)
+    std::shared_ptr<veModel> veModel::createModelFromFile(veDevice &device, const std::string &filepath)
     {
         Builder builder{};
         builder.loadModel(filepath);
         std::cout << "Vertices count: " << builder.vertices.size() << std::endl;
-        return std::make_unique<veModel>(device, builder);
+        return std::make_shared<veModel>(device, builder);
     }
 
     void veModel::createVertexBuffers(const std::vector<Vertex> &vertices)
