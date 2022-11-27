@@ -1,6 +1,7 @@
 #pragma once
 #include "device.hpp"
 #include "buffer.hpp"
+#include "texture.hpp"
 
 #include <cstdint>
 #include <vulkan/vulkan.hpp>

@@ -1,9 +1,10 @@
 #include "texture.hpp"
-#include <vulkan/vulkan_core.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stbimage/stb_image.h"
 
 namespace ve
 {
-    veTexture::veTexture()
+    veTexture::veTexture(veDevice &device)
      : device(device)
     {
         int texWidth = 0;
@@ -62,9 +63,11 @@ namespace ve
         viewInfo.subresourceRange.layerCount = 1;
         viewInfo.components = {};
 
-        if(vkCreateImageView(device.device(), &viewInfo, nullptr, &textureImageView) != VK_SUCCESS){
+        VkImageView imageView;
+        if(vkCreateImageView(device.device(), &viewInfo, nullptr, &imageView) != VK_SUCCESS){
             throw std::runtime_error("failed to create texture image view!");
         }
+        return imageView;
     }
     void veTexture::createTextureImageView(){
         textureImageView = createImageView();
@@ -81,8 +84,7 @@ namespace ve
         //Effects the performance
         //samplerInfo.anisotropyEnable = VK_TRUE;
         //samplerInfo.maxAnisotropy = ???;
-        VkPhysicalDeviceProperties properties{};
-        vkGetPhysicalDeviceProperties(device.device(), &properties);
+        VkPhysicalDeviceProperties properties = device.properties;
         samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
         samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
         samplerInfo.unnormalizedCoordinates = VK_FALSE;

@@ -1,8 +1,7 @@
 #pragma once
+#include "device.hpp"
+#include <vulkan/vulkan_core.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stbimage/stb_image.h"
-#include "frameInfo.hpp"
 //createImageViews gonna be implemented to texture.cpp later
 //cleanup for the createTextureImageView and CreatTextureSampler gonna be implemented later
 namespace ve{
@@ -13,7 +12,7 @@ namespace ve{
         // It is used to load textures from files and create Vulkan textures from them
 
         public:
-            veTexture();
+            veTexture(veDevice &device);
             ~veTexture();
 
             void loadTexture(std::string& filename);
