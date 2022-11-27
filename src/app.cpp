@@ -199,22 +199,22 @@ namespace ve
             firstFrame = false;
         }
 
-        static std::string current_item = entity_names.begin()->first;
+        static std::string selectedEntity = entity_names.begin()->first;
 
-        if (ImGui::BeginCombo("Objects", current_item.c_str()))
+        if (ImGui::BeginCombo("Objects", selectedEntity.c_str()))
         { // The second parameter is the label previewed before opening the combo.
             for (auto &kv : entity_names)
             {
-                bool is_selected = (current_item == kv.first); // You can store your selection however you want, outside or inside your objects
+                bool is_selected = (selectedEntity == kv.first); // You can store your selection however you want, outside or inside your objects
                 if (ImGui::Selectable(kv.first.c_str(), is_selected))
-                    current_item = kv.first;
+                    selectedEntity = kv.first;
                 if (is_selected)
                     ImGui::SetItemDefaultFocus(); // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
             }
             ImGui::EndCombo();
         }
 
-        auto &transform = pScene.getComponent<TransformComponent>(entity_names[current_item]);
+        auto &transform = pScene.getComponent<TransformComponent>(entity_names[selectedEntity]);
         ImGui::DragFloat3("Position", &transform.translation.x, 0.1f);
         ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.1f);
         ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f);
@@ -222,14 +222,14 @@ namespace ve
 
         static auto modelNames = getModelNames();
 
-        static auto &currentModel = modelNames[0];
-        if (ImGui::BeginCombo("Models", currentModel.c_str()))
+        static auto &selectedModel = modelNames[0];
+        if (ImGui::BeginCombo("Models", selectedModel.c_str()))
         { // The second parameter is the label previewed before opening the combo.
             for (auto &model : modelNames)
             {
-                bool is_selected = (currentModel == model); // You can store your selection however you want, outside or inside your objects
+                bool is_selected = (selectedModel == model); // You can store your selection however you want, outside or inside your objects
                 if (ImGui::Selectable(model.c_str(), is_selected))
-                    currentModel = model;
+                    selectedModel = model;
                 if (is_selected)
                     ImGui::SetItemDefaultFocus(); // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
             }
@@ -239,171 +239,159 @@ namespace ve
         if (ImGui::Button("Add Object"))
         {
             // use addGameObject() to add a new object to the scene
-            auto [name, entity] = addGameObject(currentModel);
+            auto [name, entity] = pScene.addEntity(selectedModel);
+            if(entity_names.find(name) != entity_names.end())
+                name = name + std::to_string(pScene.getEntityCount());
+            
             entity_names[name] = entity;
         }
 
-        // ImGui::ColorPicker3("Sky Color", pScene.m_SkyColor);
+    // ImGui::ColorPicker3("Sky Color", pScene.m_SkyColor);
 
-        ImGui::End();
+    ImGui::End();
 
-        ImGui::Render();
-        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
+    ImGui::Render();
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
+}
+
+void App::close_imgui()
+{
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void App::run()
+{
+    std::vector<std::unique_ptr<veBuffer>> uboBuffers(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+    for (int i = 0; i < uboBuffers.size(); i++)
+    {
+        uboBuffers[i] = std::make_unique<veBuffer>(
+            pDevice,
+            sizeof(GlobalUbo),
+            1,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+        uboBuffers[i]->map();
     }
 
-    void App::close_imgui()
+    auto globalSetLayout = veDescriptorSetLayout::Builder(pDevice)
+                               .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+                               .build();
+
+    std::vector<VkDescriptorSet> globalDescriptorSets(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+    for (int i = 0; i < globalDescriptorSets.size(); i++)
     {
-        ImGui_ImplVulkan_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
+        auto bufferInfo = uboBuffers[i]->descriptorInfo();
+        veDescriptorWriter(*globalSetLayout, *globalPool)
+            .writeBuffer(0, &bufferInfo)
+            .build(globalDescriptorSets[i]);
     }
 
-    void App::run()
+    SimpleRenderSystem srs{pDevice, pRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()}; // srs - simpleRenderSystem
+    PointLightSystem pls{pDevice, pRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};   // pls - pointLightSystem
+    veCamera camera{};
+
+    auto viewerObject = veGameObject::createGameObject();
+    viewerObject.transform.translation.z = -2.5f;
+    KeyboardMovementController cameraController{};
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+
+    bool firstFrame = true;
+    double lastTime = glfwGetTime();
+    int nbFrames = 0;
+
+    while (!pWindow.shouldClose())
     {
-        std::vector<std::unique_ptr<veBuffer>> uboBuffers(veSwapChain::MAX_FRAMES_IN_FLIGHT);
-        for (int i = 0; i < uboBuffers.size(); i++)
+        glfwPollEvents();
+        auto newTime = std::chrono::high_resolution_clock::now();
+        float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+        currentTime = newTime;
+
+        cameraController.moveInPlaneXZ(pWindow.getGLFWwindow(), frameTime, viewerObject);
+        camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
+
+        float aspect = pRenderer.getAspectRatio();
+
+        camera.setPerspectiveProjection(glm::radians(60.f), aspect, 0.01f, 20.f);
+
+        if (auto commandBuffer = pRenderer.beginFrame())
         {
-            uboBuffers[i] = std::make_unique<veBuffer>(
-                pDevice,
-                sizeof(GlobalUbo),
-                1,
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-            uboBuffers[i]->map();
-        }
-
-        auto globalSetLayout = veDescriptorSetLayout::Builder(pDevice)
-                                   .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
-                                   .build();
-
-        std::vector<VkDescriptorSet> globalDescriptorSets(veSwapChain::MAX_FRAMES_IN_FLIGHT);
-        for (int i = 0; i < globalDescriptorSets.size(); i++)
-        {
-            auto bufferInfo = uboBuffers[i]->descriptorInfo();
-            veDescriptorWriter(*globalSetLayout, *globalPool)
-                .writeBuffer(0, &bufferInfo)
-                .build(globalDescriptorSets[i]);
-        }
-
-        SimpleRenderSystem srs{pDevice, pRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()}; // srs - simpleRenderSystem
-        PointLightSystem pls{pDevice, pRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};   // pls - pointLightSystem
-        veCamera camera{};
-
-        auto viewerObject = veGameObject::createGameObject();
-        viewerObject.transform.translation.z = -2.5f;
-        KeyboardMovementController cameraController{};
-
-        auto currentTime = std::chrono::high_resolution_clock::now();
-
-        bool firstFrame = true;
-        double lastTime = glfwGetTime();
-        int nbFrames = 0;
-
-        while (!pWindow.shouldClose())
-        {
-            glfwPollEvents();
-            auto newTime = std::chrono::high_resolution_clock::now();
-            float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
-            currentTime = newTime;
-
-            cameraController.moveInPlaneXZ(pWindow.getGLFWwindow(), frameTime, viewerObject);
-            camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
-
-            float aspect = pRenderer.getAspectRatio();
-
-            camera.setPerspectiveProjection(glm::radians(60.f), aspect, 0.01f, 20.f);
-
-            if (auto commandBuffer = pRenderer.beginFrame())
+            if (firstFrame)
             {
-                if (firstFrame)
-                {
-                    init_imgui(commandBuffer);
-                    firstFrame = false;
-                }
-
-                int frameIndex = pRenderer.getFrameIndex();
-                FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects, pScene};
-
-                // updating buffers
-                GlobalUbo ubo{};
-                ubo.projection = camera.getProjectionMatrix();
-                ubo.view = camera.getViewMatrix();
-                ubo.inverseViewMatrix = camera.getInverseViewMatrix();
-                pls.update(frameInfo, ubo);
-                uboBuffers[frameIndex]->writeToBuffer(&ubo);
-                uboBuffers[frameIndex]->flush();
-
-                // rendering
-                pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
-                srs.renderGameObjects(frameInfo);
-                pls.render(frameInfo);
-                render_imgui(frameInfo);
-                pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
-                pRenderer.endFrame();
+                init_imgui(commandBuffer);
+                firstFrame = false;
             }
 
-            double time = glfwGetTime();
-            nbFrames++;
-            if (time - lastTime >= 1.0)
-            { // If last prinf() was more than 1 sec ago
-                std::cout << "FPS: " << nbFrames << std::endl;
-                nbFrames = 0;
-                lastTime += 1.0;
-            }
+            int frameIndex = pRenderer.getFrameIndex();
+            FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects, pScene};
+
+            // updating buffers
+            GlobalUbo ubo{};
+            ubo.projection = camera.getProjectionMatrix();
+            ubo.view = camera.getViewMatrix();
+            ubo.inverseViewMatrix = camera.getInverseViewMatrix();
+            pls.update(frameInfo, ubo);
+            uboBuffers[frameIndex]->writeToBuffer(&ubo);
+            uboBuffers[frameIndex]->flush();
+
+            // rendering
+            pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
+            srs.renderGameObjects(frameInfo);
+            pls.render(frameInfo);
+            render_imgui(frameInfo);
+            pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
+            pRenderer.endFrame();
         }
 
-        vkDeviceWaitIdle(pDevice.device());
-        close_imgui();
-    }
-
-    void App::loadGameObjects()
-    {
-
-        auto vase = pScene.createEntity("Vase");
-        pScene.addComponent<TransformComponent>(vase, glm::vec3(-.5f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
-        pScene.addComponent<MeshComponent>(vase, pDevice, "smooth_vase.obj");
-
-        auto pose = pScene.createEntity("Pose");
-        pScene.addComponent<TransformComponent>(pose, glm::vec3(.2f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
-        pScene.addComponent<MeshComponent>(pose, pDevice, "pose.obj");
-
-        auto floor = pScene.createEntity("Floor");
-        pScene.addComponent<TransformComponent>(floor, glm::vec3(0.f, 0.5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(10.f, 10.f, 10.f), 0.0f);
-        pScene.addComponent<MeshComponent>(floor, pDevice, "floor.obj");
-
-        std::vector<glm::vec3> lightColors{
-            {1.f, .1f, .1f},
-            {.1f, .1f, 1.f},
-            {.1f, 1.f, .1f},
-            {1.f, 1.f, .1f},
-            {.1f, 1.f, 1.f},
-            {1.f, 1.f, 1.f}};
-
-        for (int i = 0; i < lightColors.size(); i++)
-        {
-            auto pointLight = veGameObject::makePointLight(0.8f);
-            pointLight.color = lightColors[i];
-            auto rotateLight = glm::rotate(
-                glm::mat4(1.f),
-                (i * glm::two_pi<float>()) / lightColors.size(),
-                {0.f, -1.f, 0.f});
-            pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
-            gameObjects.emplace(pointLight.getId(), std::move(pointLight));
+        double time = glfwGetTime();
+        nbFrames++;
+        if (time - lastTime >= 1.0)
+        { // If last prinf() was more than 1 sec ago
+            std::cout << "FPS: " << nbFrames << std::endl;
+            nbFrames = 0;
+            lastTime += 1.0;
         }
     }
 
-    /**
-     * @note - It makes sense to use this function only for imgui interface which will have its own class in the future
-     *
-     * @param filename - path to the file with .obj extension
-     * @return std::pair<std::string, Entity> - pair of the name of the object and the entity
-     */
-    std::pair<std::string, Entity> App::addGameObject(const std::string &filename)
+    vkDeviceWaitIdle(pDevice.device());
+    close_imgui();
+}
+
+void App::loadGameObjects()
+{
+
+    auto vase = pScene.createEntity("Vase");
+    pScene.addComponent<TransformComponent>(vase, glm::vec3(-.5f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
+    pScene.addComponent<MeshComponent>(vase, pDevice, "smooth_vase.obj");
+
+    auto pose = pScene.createEntity("Pose");
+    pScene.addComponent<TransformComponent>(pose, glm::vec3(.2f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
+    pScene.addComponent<MeshComponent>(pose, pDevice, "pose.obj");
+
+    auto floor = pScene.createEntity("Floor");
+    pScene.addComponent<TransformComponent>(floor, glm::vec3(0.f, 0.5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(10.f, 10.f, 10.f), 0.0f);
+    pScene.addComponent<MeshComponent>(floor, pDevice, "floor.obj");
+
+    std::vector<glm::vec3> lightColors{
+        {1.f, .1f, .1f},
+        {.1f, .1f, 1.f},
+        {.1f, 1.f, .1f},
+        {1.f, 1.f, .1f},
+        {.1f, 1.f, 1.f},
+        {1.f, 1.f, 1.f}};
+
+    for (int i = 0; i < lightColors.size(); i++)
     {
-        auto name = filename.substr(0, filename.find_last_of('.'));
-        auto entity = pScene.createEntity(name);
-        pScene.addComponent<TransformComponent>(entity, glm::vec3(0.f, 0.f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.f, 1.f, 1.f), 0.0f);
-        pScene.addComponent<MeshComponent>(entity, pDevice, filename);
-        return {name, entity};
+        auto pointLight = veGameObject::makePointLight(0.8f);
+        pointLight.color = lightColors[i];
+        auto rotateLight = glm::rotate(
+            glm::mat4(1.f),
+            (i * glm::two_pi<float>()) / lightColors.size(),
+            {0.f, -1.f, 0.f});
+        pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
+        gameObjects.emplace(pointLight.getId(), std::move(pointLight));
     }
+}
 } // namespace ve
