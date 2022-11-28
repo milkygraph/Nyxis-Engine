@@ -32,5 +32,6 @@ namespace ve
         VkDescriptorSet globalDescriptorSet;
         veGameObject::Map &gameObjects;
         Scene& scene;
+        int fps;
     };
 }

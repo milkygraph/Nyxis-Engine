@@ -250,6 +250,11 @@ namespace ve
 
     ImGui::End();
 
+    ImGui::Begin("Statistics");
+    ImGui::Text("Entity Count: %d", pScene.getEntityCount());
+    ImGui::Text("Frame Time: %fms", frameInfo.frameTime);
+    ImGui::End();
+
     ImGui::Render();
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
 }
@@ -325,7 +330,7 @@ void App::run()
             }
 
             int frameIndex = pRenderer.getFrameIndex();
-            FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects, pScene};
+            FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects, pScene, 0};
 
             // updating buffers
             GlobalUbo ubo{};
@@ -343,15 +348,7 @@ void App::run()
             render_imgui(frameInfo);
             pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
             pRenderer.endFrame();
-        }
 
-        double time = glfwGetTime();
-        nbFrames++;
-        if (time - lastTime >= 1.0)
-        { // If last prinf() was more than 1 sec ago
-            std::cout << "FPS: " << nbFrames << std::endl;
-            nbFrames = 0;
-            lastTime += 1.0;
         }
     }
 
