@@ -28,3 +28,4 @@ x64/
 CMakePresets.json
 *.sln
 *.vcxproj*
+/cpp.hint
