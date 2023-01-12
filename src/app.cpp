@@ -314,6 +314,12 @@ void App::run()
         float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
         currentTime = newTime;
 
+        // example usage of input class
+        auto [x, y] = pInput.getMousePosition();
+        std::cout << "Mouse Position: " << x << ", " << y << std::endl;
+        auto key = pInput.isKeyPressed(GLFW_KEY_SPACE);
+        std::cout << "Space Key Pressed: " << key << std::endl;
+
         cameraController.moveInPlaneXZ(pWindow.getGLFWwindow(), frameTime, viewerObject);
         camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
 
@@ -348,6 +354,7 @@ void App::run()
             render_imgui(frameInfo);
             pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
             pRenderer.endFrame();
+            pInput.getMousePosition();
 
         }
     }

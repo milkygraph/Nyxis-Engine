@@ -27,26 +27,24 @@ namespace ve
 							   virtual const char* GetName() const override { return #type; }
 
 #define EVENT_CLASS_CATEGORY(category) virtual int GetCategoryFlags() const override { return category; } 
-
+	
 	class Event
 	{
 	public:
+		bool mHandled = false;
+
 		virtual EventType getEventType() const = 0;
 		virtual const char* getName() const = 0;
+		virtual EventCategory getCategoryFlags() const = 0;
 		virtual std::string toString() const { return getName(); }
-
 		
-		virtual int getEventType() const = 0;
-		virtual int getCategoryFlags() const = 0;
-		
-		inline bool isHandled() const { return handled; }
+		inline bool isHandled() const { return mHandled; }
 		inline bool isSubCategory(const EventCategory category) const 
 		{
-			return getCategoryFlags() & category;
+			// compare the category flags with the category
+			// fix this
+			return getCategoryFlags() == category;
 		}
-		
-	protected:
-		bool pHandled = false;
 	};
 
 	class EventDispatcher
@@ -58,7 +56,7 @@ namespace ve
 		{
 			if (pEvent.getEventType() == T::getStaticType())
 			{
-				pEvent.handled = func(*(T*)&pEvent);
+				pEvent.mHandled = func(*(T*)&pEvent);
 				return true;
 			}
 			return false;
@@ -67,4 +65,9 @@ namespace ve
 	private:
 		Event& pEvent;
 	};
+
+	inline std::ostream& operator<<(std::ostream& os, const Event& e)
+	{
+		return os << e.toString();
+	}
 }
