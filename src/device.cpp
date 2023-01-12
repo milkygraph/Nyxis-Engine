@@ -16,7 +16,7 @@ namespace ve
         const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
         void *pUserData)
     {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+        std::cerr << "[Debug]: " << pCallbackData->pMessage << std::endl;
 
         return VK_FALSE;
     }
@@ -281,6 +281,7 @@ namespace ve
     bool veDevice::checkValidationLayerSupport()
     {
         uint32_t layerCount;
+        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
         std::vector<VkLayerProperties> availableLayers(layerCount);
         vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());

@@ -16,3 +16,14 @@ resources/Learning Vulkan.pdf
 CMakeCache.txt
 cmake_install.cmake
 shaders/glslc
+
+# Visual Studio Files
+.settings/
+.vs/
+cmake-build-debug/
+x64/
+.cproject
+.project
+CMakePresets.json
+*.sln
+*.vcxproj*
