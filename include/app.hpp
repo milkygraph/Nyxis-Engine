@@ -7,6 +7,7 @@
 #include "renderer.hpp"
 #include "frameInfo.hpp"
 #include "scene.hpp"
+#include "layer.hpp"
 
 #include <memory>
 #include <vector>
@@ -58,5 +59,6 @@ namespace ve
         veGameObject::Map gameObjects;
 
         Scene pScene{pDevice};
+        LayerStack pLayerStack{};
     }; // class App
 } // namespace ve
