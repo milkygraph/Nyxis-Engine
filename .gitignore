@@ -18,6 +18,7 @@ cmake_install.cmake
 shaders/glslc
 
 # Visual Studio Files
+debug/
 .settings/
 .vs/
 cmake-build-debug/
