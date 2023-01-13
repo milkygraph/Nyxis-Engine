@@ -27,7 +27,7 @@ namespace ve
 		std::string toString() const override
 		{
 			std::stringstream ss;
-			ss << "KeyPressedEvent: " << keyCode << " (" << repeatCount << " repeats)";
+			ss << "KeyPressedEvent: " << keyCode << " (" << pRepeatCount << " repeats)";
 			return ss.str();
 		}
 

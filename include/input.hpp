@@ -10,14 +10,22 @@ namespace ve
 	class Input
 	{
 	public:
-		explicit Input(GLFWwindow* window) : pWindow(window) {}
-		~Input() = default;
-		bool isKeyPressed(int keycode);
-		bool isMouseButtonPressed(int button);
-		std::pair<float, float> getMousePosition();
-		float getMouseXImpl();
-		float getMouseYImpl();
-	private:
-		GLFWwindow* pWindow;
-	};
+        Input() = default;
+        ~Input() = default;
+
+        static bool isKeyPressed(GLFWwindow* window, int key) { return pInstance->isKeyPressedImpl(window, key); };
+        static bool isMouseButtonPressed(GLFWwindow* window, int button) { return pInstance->isMouseButtonPressedImpl(window, button); };
+        static std::pair<float, float> getMousePosition(GLFWwindow* window) { return pInstance->getMousePositionImpl(window); };
+        float getMouseX(GLFWwindow* window) { return pInstance->getMousePositionImpl(window).first; }
+        float getMouseY(GLFWwindow* window) { return pInstance->getMousePositionImpl(window).second; }
+
+    private:
+        static Input* pInstance;
+
+        static bool isKeyPressedImpl(GLFWwindow* window, int key);
+        static bool isMouseButtonPressedImpl(GLFWwindow* window, int button);
+        static std::pair<float, float> getMousePositionImpl(GLFWwindow* window);
+        float getMouseXImpl(GLFWwindow* window);
+        float getMouseYImpl(GLFWwindow* window);
+    };
 }

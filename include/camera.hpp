@@ -16,10 +16,9 @@ namespace ve
         void setViewTarget(glm::vec3 position, glm::vec3 target, glm::vec3 up = glm::vec3{0.0f, -1.0f, 0.0f});
         void setViewYXZ(glm::vec3 position, glm::vec3 rotation);
 
-        const glm::mat4& getProjectionMatrix() const { return projectionMatrix; }
-        const glm::mat4& getViewMatrix() const { return viewMatrix; }
-        const glm::mat4& getInverseViewMatrix() const { return inverseViewMatrix; }
-
+        [[nodiscard]] const glm::mat4& getProjectionMatrix() const { return projectionMatrix; }
+        [[nodiscard]] const glm::mat4& getViewMatrix() const { return viewMatrix; }
+        [[nodiscard]] const glm::mat4& getInverseViewMatrix() const { return inverseViewMatrix; }
 
     private:
         glm::mat4 projectionMatrix{1.0f};
