@@ -10,7 +10,7 @@
 
 namespace ve
 {
-    class KeyboardMovementController
+    class CameraController
     {
     public:
         struct KeyMappings

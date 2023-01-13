@@ -61,6 +61,5 @@ namespace ve
 
         Scene pScene{pDevice};
         LayerStack pLayerStack{};
-		Input pInput{ pWindow.getGLFWwindow() };
     }; // class App
 } // namespace ve

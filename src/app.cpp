@@ -97,7 +97,6 @@ namespace ve
                          .setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .build();
-
         loadGameObjects();
     }
 
@@ -299,7 +298,7 @@ void App::run()
 
     auto viewerObject = veGameObject::createGameObject();
     viewerObject.transform.translation.z = -2.5f;
-    KeyboardMovementController cameraController{};
+    CameraController cameraController{};
 
     auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -315,9 +314,9 @@ void App::run()
         currentTime = newTime;
 
         // example usage of input class
-        auto [x, y] = pInput.getMousePosition();
+        auto [x, y] = Input::getMousePosition(pWindow.getGLFWwindow());
         std::cout << "Mouse Position: " << x << ", " << y << std::endl;
-        auto key = pInput.isKeyPressed(GLFW_KEY_SPACE);
+        auto key = Input::isKeyPressed(pWindow.getGLFWwindow(), GLFW_KEY_SPACE);
         std::cout << "Space Key Pressed: " << key << std::endl;
 
         cameraController.moveInPlaneXZ(pWindow.getGLFWwindow(), frameTime, viewerObject);
@@ -354,7 +353,6 @@ void App::run()
             render_imgui(frameInfo);
             pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
             pRenderer.endFrame();
-            pInput.getMousePosition();
 
         }
     }
