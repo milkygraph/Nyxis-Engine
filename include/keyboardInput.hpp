@@ -28,7 +28,7 @@ namespace ve
             int fast = GLFW_KEY_LEFT_SHIFT;
         };
 
-        void moveInPlaneXZ(GLFWwindow *window, float dt, veGameObject &gameObject);
+        void moveInPlaneXZ(float dt, veGameObject &gameObject);
 
     private:
         KeyMappings keys{};

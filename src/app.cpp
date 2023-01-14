@@ -314,12 +314,12 @@ void App::run()
         currentTime = newTime;
 
         // example usage of input class
-        auto [x, y] = Input::getMousePosition(pWindow.getGLFWwindow());
-        std::cout << "Mouse Position: " << x << ", " << y << std::endl;
-        auto key = Input::isKeyPressed(pWindow.getGLFWwindow(), GLFW_KEY_SPACE);
-        std::cout << "Space Key Pressed: " << key << std::endl;
+        // auto [x, y] = Input::getMousePosition(pWindow.getGLFWwindow());
+        // std::cout << "Mouse Position: " << x << ", " << y << std::endl;
+        // auto key = Input::isKeyPressed(pWindow.getGLFWwindow(), GLFW_KEY_SPACE);
+        // std::cout << "Space Key Pressed: " << key << std::endl;
 
-        cameraController.moveInPlaneXZ(pWindow.getGLFWwindow(), frameTime, viewerObject);
+        cameraController.moveInPlaneXZ(frameTime, viewerObject);
         camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
 
         float aspect = pRenderer.getAspectRatio();
