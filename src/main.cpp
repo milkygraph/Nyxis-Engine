@@ -6,10 +6,10 @@
 
 int main()
 {
-    ve::App app;
+    ve::App* app = ve::App::getInstance();
     try
     {
-        app.run();
+        app->run();
     }
     catch (const std::exception &e)
     {

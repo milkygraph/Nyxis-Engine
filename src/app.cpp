@@ -91,14 +91,20 @@ std::vector<std::string> getModelNames()
 
 namespace ve
 {
+	App* App::pInstance = nullptr;
     App::App()
     {
         globalPool = veDescriptorPool::Builder(pDevice)
                          .setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .build();
+        // calculate the time it takes for below code to execute
+        auto start = std::chrono::high_resolution_clock::now();
         loadGameObjects();
-    }
+        auto end = std::chrono::high_resolution_clock::now();
+        std::cout << "Loading game objects took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+        pInstance = this;
+	}
 
     App::~App() {}
 
