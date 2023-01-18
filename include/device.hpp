@@ -35,7 +35,13 @@ namespace ve
         const bool enableValidationLayers = true;
 #endif
 
-        veDevice(veWindow &Window);
+		static veDevice& get()
+		{
+			pInstance = new veDevice();
+			return *pInstance;
+		}
+
+        veDevice();
         ~veDevice();
         // Not copyable or movable
         veDevice(const veDevice &) = delete;
@@ -79,6 +85,7 @@ namespace ve
         void createImGuiInitInfo(ImGui_ImplVulkan_InitInfo &init_info);
 
     private:
+		static veDevice* pInstance;
         void createInstance();
         void setupDebugMessenger();
         void createSurface();
@@ -98,7 +105,7 @@ namespace ve
         VkDebugUtilsMessengerEXT debugMessenger;
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
-        veWindow &pWindow;
+        veWindow &pWindow = veWindow::get();
         VkCommandPool commandPool;
         VkDevice device_;
         VkSurfaceKHR surface_;
@@ -110,5 +117,5 @@ namespace ve
         #else
         const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
         #endif
-    };
+  };
 } // namespace ve

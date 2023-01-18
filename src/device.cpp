@@ -9,6 +9,7 @@
 namespace ve
 {
 
+	veDevice* veDevice::pInstance = nullptr;
     // local callback functions
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -55,7 +56,7 @@ namespace ve
     }
 
     // class member functions
-    veDevice::veDevice(veWindow &Window) : pWindow{Window}
+    veDevice::veDevice()
     {
         createInstance();
         setupDebugMessenger();
@@ -63,7 +64,7 @@ namespace ve
         pickPhysicalDevice();
         createLogicalDevice();
         createCommandPool();
-    }
+	}
 
     veDevice::~veDevice()
     {

@@ -25,7 +25,12 @@ namespace ve
     class App
     {
     public:
-        App();
+		static App* getInstance()
+		{
+      
+			pInstance = new App();
+			return pInstance;
+		}
         ~App();
 
         // copy constructor and destructors
@@ -41,15 +46,19 @@ namespace ve
         void render_imgui(FrameInfo& frameInfo);
         static void close_imgui();
 
-    private:
+		static veWindow& getWindow() { return pInstance->pWindow; }
+	    static veDevice& getDevice() { return pInstance->pDevice; }
+		static GLFWwindow* getGLFWwindow() { return pInstance->pWindow.getGLFWwindow(); }
+	private:
+		static App* pInstance;
         void loadGameObjects();
         void renderGameObjects(VkCommandBuffer commandBuffer);
         std::pair<std::string, entt::entity> addGameObject(const std::string &path);
 
         bool newObject = false;
 
-        veWindow pWindow{WIDTH, HEIGHT, "VulkanApp"};
-        veDevice pDevice{pWindow};
+        veWindow& pWindow = veWindow::get(WIDTH, HEIGHT, "Vulkan Engine");
+        veDevice& pDevice = veDevice::get();
         veRenderer pRenderer{pWindow, pDevice, pScene};
 
         // TODO: Create third(or first) person Player View
@@ -61,5 +70,8 @@ namespace ve
 
         Scene pScene{pDevice};
         LayerStack pLayerStack{};
+
+	protected:
+	    App();
     }; // class App
 } // namespace ve

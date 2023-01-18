@@ -10,7 +10,7 @@ namespace ve
     class veWindow
     {
     public:
-        veWindow(int width, int height, const std::string &name);
+	    veWindow(int width, int height, const std::string &name);
         ~veWindow();
 
         veWindow(const veWindow &) = delete;
@@ -22,14 +22,22 @@ namespace ve
         bool windowResized() { return framebufferResized; }
         void resetWindowResizedFlag() { framebufferResized = false; };
 
-        static GLFWwindow* getGLFWwindow() { return pWindow; }
+        static GLFWwindow* getGLFWwindow() { return pInstance->pWindow; }
+		static veWindow& get(int width, int height, const std::string& name)
+		{
+			pInstance = new veWindow(width, height, name);
+			return *pInstance;
+		}
+
+		static veWindow& get() { return *pInstance; }
 
 
     private:
+		static veWindow* pInstance;
         void initveWindow();
         static void frameBufferResizedCallback(GLFWwindow *window, int width, int height);
 
-        static GLFWwindow *pWindow;
+		GLFWwindow* pWindow;
 
         int pWidth;
         int pHeight;

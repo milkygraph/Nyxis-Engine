@@ -4,7 +4,7 @@
 
 namespace ve
 {
-    GLFWwindow* veWindow::pWindow = nullptr;
+	  veWindow* veWindow::pInstance = nullptr;
     veWindow::veWindow(int width, int height, const std::string &name) : pWidth(width), pHeight(height), pTitle(name)
     {
         initveWindow();
@@ -21,12 +21,11 @@ namespace ve
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        // glfwSetInputMode(pWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
         pWindow = glfwCreateWindow(pWidth, pHeight, pTitle.c_str(), nullptr, nullptr);
         glfwSetWindowSizeLimits(pWindow, 200, 200, GLFW_DONT_CARE, GLFW_DONT_CARE);
         glfwSetWindowUserPointer(pWindow, this);
-        glfwSetFramebufferSizeCallback(pWindow, frameBufferResizedCallback);
+        //glfwSetFramebufferSizeCallback(pWindow, frameBufferResizedCallback);
     }
 
     void veWindow::CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface)
