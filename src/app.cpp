@@ -97,7 +97,6 @@ namespace ve
                          .setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .build();
-
         loadGameObjects();
     }
 
@@ -299,7 +298,7 @@ void App::run()
 
     auto viewerObject = veGameObject::createGameObject();
     viewerObject.transform.translation.z = -2.5f;
-    KeyboardMovementController cameraController{};
+    CameraController cameraController{};
 
     auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -314,7 +313,13 @@ void App::run()
         float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
         currentTime = newTime;
 
-        cameraController.moveInPlaneXZ(pWindow.getGLFWwindow(), frameTime, viewerObject);
+        // example usage of input class
+        // auto [x, y] = Input::getMousePosition(pWindow.getGLFWwindow());
+        // std::cout << "Mouse Position: " << x << ", " << y << std::endl;
+        // auto key = Input::isKeyPressed(pWindow.getGLFWwindow(), GLFW_KEY_SPACE);
+        // std::cout << "Space Key Pressed: " << key << std::endl;
+
+        cameraController.moveInPlaneXZ(frameTime, viewerObject);
         camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
 
         float aspect = pRenderer.getAspectRatio();

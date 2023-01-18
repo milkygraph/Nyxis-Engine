@@ -4,6 +4,7 @@
 
 namespace ve
 {
+    GLFWwindow* veWindow::pWindow = nullptr;
     veWindow::veWindow(int width, int height, const std::string &name) : pWidth(width), pHeight(height), pTitle(name)
     {
         initveWindow();

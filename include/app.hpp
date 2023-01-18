@@ -8,6 +8,7 @@
 #include "frameInfo.hpp"
 #include "scene.hpp"
 #include "layer.hpp"
+#include "input.hpp"
 
 #include <memory>
 #include <vector>
@@ -38,7 +39,7 @@ namespace ve
         void run();
         void init_imgui(VkCommandBuffer commandBuffer);
         void render_imgui(FrameInfo& frameInfo);
-        void close_imgui();
+        static void close_imgui();
 
     private:
         void loadGameObjects();

@@ -105,6 +105,7 @@ namespace ve
         auto extensions = getRequiredExtensions();
         #ifdef __APPLE__
         extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+        extensions.push_back("VK_KHR_get_physical_device_properties2");
         #endif
         createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();

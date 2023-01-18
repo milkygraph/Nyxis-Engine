@@ -1,18 +1,19 @@
 #include "keyboardInput.hpp"
 #include <GLFW/glfw3.h>
+#include "input.hpp"
 
 namespace ve
 {
-    void KeyboardMovementController::moveInPlaneXZ(GLFWwindow *window, float dt, veGameObject &gameObject)
+    void CameraController::moveInPlaneXZ(float dt, veGameObject &gameObject)
     {
         glm::vec3 rotate{0};
-        if (glfwGetKey(window, keys.lookRight) == GLFW_PRESS)
+        if (Input::isKeyPressed(keys.lookRight))
             rotate.y += .5f;
-        if (glfwGetKey(window, keys.lookLeft) == GLFW_PRESS)
+        if (Input::isKeyPressed(keys.lookLeft))
             rotate.y -= .5f;
-        if (glfwGetKey(window, keys.lookUp) == GLFW_PRESS)
+        if (Input::isKeyPressed(keys.lookUp))
             rotate.x += .5f;
-        if (glfwGetKey(window, keys.lookDown) == GLFW_PRESS)
+        if (Input::isKeyPressed(keys.lookDown))
             rotate.x -= .5f;
 
         if (glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon())
@@ -26,27 +27,27 @@ namespace ve
         const glm::vec3 rightDir{forwardDir.z, 0.f, -forwardDir.x};
         const glm::vec3 upDir{0.f, -.5f, 0.f};
 
-        if(glfwGetKey(window, keys.fast) == GLFW_PRESS)
+        if(Input::isKeyPressed(keys.fast))
             moveSpeed = 5.f;
         else
             moveSpeed = 3.f;
 
         glm::vec3 moveDir{0.f};
-        if (glfwGetKey(window, keys.moveForward) == GLFW_PRESS)
+        if (Input::isKeyPressed(keys.moveForward))
             moveDir += forwardDir;
-        if (glfwGetKey(window, keys.moveBackward) == GLFW_PRESS)
+        if (Input::isKeyPressed(keys.moveBackward))
             moveDir -= forwardDir;
-        if (glfwGetKey(window, keys.moveRight) == GLFW_PRESS)
+        if (Input::isKeyPressed(keys.moveRight))
             moveDir += rightDir;
-        if (glfwGetKey(window, keys.moveLeft) == GLFW_PRESS)
+        if (Input::isKeyPressed(keys.moveLeft))
             moveDir -= rightDir;
-        if (glfwGetKey(window, keys.moveUp) == GLFW_PRESS)
+        if (Input::isKeyPressed(keys.moveUp))
             moveDir += upDir;
-        if (glfwGetKey(window, keys.moveDown) == GLFW_PRESS)
+        if (Input::isKeyPressed(keys.moveDown))
             moveDir -= upDir;
 
         static double xpos, ypos;
-        // glfwGetCursorPos(window, xpos, ypos);
+        // glfwGetCursorPos(xpos, ypos);
 
         if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon())
         {
