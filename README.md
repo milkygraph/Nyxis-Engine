@@ -2,6 +2,11 @@
 
 ## Building Instructions
 
+Clone repository using 
+```
+    git clone https://github.com/itu-itis21-bandaliyev21/Vulkan_Engine.git --recursive
+```
+
 ## Unix
 - Install dependencies using your package manager
 For example, 
