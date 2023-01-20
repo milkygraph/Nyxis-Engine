@@ -1,5 +1,5 @@
 #pragma once
-#include "Events/Event.hpp"
+#include "Events/event.hpp"
 
 
 #define GLFW_INCLUDE_VULKAN
