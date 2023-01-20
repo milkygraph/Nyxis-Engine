@@ -41,6 +41,8 @@ namespace ve
         static constexpr int HEIGHT = 800;
         static constexpr int WIDTH = 800;
 
+	    void OnEvent(Event& e);
+
         void run();
         void init_imgui(VkCommandBuffer commandBuffer);
         void render_imgui(FrameInfo& frameInfo);

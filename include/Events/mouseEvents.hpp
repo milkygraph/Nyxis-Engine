@@ -19,8 +19,8 @@ namespace ve
 			return ss.str();
 		}
 
-		EVENT_CLASS_TYPE(MouseMoved); !#
-			EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput);
+		EVENT_CLASS_TYPE(MouseMoved);
+		EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput)
 
 	private:
 		float pMouseX;
@@ -34,7 +34,7 @@ namespace ve
 		inline float GetXOffset() const { return pXOffset; }
 		inline float GetYOffset() const { return pYOffset; }
 
-		std::string toString() override
+		std::string toString() const override
 		{
 			std::stringstream ss;
 			ss << "MouseScrolledEvent: " << pXOffset << ", " << pYOffset;

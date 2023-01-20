@@ -12,7 +12,7 @@ namespace ve
 		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled
 	};
 
-	enum class EventCategory
+	enum EventCategory
 	{
 		None = 0,
 		EventCategoryApplication = BIT(0),
@@ -22,11 +22,11 @@ namespace ve
 		EventCategoryMouseButton = BIT(4)
 	};
 
-#define EVENT_CLASS_TYPE(type) static EventType GetStaticType(){ return EventType::##type; } \
-							   virtual EventType GetEventType() const override { return GetStaticType(); } \
-							   virtual const char* GetName() const override { return #type; }
+#define EVENT_CLASS_TYPE(type) static EventType getStaticType(){ return EventType::type; } \
+							   virtual EventType getEventType() const override { return getStaticType(); } \
+							   virtual const char* getName() const override { return #type; }
 
-#define EVENT_CLASS_CATEGORY(category) virtual int GetCategoryFlags() const override { return category; } 
+#define EVENT_CLASS_CATEGORY(category) virtual int getCategoryFlags() const override { return category; }
 	
 	class Event
 	{
@@ -35,24 +35,23 @@ namespace ve
 
 		virtual EventType getEventType() const = 0;
 		virtual const char* getName() const = 0;
-		virtual EventCategory getCategoryFlags() const = 0;
+		virtual int getCategoryFlags() const = 0;
 		virtual std::string toString() const { return getName(); }
 		
 		inline bool isHandled() const { return mHandled; }
 		inline bool isSubCategory(const EventCategory category) const 
 		{
-			// compare the category flags with the category
-			// fix this
-			return getCategoryFlags() == category;
+			return getCategoryFlags() & category;
 		}
 	};
 
 	class EventDispatcher
 	{
 	public:
-		template<typename T> using EventFn = std::function<bool(T&)>;
+		template<typename T>
 		EventDispatcher(Event& event) : pEvent(event) {}
-		template<typename T> bool dispatch(EventFn<T> func)
+
+		template<typename T, typename F> bool dispatch(const F& func)
 		{
 			if (pEvent.getEventType() == T::getStaticType())
 			{

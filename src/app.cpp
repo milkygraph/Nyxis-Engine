@@ -11,6 +11,7 @@
 #include "simpleRenderSystem.hpp"
 #include "pointLightSystem.hpp"
 #include "path.hpp"
+#include "Log.hpp"
 
 #include <iostream>
 #include <chrono>
@@ -99,10 +100,9 @@ namespace ve
                          .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .build();
         // calculate the time it takes for below code to execute
-        auto start = std::chrono::high_resolution_clock::now();
+	    Log::init();
         loadGameObjects();
-        auto end = std::chrono::high_resolution_clock::now();
-        std::cout << "Loading game objects took " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+		pWindow.SetEventCallback(std::bind(&App::OnEvent, this, std::placeholders::_1));
         pInstance = this;
 	}
 
@@ -271,6 +271,12 @@ void App::close_imgui()
     ImGui::DestroyContext();
 }
 
+void App::OnEvent(Event &e)
+{
+	std::string event_name = e.toString();
+	LOG_INFO(event_name);
+}
+
 void App::run()
 {
     std::vector<std::unique_ptr<veBuffer>> uboBuffers(veSwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -310,6 +316,7 @@ void App::run()
     bool firstFrame = true;
     double lastTime = glfwGetTime();
     int nbFrames = 0;
+
 
     while (!pWindow.shouldClose())
     {

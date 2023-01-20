@@ -15,7 +15,7 @@ namespace ve
 		virtual void onImGuiRender() {}
 		virtual void onEvent() {}
 	};
-	
+
 	class LayerStack
 	{
 	public:
@@ -23,7 +23,7 @@ namespace ve
 		~LayerStack();
 
 		void pushLayer(Layer* layer);
-		void pushOverlay(Layer* overlay);
+			void pushOverlay(Layer* overlay);
 		void popLayer(Layer* layer);
 		void popOverlay(Layer* overlay);
 
