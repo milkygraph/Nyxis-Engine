@@ -25,7 +25,7 @@ namespace ve
     class SimpleRenderSystem
     {
     public:
-        SimpleRenderSystem(veDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalDescriptorSetLayout);
+        SimpleRenderSystem(VkRenderPass renderPass, VkDescriptorSetLayout globalDescriptorSetLayout);
         ~SimpleRenderSystem();
 
         // copy constructor and destructors
@@ -38,7 +38,7 @@ namespace ve
         void createPipelineLayout(VkDescriptorSetLayout globalDescriptorSetLayout);
         void createPipeline(VkRenderPass renderPass);
 
-        veDevice &pDevice;
+        veDevice &pDevice = veDevice::get();
 
         std::unique_ptr<vePipeline> pPipeline;
         VkPipelineLayout pipelineLayout;

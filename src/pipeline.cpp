@@ -10,8 +10,7 @@
 
 namespace ve
 {
-    vePipeline::vePipeline(veDevice &veDevice, const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config)
-        : device{veDevice}
+    vePipeline::vePipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config)
     {
 
         createGraphicsPipeline(vertPath, fragPath, config);

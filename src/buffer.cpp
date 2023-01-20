@@ -33,14 +33,12 @@ namespace ve
     }
 
     veBuffer::veBuffer(
-        veDevice &device,
         VkDeviceSize instanceSize,
         uint32_t instanceCount,
         VkBufferUsageFlags usageFlags,
         VkMemoryPropertyFlags memoryPropertyFlags,
         VkDeviceSize minOffsetAlignment)
-        : device{device},
-          instanceSize{instanceSize},
+        : instanceSize{instanceSize},
           instanceCount{instanceCount},
           usageFlags{usageFlags},
           memoryPropertyFlags{memoryPropertyFlags}

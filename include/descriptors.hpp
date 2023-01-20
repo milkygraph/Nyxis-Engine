@@ -16,7 +16,7 @@ namespace ve
         class Builder
         {
         public:
-            Builder(veDevice &device) : device{device} {}
+            Builder() {}
 
             Builder &addBinding(
                 uint32_t binding,
@@ -26,12 +26,12 @@ namespace ve
             std::unique_ptr<veDescriptorSetLayout> build() const;
 
         private:
-            veDevice &device;
+            veDevice &device = veDevice::get();
             std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings{};
         };
 
         veDescriptorSetLayout(
-            veDevice &device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
+            std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
         ~veDescriptorSetLayout();
         veDescriptorSetLayout(const veDescriptorSetLayout &) = delete;
         veDescriptorSetLayout &operator=(const veDescriptorSetLayout &) = delete;
@@ -39,7 +39,7 @@ namespace ve
         VkDescriptorSetLayout getDescriptorSetLayout() const { return descriptorSetLayout; }
 
     private:
-        veDevice &device;
+        veDevice &device = veDevice::get();
         VkDescriptorSetLayout descriptorSetLayout;
         std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
 
@@ -53,7 +53,7 @@ namespace ve
         class Builder
         {
         public:
-            Builder(veDevice &device) : device{device} {}
+            Builder() {}
 
             Builder &addPoolSize(VkDescriptorType descriptorType, uint32_t count);
             Builder &setPoolFlags(VkDescriptorPoolCreateFlags flags);
@@ -61,14 +61,13 @@ namespace ve
             std::unique_ptr<veDescriptorPool> build() const;
 
         private:
-            veDevice &device;
+            veDevice &device = veDevice::get();
             std::vector<VkDescriptorPoolSize> poolSizes{};
             uint32_t maxSets = 1000;
             VkDescriptorPoolCreateFlags poolFlags = 0;
         };
 
         veDescriptorPool(
-            veDevice &device,
             uint32_t maxSets,
             VkDescriptorPoolCreateFlags poolFlags,
             const std::vector<VkDescriptorPoolSize> &poolSizes);
@@ -84,7 +83,7 @@ namespace ve
         void resetPool();
 
     private:
-        veDevice &device;
+        veDevice &device = veDevice::get();
         VkDescriptorPool descriptorPool;
 
         friend class veDescriptorWriter;

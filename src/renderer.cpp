@@ -10,8 +10,8 @@
 
 namespace ve
 {
-    veRenderer::veRenderer(veWindow &window, veDevice &device, Scene& scene)
-        : window(window), device{device}, scene{scene}
+    veRenderer::veRenderer(Scene& scene)
+        : scene{scene}
     {
         recreateSwapChain();
         createCommandBuffers();
@@ -34,11 +34,11 @@ namespace ve
         vkDeviceWaitIdle(device.device());
         if (pSwapChain == nullptr)
         {
-            pSwapChain = std::make_unique<veSwapChain>(device, extent);
+            pSwapChain = std::make_unique<veSwapChain>(extent);
         }
         else
         {
-            pSwapChain = std::make_unique<veSwapChain>(device, extent, std::move(pSwapChain));
+            pSwapChain = std::make_unique<veSwapChain>(extent, std::move(pSwapChain));
             if (pSwapChain->imageCount() != commandBuffers.size())
             {
                 freeCommandBuffers();

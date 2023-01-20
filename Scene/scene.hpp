@@ -20,7 +20,7 @@ namespace ve
     class Scene
     {
     public:
-        Scene(veDevice &device) : device(device) {}
+        Scene() {}
         ~Scene();
 
         Entity createEntity(const std::string &name);
@@ -78,6 +78,6 @@ namespace ve
     private:
         uint32_t m_EntityCount = 0;
         std::atomic_int m_loadingEntity = 0;
-        veDevice &device;
+        veDevice &device = veDevice::get();
     };
 } // namespace ve

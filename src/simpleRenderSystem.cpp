@@ -20,9 +20,8 @@ namespace ve
         float roughness{0.0f};
     };
 
-    SimpleRenderSystem::SimpleRenderSystem(veDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalDescriptorSetLayout)
-        : pDevice(device)
-    {
+    SimpleRenderSystem::SimpleRenderSystem(VkRenderPass renderPass, VkDescriptorSetLayout globalDescriptorSetLayout)
+	{
         createPipelineLayout(globalDescriptorSetLayout);
         createPipeline(renderPass);
     }
@@ -63,7 +62,6 @@ namespace ve
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
         pPipeline = std::make_unique<vePipeline>(
-            pDevice,
             currentPath() + "/../shaders/simple_shader.vert.spv",
             currentPath() + "/../shaders/simple_shader.frag.spv",
             pipelineConfig);

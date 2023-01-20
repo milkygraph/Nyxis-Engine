@@ -21,8 +21,7 @@ namespace ve
     };
 
     PointLightSystem::PointLightSystem(
-        veDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
-        : device{device}
+        VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
     {
         createPipelineLayout(globalSetLayout);
         createPipeline(renderPass);
@@ -67,7 +66,6 @@ namespace ve
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
         pipeline = std::make_unique<vePipeline>(
-            device,
             currentPath() + "/../shaders/point_light.vert.spv",
             currentPath() + "/../shaders/point_light.frag.spv",
             pipelineConfig);

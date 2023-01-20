@@ -9,7 +9,6 @@ namespace ve
     {
     public:
         veBuffer(
-            veDevice &device,
             VkDeviceSize instanceSize,
             uint32_t instanceCount,
             VkBufferUsageFlags usageFlags,
@@ -45,7 +44,7 @@ namespace ve
     private:
         static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
 
-        veDevice &device;
+        veDevice &device = veDevice::get();
         void *mapped = nullptr;
         VkBuffer buffer = VK_NULL_HANDLE;
         VkDeviceMemory memory = VK_NULL_HANDLE;

@@ -44,13 +44,13 @@ namespace ve
             void loadModel(const std::string& filepath);
         };
 
-        veModel(veDevice &device, const veModel::Builder &builder);
+        veModel(const veModel::Builder &builder);
         ~veModel();
 
         veModel(const veModel &) = delete;
         veModel &operator=(const veModel &) = delete;
 
-        static std::shared_ptr<veModel> createModelFromFile(veDevice& device, const std::string& filepath);
+        static std::shared_ptr<veModel> createModelFromFile(const std::string& filepath);
 
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer);
@@ -61,7 +61,7 @@ namespace ve
 
         bool hasIndexBuffer = false;
 
-        veDevice &device;
+        veDevice &device = veDevice::get();
         std::unique_ptr<veBuffer> vertexBuffer;
         uint32_t vertexCount;
 

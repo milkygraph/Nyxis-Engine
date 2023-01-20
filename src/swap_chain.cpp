@@ -11,14 +11,14 @@
 namespace ve
 {
 
-    veSwapChain::veSwapChain(veDevice &deviceRef, VkExtent2D extent)
-        : device{deviceRef}, windowExtent{extent}
+    veSwapChain::veSwapChain(VkExtent2D extent)
+        : windowExtent{extent}
     {
         init();
     }
 
-    veSwapChain::veSwapChain(veDevice &deviceRef, VkExtent2D extent, std::shared_ptr<veSwapChain> previous)
-        : device{deviceRef}, windowExtent{extent}, oldSwapChain{previous}
+    veSwapChain::veSwapChain(VkExtent2D extent, std::shared_ptr<veSwapChain> previous)
+        : windowExtent{extent}, oldSwapChain{previous}
     {
         init();
         oldSwapChain = nullptr;

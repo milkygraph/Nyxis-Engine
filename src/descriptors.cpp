@@ -27,14 +27,14 @@ namespace ve
 
   std::unique_ptr<veDescriptorSetLayout> veDescriptorSetLayout::Builder::build() const
   {
-    return std::make_unique<veDescriptorSetLayout>(device, bindings);
+    return std::make_unique<veDescriptorSetLayout>(bindings);
   }
 
   // *************** Descriptor Set Layout *********************
 
   veDescriptorSetLayout::veDescriptorSetLayout(
-      veDevice &device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
-      : device{device}, bindings{bindings}
+      std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
+      : bindings{bindings}
   {
     std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings{};
     for (auto kv : bindings)
@@ -85,17 +85,15 @@ namespace ve
 
   std::unique_ptr<veDescriptorPool> veDescriptorPool::Builder::build() const
   {
-    return std::make_unique<veDescriptorPool>(device, maxSets, poolFlags, poolSizes);
+    return std::make_unique<veDescriptorPool>(maxSets, poolFlags, poolSizes);
   }
 
   // *************** Descriptor Pool *********************
 
   veDescriptorPool::veDescriptorPool(
-      veDevice &device,
       uint32_t maxSets,
       VkDescriptorPoolCreateFlags poolFlags,
       const std::vector<VkDescriptorPoolSize> &poolSizes)
-      : device{device}
   {
     VkDescriptorPoolCreateInfo descriptorPoolInfo{};
     descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;

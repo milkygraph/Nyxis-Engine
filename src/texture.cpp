@@ -4,8 +4,7 @@
 
 namespace ve
 {
-    veTexture::veTexture(veDevice &device)
-     : device(device)
+    veTexture::veTexture()
     {
         int texWidth = 0;
         int texHeight = 0;

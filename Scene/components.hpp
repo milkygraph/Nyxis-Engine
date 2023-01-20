@@ -51,14 +51,14 @@ namespace ve
     static std::unordered_map<std::string, std::shared_ptr<veModel>> meshstuff();
     struct MeshComponent
     {
-        MeshComponent(veDevice &device, std::string &modelName)
+        MeshComponent(std::string &modelName)
         {
-            model = veModel::createModelFromFile(device, currentPath() + "/../models/" + modelName);
+            model = veModel::createModelFromFile(currentPath() + "/../models/" + modelName);
         }
 
-        MeshComponent(veDevice &device, std::string modelName)
+        MeshComponent(std::string modelName)
         {
-            model = veModel::createModelFromFile(device, currentPath() + "/../models/" + modelName);
+            model = veModel::createModelFromFile(currentPath() + "/../models/" + modelName);
         }
 
         std::shared_ptr<veModel> model;

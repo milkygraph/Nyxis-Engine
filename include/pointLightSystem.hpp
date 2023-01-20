@@ -16,7 +16,7 @@ namespace ve
     {
     public:
         PointLightSystem(
-            veDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+			VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
         ~PointLightSystem();
 
         PointLightSystem(const PointLightSystem &) = delete;
@@ -29,7 +29,7 @@ namespace ve
         void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
         void createPipeline(VkRenderPass renderPass);
 
-        veDevice &device;
+        veDevice &device = veDevice::get();
 
         std::unique_ptr<vePipeline> pipeline;
         VkPipelineLayout pipelineLayout;

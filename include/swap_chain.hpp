@@ -16,8 +16,8 @@ namespace ve
     public:
         static constexpr int MAX_FRAMES_IN_FLIGHT = 3;
 
-        veSwapChain(veDevice &deviceRef, VkExtent2D windowExtent);
-        veSwapChain(veDevice &deviceRef, VkExtent2D windowExtent, std::shared_ptr<veSwapChain> previous);
+        veSwapChain(VkExtent2D windowExtent);
+        veSwapChain(VkExtent2D windowExtent, std::shared_ptr<veSwapChain> previous);
 
         ~veSwapChain();
 
@@ -68,7 +68,7 @@ namespace ve
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
 
-        veDevice &device;
+        veDevice &device = veDevice::get();
         VkExtent2D windowExtent;
 
         VkSwapchainKHR swapChain;

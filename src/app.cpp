@@ -94,7 +94,7 @@ namespace ve
 	App* App::pInstance = nullptr;
     App::App()
     {
-        globalPool = veDescriptorPool::Builder(pDevice)
+        globalPool = veDescriptorPool::Builder()
                          .setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .build();
@@ -113,7 +113,7 @@ namespace ve
         // 1: create descriptor pool for IMGUI
         //  the size of the pool is very oversize, but it's copied from imgui demo itself.
 
-        imguiPool = veDescriptorPool::Builder(pDevice)
+        imguiPool = veDescriptorPool::Builder()
                         .addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000)
                         .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
                         .addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000)
@@ -277,7 +277,6 @@ void App::run()
     for (int i = 0; i < uboBuffers.size(); i++)
     {
         uboBuffers[i] = std::make_unique<veBuffer>(
-            pDevice,
             sizeof(GlobalUbo),
             1,
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -285,7 +284,7 @@ void App::run()
         uboBuffers[i]->map();
     }
 
-    auto globalSetLayout = veDescriptorSetLayout::Builder(pDevice)
+    auto globalSetLayout = veDescriptorSetLayout::Builder()
                                .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
                                .build();
 
@@ -298,8 +297,8 @@ void App::run()
             .build(globalDescriptorSets[i]);
     }
 
-    SimpleRenderSystem srs{pDevice, pRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()}; // srs - simpleRenderSystem
-    PointLightSystem pls{pDevice, pRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};   // pls - pointLightSystem
+    SimpleRenderSystem srs{pRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()}; // srs - simpleRenderSystem
+    PointLightSystem pls{pRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};   // pls - pointLightSystem
     veCamera camera{};
 
     auto viewerObject = veGameObject::createGameObject();
@@ -372,15 +371,15 @@ void App::loadGameObjects()
 
     auto vase = pScene.createEntity("Vase");
     pScene.addComponent<TransformComponent>(vase, glm::vec3(-.5f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
-    pScene.addComponent<MeshComponent>(vase, pDevice, "smooth_vase.obj");
+    pScene.addComponent<MeshComponent>(vase, "smooth_vase.obj");
 
     auto pose = pScene.createEntity("Pose");
     pScene.addComponent<TransformComponent>(pose, glm::vec3(.2f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
-    pScene.addComponent<MeshComponent>(pose, pDevice, "pose.obj");
+    pScene.addComponent<MeshComponent>(pose, "pose.obj");
 
     auto floor = pScene.createEntity("Floor");
     pScene.addComponent<TransformComponent>(floor, glm::vec3(0.f, 0.5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(10.f, 10.f, 10.f), 0.0f);
-    pScene.addComponent<MeshComponent>(floor, pDevice, "floor.obj");
+    pScene.addComponent<MeshComponent>(floor, "floor.obj");
 
     std::vector<glm::vec3> lightColors{
         {1.f, .1f, .1f},

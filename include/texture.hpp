@@ -12,7 +12,7 @@ namespace ve{
         // It is used to load textures from files and create Vulkan textures from them
 
         public:
-            veTexture(veDevice &device);
+            veTexture();
             ~veTexture();
 
             void loadTexture(std::string& filename);
@@ -30,7 +30,7 @@ namespace ve{
             int texHeight;
             int texChannels;
         private:
-            veDevice& device;
+            veDevice& device = veDevice::get();
     };
 
 }

@@ -35,7 +35,7 @@ namespace ve
     class vePipeline
     {
     public:
-        vePipeline(veDevice &device, const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);
+        vePipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);
         ~vePipeline();
 
         // copy constructors and destructors
@@ -52,7 +52,7 @@ namespace ve
         void createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule);
         void createGraphicsPipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);
 
-        veDevice &device;
+        veDevice &device = veDevice::get();
         VkPipeline graphicsPipeline;
         VkShaderModule vertShaderModule;
         VkShaderModule fragShaderModule;

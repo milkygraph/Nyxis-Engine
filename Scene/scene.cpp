@@ -31,7 +31,7 @@ namespace ve
         auto name = filename.substr(0, filename.find_last_of('.'));
         auto entity = createEntity(name);
         addComponent<TransformComponent>(entity, glm::vec3(0.f, 0.f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.f, 1.f, 1.f), 0.0f);
-        addComponent<MeshComponent>(entity, device, filename);
+        addComponent<MeshComponent>(entity, filename);
         return {name, entity};
     }
 } // namespace ve

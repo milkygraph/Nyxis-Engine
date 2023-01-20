@@ -22,7 +22,7 @@ namespace ve
     class veRenderer
     {
     public:
-        veRenderer(veWindow &window, veDevice &device, Scene &scene);
+        veRenderer(Scene &scene);
         ~veRenderer();
 
         // copy constructor and destructors
@@ -61,8 +61,8 @@ namespace ve
         void freeCommandBuffers();
         void recreateSwapChain();
 
-        veWindow &window;
-        veDevice &device;
+        veWindow &window = veWindow::get();
+        veDevice &device = veDevice::get();
         Scene& scene;
         std::unique_ptr<veSwapChain> pSwapChain;
         std::vector<VkCommandBuffer> commandBuffers;

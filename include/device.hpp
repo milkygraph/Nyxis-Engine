@@ -37,7 +37,8 @@ namespace ve
 
 		static veDevice& get()
 		{
-			pInstance = new veDevice();
+			if(pInstance == nullptr)
+				pInstance = new veDevice();
 			return *pInstance;
 		}
 

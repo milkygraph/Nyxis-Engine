@@ -59,7 +59,7 @@ namespace ve
 
         veWindow& pWindow = veWindow::get(WIDTH, HEIGHT, "Vulkan Engine");
         veDevice& pDevice = veDevice::get();
-        veRenderer pRenderer{pWindow, pDevice, pScene};
+        veRenderer pRenderer{pScene};
 
         // TODO: Create third(or first) person Player View
         // std::unique_ptr<veGameObject> Player;
@@ -68,7 +68,7 @@ namespace ve
         std::unique_ptr<veDescriptorPool> imguiPool{};
         veGameObject::Map gameObjects;
 
-        Scene pScene{pDevice};
+        Scene pScene{};
         LayerStack pLayerStack{};
 
 	protected:
