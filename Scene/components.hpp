@@ -34,7 +34,7 @@ namespace ve
         float roughness = 0.0f;
 
         TransformComponent() = default;
-        TransformComponent(glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale, float roughness)
+		TransformComponent(glm::vec3 translation, glm::vec3 rotation = glm::vec3{0.0f}, glm::vec3 scale = glm::vec3{1.0f}, float roughness = 0.0f)
             : translation(translation), rotation(rotation), scale(scale), roughness(roughness) {}
 
         TransformComponent(const TransformComponent &) = default;

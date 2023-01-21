@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Events/event.hpp"
+#include <sstream>
 
 namespace ve
 {

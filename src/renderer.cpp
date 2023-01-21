@@ -49,7 +49,7 @@ namespace ve
 
     void veRenderer::createCommandBuffers()
     {
-        commandBuffers.resize(pSwapChain->imageCount());
+        commandBuffers.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
 
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -117,7 +117,7 @@ namespace ve
             throw std::runtime_error("failed to present swap chain image!");
 
         isFrameStarted = false;
-
+	    currentFrameIndex = (currentFrameIndex + 1) % veSwapChain::MAX_FRAMES_IN_FLIGHT;
     }
     void veRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer)
     {
