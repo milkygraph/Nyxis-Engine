@@ -1,5 +1,8 @@
 #include "model.hpp"
 #include "utils.hpp"
+#include "Log.hpp"
+#include "ve.hpp"
+
 #include <cstddef>
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -37,7 +40,10 @@ namespace ve
     {
         Builder builder{};
         builder.loadModel(filepath);
-        std::cout << "Vertices count: " << builder.vertices.size() << std::endl;
+        #ifdef LOGGING
+		LOG_INFO("Model {} loaded, {} vertices", filepath, builder.vertices.size());
+        #endif // LOGGING
+
         return std::make_shared<veModel>(builder);
     }
 

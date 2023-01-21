@@ -64,7 +64,14 @@ namespace ve
         template <typename A, typename B>
         auto getComponentView()
         {
-            return m_Registry.group<A, B>();
+			static uint32_t prevCount = m_EntityCount;
+	        static auto view = m_Registry.view<A, B>();
+			if(prevCount != m_EntityCount)
+			{
+				view = m_Registry.view<A, B>();
+				prevCount = m_EntityCount;
+			}
+            return view;
         }
         template <typename A>
         auto getComponentView()

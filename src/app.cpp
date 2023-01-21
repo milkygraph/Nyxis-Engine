@@ -100,7 +100,6 @@ namespace ve
                          .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .build();
         // calculate the time it takes for below code to execute
-	    Log::init();
         loadGameObjects();
 		pWindow.SetEventCallback(std::bind(&App::OnEvent, this, std::placeholders::_1));
         pInstance = this;
@@ -274,7 +273,9 @@ void App::close_imgui()
 void App::OnEvent(Event &e)
 {
 	std::string event_name = e.toString();
+    #ifdef LOGGING
 	LOG_INFO(event_name);
+    #endif // LOGGING
 }
 
 void App::run()
@@ -387,6 +388,13 @@ void App::loadGameObjects()
     auto floor = pScene.createEntity("Floor");
     pScene.addComponent<TransformComponent>(floor, glm::vec3(0.f, 0.5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(10.f, 10.f, 10.f), 0.0f);
     pScene.addComponent<MeshComponent>(floor, "floor.obj");
+
+    for(int i = 0; i < 10; i++)
+    {
+        auto srad = pScene.createEntity("srad" + std::to_string(i));
+        pScene.addComponent<TransformComponent>(srad, glm::vec3((i - 15) / 2, 0, (i - 15) / 2));
+        pScene.addComponent<MeshComponent>(srad, "pose.obj");
+    }
 
     std::vector<glm::vec3> lightColors{
         {1.f, .1f, .1f},

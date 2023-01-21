@@ -1,10 +1,12 @@
 #include "device.hpp"
-
+#include "ve.hpp"
+#include "Log.hpp"
 // std headers
 #include <cstring>
 #include <iostream>
 #include <set>
 #include <unordered_set>
+#include <sstream>
 
 namespace ve
 {
@@ -17,7 +19,10 @@ namespace ve
         const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
         void *pUserData)
     {
-        std::cerr << "[Debug]: " << pCallbackData->pMessage << std::endl;
+//        std::cerr << "[Debug]: " << pCallbackData->pMessage << std::endl;
+#ifdef LOGGING
+        LOG_ERROR(pCallbackData->pMessage);
+#endif // LOGGING
 
         return VK_FALSE;
     }

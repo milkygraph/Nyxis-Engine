@@ -1,3 +1,4 @@
+#pragma once
 #include <spdlog/spdlog.h>
 
 namespace ve
@@ -7,7 +8,10 @@ namespace ve
 		public:
 		static void init();
 
-		inline static std::shared_ptr<spdlog::logger>& GetLogger() { return s_CoreLogger; }
+		inline static std::shared_ptr<spdlog::logger>& GetLogger()
+		{ 
+			return s_CoreLogger; 
+		}
 
 		private:
 		static std::shared_ptr<spdlog::logger> s_CoreLogger;

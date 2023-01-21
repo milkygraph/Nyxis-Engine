@@ -9,6 +9,7 @@
 #include "scene.hpp"
 #include "layer.hpp"
 #include "input.hpp"
+#include "Log.hpp"
 
 #include <memory>
 #include <vector>
@@ -27,9 +28,9 @@ namespace ve
     public:
 		static App* getInstance()
 		{
-      
+            Log::init();
 			pInstance = new App();
-			return pInstance;
+            return pInstance;
 		}
         ~App();
 

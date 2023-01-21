@@ -9,6 +9,9 @@
 #include <type_traits>
 #include <cassert>
 
+//#define NDEBUG
+#define LOGGING
+
 #define VE_VERSION_MAJOR 0
 #define VE_VERSION_MINOR 1
 
