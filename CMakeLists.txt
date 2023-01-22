@@ -8,9 +8,9 @@ find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
 
 
-file (GLOB_RECURSE SOURCES src/*.cpp Scene/*.cpp libs/entt/*.cpp libs/stbimage/*.cpp libs/tinyobjloader/*.cpp
-        imgui/imgui.cpp imgui/imgui_demo.cpp imgui/imgui_draw.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp imgui/imgui
-        imgui/backends/imgui_impl_glfw.cpp imgui/backends/imgui_impl_vulkan.cpp)
+file (GLOB_RECURSE SOURCES src/*.cpp Scene/*.cpp libs/entt/*.cpp libs/stbimage/*.cpp libs/tinyobjloader/*.cpp libs/imgui/imgui.cpp libs/imgui/imgui_demo.cpp
+        libs/imgui/imgui_draw.cpp libs/imgui/imgui_tables.cpp libs/imgui/imgui_widgets.cpp libs/imgui/imgui
+        libs/imgui/backends/imgui_impl_glfw.cpp libs/imgui/backends/imgui_impl_vulkan.cpp)
 file (GLOB_RECURSE HEADERS include/*.hpp )
 file (GLOB_RECURSE VENDOR )
 file (GLOB_RECURSE VERTEX_SHADERS shaders/*.vert)
@@ -28,7 +28,7 @@ endforeach(SHADER)
 
 add_executable(${PROJECT} ${SOURCES} ${HEADERS})
 
-target_include_directories(${PROJECT} PUBLIC include Scene libs imgui imgui/backends imgui/misc/cpp)
+target_include_directories(${PROJECT} PUBLIC include Scene libs libs/imgui libs/imgui/backends)
 target_link_directories(${PROJECT} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 target_link_libraries(${PROJECT} PUBLIC Vulkan::Vulkan glfw)
 

@@ -25,8 +25,8 @@
 #include <utility>
 #include <vulkan/vulkan_core.h>
 #include <imgui/imgui.h>
-#include <imgui/imgui_impl_vulkan.h>
-#include <imgui/imgui_impl_glfw.h>
+#include <imgui/backends/imgui_impl_vulkan.h>
+#include <imgui/backends/imgui_impl_glfw.h>
 
 void ShowExampleAppDockSpace()
 {
