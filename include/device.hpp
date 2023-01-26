@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <mutex>
 
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_vulkan.h>
@@ -105,6 +106,8 @@ namespace ve
         VkInstance instance;
         VkDebugUtilsMessengerEXT debugMessenger;
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+
+		std::mutex deviceGuard;
 
         veWindow &pWindow = veWindow::get();
         VkCommandPool commandPool;

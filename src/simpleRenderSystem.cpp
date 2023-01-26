@@ -62,12 +62,12 @@ namespace ve
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
         pPipeline = std::make_unique<vePipeline>(
-            currentPath() + "/../shaders/simple_shader.vert.spv",
-            currentPath() + "/../shaders/simple_shader.frag.spv",
+            current_path + "/../shaders/simple_shader.vert.spv",
+            current_path + "/../shaders/simple_shader.frag.spv",
             pipelineConfig);
     }
 
-    void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo)
+    void SimpleRenderSystem::render(FrameInfo &frameInfo)
     {
         pPipeline->bind(frameInfo.commandBuffer);
 
@@ -77,26 +77,31 @@ namespace ve
                                 0, 1,
                                 &frameInfo.globalDescriptorSet, 0, nullptr);
 
-        auto view = frameInfo.scene.getComponentView<TransformComponent, MeshComponent>();
+        auto view = frameInfo.scene.getComponentView<TransformComponent, veModel>();
 
+		std::mutex vulkanGuard;
         for (auto& entity : view)
         {
-            SimplePushConstantData push{};
-            auto transform = view.get<TransformComponent>(entity);
-            push.modelMatrix = transform.mat4();
-            push.normalMatrix = transform.normalMatrix();
-            push.roughness = transform.roughness;
+	        auto [transform, model] = view.get<TransformComponent, veModel>(entity);
+			auto name = frameInfo.scene.getComponent<TagComponent>(entity).Tag;
+			if(model.loaded)
+				{
+					SimplePushConstantData push{};
+					push.modelMatrix = transform.mat4 ();
+					push.normalMatrix = transform.normalMatrix ();
+					push.roughness = transform.roughness;
 
-            vkCmdPushConstants(
-                frameInfo.commandBuffer,
-                pipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                0,
-                sizeof(SimplePushConstantData),
-                &push);
-            auto &mesh = view.get<MeshComponent>(entity);
-            mesh.model->bind(frameInfo.commandBuffer);
-            mesh.model->draw(frameInfo.commandBuffer);
-        }
+					std::unique_lock<std::mutex> lock(vulkanGuard);
+					vkCmdPushConstants (
+						frameInfo.commandBuffer,
+						pipelineLayout,
+						VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+						0,
+						sizeof (SimplePushConstantData),
+						&push);
+					model.bind (frameInfo.commandBuffer);
+					model.draw (frameInfo.commandBuffer);
+				}
+		}
     }
 } // namespace ve

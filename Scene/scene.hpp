@@ -56,28 +56,18 @@ namespace ve
 
         // get component from entity
         template <typename T>
-        T &getComponent(Entity entity)
+        auto &getComponent(Entity entity)
         {
             return m_Registry.get<T>(entity);
         }
 
-        template <typename A, typename B>
+        template <typename... Comps>
         auto getComponentView()
         {
-			static uint32_t prevCount = m_EntityCount;
-	        static auto view = m_Registry.view<A, B>();
-			if(prevCount != m_EntityCount)
-			{
-				view = m_Registry.view<A, B>();
-				prevCount = m_EntityCount;
-			}
-            return view;
+			return m_Registry.view<Comps...>();
         }
-        template <typename A>
-        auto getComponentView()
-        {
-            return m_Registry.view<A>();
-        }
+
+		void loadModels();
 
         float m_SkyColor[3] = {0.0f, 0.0f, 0.0f};
         Registry m_Registry;

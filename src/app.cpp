@@ -13,11 +13,8 @@
 #include "path.hpp"
 #include "Log.hpp"
 
-#include <iostream>
 #include <chrono>
 #include <memory>
-#include <stdexcept>
-#include <array>
 #include <string>
 #include <algorithm>
 #include <filesystem>
@@ -83,7 +80,7 @@ void ShowExampleAppDockSpace()
 std::vector<std::string> getModelNames()
 {
     std::vector<std::string> modelNames;
-    for (const auto &entry : std::filesystem::directory_iterator(ve::currentPath() + "/../models"))
+    for (const auto &entry : std::filesystem::directory_iterator(ve::model_path))
     {
         modelNames.push_back(entry.path().filename().string());
     }
@@ -100,7 +97,10 @@ namespace ve
                          .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .build();
         // calculate the time it takes for below code to execute
+	    auto start = std::chrono::high_resolution_clock::now();
         loadGameObjects();
+	    pScene.loadModels();
+	    std::cout << "loadGameObjects() took " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
 		pWindow.SetEventCallback(std::bind(&App::OnEvent, this, std::placeholders::_1));
         pInstance = this;
 	}
@@ -243,11 +243,15 @@ namespace ve
         if (ImGui::Button("Add Object"))
         {
             // use addGameObject() to add a new object to the scene
-            auto [name, entity] = pScene.addEntity(selectedModel);
-            if(entity_names.find(name) != entity_names.end())
-                name = name + std::to_string(pScene.getEntityCount());
-            
-            entity_names[name] = entity;
+			futures.emplace_back (std::async(std::launch::async, [&]()
+			{
+			  auto [name, entity] = pScene.addEntity (selectedModel);
+			  if (entity_names.find (name) != entity_names.end ())
+				  name = name + std::to_string (pScene.getEntityCount ());
+			  entity_names[name] = entity;
+			  selectedEntity = name;
+			}));
+
         }
 
     // ImGui::ColorPicker3("Sky Color", pScene.m_SkyColor);
@@ -273,9 +277,9 @@ void App::close_imgui()
 void App::OnEvent(Event &e)
 {
 	std::string event_name = e.toString();
-    #ifdef LOGGING
+    #if LOGGING_LEVEL == 0
 	LOG_INFO(event_name);
-    #endif // LOGGING
+    #endif // LOGGING_LEVEL
 }
 
 void App::run()
@@ -361,7 +365,7 @@ void App::run()
 
             // rendering
             pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
-            srs.renderGameObjects(frameInfo);
+	        srs.render (frameInfo);
             pls.render(frameInfo);
             render_imgui(frameInfo);
             pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
@@ -379,21 +383,21 @@ void App::loadGameObjects()
 
     auto vase = pScene.createEntity("Vase");
     pScene.addComponent<TransformComponent>(vase, glm::vec3(-.5f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
-    pScene.addComponent<MeshComponent>(vase, "smooth_vase.obj");
+    pScene.addComponent<veModel>(vase, model_path + "smooth_vase.obj");
 
     auto pose = pScene.createEntity("Pose");
     pScene.addComponent<TransformComponent>(pose, glm::vec3(.2f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
-    pScene.addComponent<MeshComponent>(pose, "pose.obj");
+    pScene.addComponent<veModel>(pose, model_path + "pose.obj");
 
     auto floor = pScene.createEntity("Floor");
     pScene.addComponent<TransformComponent>(floor, glm::vec3(0.f, 0.5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(10.f, 10.f, 10.f), 0.0f);
-    pScene.addComponent<MeshComponent>(floor, "floor.obj");
+    pScene.addComponent<veModel>(floor, model_path + "floor.obj");
 
-    for(int i = 0; i < 10; i++)
+    for(int i = 0; i < 3; i++)
     {
         auto srad = pScene.createEntity("srad" + std::to_string(i));
-        pScene.addComponent<TransformComponent>(srad, glm::vec3((i - 15) / 2, 0, (i - 15) / 2));
-        pScene.addComponent<MeshComponent>(srad, "pose.obj");
+        pScene.addComponent<TransformComponent>(srad, glm::vec3((i - 15) / 4, 0, (i - 15) / 4));
+        pScene.addComponent<veModel>(srad, model_path + "Srad 750.obj");
     }
 
     std::vector<glm::vec3> lightColors{

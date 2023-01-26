@@ -15,6 +15,9 @@ OpenSans-Light.ttf
 resources/Learning Vulkan.pdf
 CMakeCache.txt
 cmake_install.cmake
+.ninja_deps
+.ninja_log
+build.ninja
 shaders/glslc
 
 # Visual Studio Files

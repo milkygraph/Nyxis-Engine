@@ -51,17 +51,17 @@ namespace ve
     static std::unordered_map<std::string, std::shared_ptr<veModel>> meshstuff();
     struct MeshComponent
     {
-        MeshComponent(std::string &modelName)
-        {
-            model = veModel::createModelFromFile(currentPath() + "/../models/" + modelName);
-        }
-
-        MeshComponent(std::string modelName)
-        {
-            model = veModel::createModelFromFile(currentPath() + "/../models/" + modelName);
-        }
-
-        std::shared_ptr<veModel> model;
+//        MeshComponent(std::string &modelName)
+//        {
+//            model = veModel::createModelFromFile(current_path + "/../models/" + modelName);
+//        }
+//
+//        MeshComponent(std::string modelName)
+//        {
+//            model = veModel::createModelFromFile(current_path + "/../models/" + modelName);
+//        }
+//
+//        std::shared_ptr<veModel> model;
     };
 
     struct PointLight

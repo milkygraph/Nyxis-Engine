@@ -1,5 +1,5 @@
 #include "scene.hpp"
-
+#include <future>
 namespace ve
 {
     Scene::~Scene()
@@ -31,7 +31,23 @@ namespace ve
         auto name = filename.substr(0, filename.find_last_of('.'));
         auto entity = createEntity(name);
         addComponent<TransformComponent>(entity, glm::vec3(0.f, 0.f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.f, 1.f, 1.f), 0.0f);
-        addComponent<MeshComponent>(entity, filename);
-        return {name, entity};
+        addComponent<veModel>(entity, model_path + filename);
+		auto &model = getComponent<veModel>(entity);
+		model.loadModel();
+		return {name, entity};
     }
+
+	void Scene::loadModels()
+	{
+		auto view = getComponentView<veModel>();
+		std::vector<std::future<void>> futures;
+		for(auto& entity : view)
+		{
+			futures.emplace_back(std::async(std::launch::async, [&]()
+			{
+				auto& model = getComponent<veModel>(entity);
+				model.loadModel();
+			}));
+		}
+	}
 } // namespace ve

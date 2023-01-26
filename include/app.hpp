@@ -20,6 +20,9 @@
 #include <glm/gtc/constants.hpp>
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_structs.hpp>
+
+#include <future>
+
 namespace ve
 {
 
@@ -76,5 +79,6 @@ namespace ve
 
 	protected:
 	    App();
+	    std::vector<std::future<void>>futures;
     }; // class App
 } // namespace ve

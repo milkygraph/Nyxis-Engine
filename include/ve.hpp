@@ -11,6 +11,7 @@
 
 //#define NDEBUG
 #define LOGGING
+#define LOGGING_LEVEL 1
 
 #define VE_VERSION_MAJOR 0
 #define VE_VERSION_MINOR 1
