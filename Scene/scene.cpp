@@ -1,5 +1,7 @@
 #include "scene.hpp"
-#include <future>
+#include "app.hpp"
+#include "ThreadPool.hpp"
+
 namespace ve
 {
     Scene::~Scene()
@@ -40,14 +42,19 @@ namespace ve
 	void Scene::loadModels()
 	{
 		auto view = getComponentView<veModel>();
-		std::vector<std::future<void>> futures;
+
+//		std::vector<std::future<void>> futures;
+//		for (auto &entity : view)
+//		{
+//			auto& model = getComponent<veModel>(entity);
+//			futures.push_back(std::async(std::launch::async, [&]() { model.loadModel(); }));
+//		}
+
+		ThreadPool pool;
 		for(auto& entity : view)
 		{
-			futures.emplace_back(std::async(std::launch::async, [&]()
-			{
-				auto& model = getComponent<veModel>(entity);
-				model.loadModel();
-			}));
+			auto& model = getComponent<veModel>(entity);
+			pool.enqueue([&]() { model.loadModel(); });
 		}
 	}
 } // namespace ve
