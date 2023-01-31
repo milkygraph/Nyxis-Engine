@@ -68,10 +68,11 @@ namespace ve
 		int pButton;
 	};
 
-	enum MouseButton : int
+	enum MouseCodes : int
 	{
 		MouseButtonLeft = 0,
 		MouseButtonRight = 1,
 		MouseButtonMiddle = 2
 	};
+
 }

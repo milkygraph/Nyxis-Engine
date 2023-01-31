@@ -4,6 +4,7 @@
 #include "ve.hpp"
 
 #include <cstddef>
+#include <execution>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader/tiny_obj_loader.h>
@@ -171,7 +172,8 @@ namespace ve
 
         std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
-        for (const auto &shape : shapes)
+//        for (const auto &shape : shapes
+	    std::for_each(std::execution::par, shapes.begin(), shapes.end(), [&](const auto &shape)
         {
             for (const auto &index : shape.mesh.indices)
             {
@@ -216,7 +218,7 @@ namespace ve
                 }
                 indices.push_back(uniqueVertices[vertex]);
             }
-        }
+        });
 		#ifdef LOGGING
 	    LOG_INFO("Model {} loaded, {} vertices", filepath, vertices.size());
 		#endif // LOGGING

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "camera.hpp"
+#include "Camera.hpp"
 #include "device.hpp"
 #include "frameInfo.hpp"
 #include "gameObject.hpp"

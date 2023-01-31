@@ -1,6 +1,6 @@
 #pragma once
 
-#include "camera.hpp"
+#include "Camera.hpp"
 #include "gameObject.hpp"
 #include "scene.hpp"
 #include "components.hpp"
@@ -28,7 +28,7 @@ namespace ve
         int frameIndex;
         float frameTime;
         VkCommandBuffer commandBuffer;
-        veCamera &camera;
+        Camera &camera;
         VkDescriptorSet globalDescriptorSet;
         veGameObject::Map &gameObjects;
         Scene& scene;

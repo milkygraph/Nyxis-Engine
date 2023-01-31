@@ -20,6 +20,9 @@ namespace ve
 
 			gameObject.transform.rotation.y += mouseDelta.x;
 			gameObject.transform.rotation.x += -mouseDelta.y;
+
+			gameObject.transform.rotation.x = glm::clamp(gameObject.transform.rotation.x, -glm::half_pi<float>(), glm::half_pi<float>());
+			gameObject.transform.rotation.y = glm::mod(gameObject.transform.rotation.y, glm::two_pi<float>());
 		}
 		else
 		{
@@ -29,9 +32,6 @@ namespace ve
 	}
     void CameraController::moveInPlaneXZ(float dt, veGameObject &gameObject)
     {
-		glm::vec3 rotate{0};
-	    processMouseMovement(dt, gameObject);
-
 	    float yaw = gameObject.transform.rotation.y;
 	    const glm::vec3 forwardDir{sin(yaw), 0.f, cos(yaw)};
 	    const glm::vec3 rightDir{forwardDir.z, 0.f, -forwardDir.x};

@@ -6,6 +6,7 @@
 namespace ve
 {
     Input* Input::pInstance = new Input();
+	int Input::CursorMode = 0;
 
 	bool Input::isKeyPressedImpl(int key)
 	{
@@ -19,13 +20,19 @@ namespace ve
 		return state == GLFW_PRESS;
 	}
 	
-	std::pair<float, float> Input::getMousePositionImpl()
+	glm::vec2 Input::getMousePositionImpl()
 	{
 		double xpos, ypos;
 		glfwGetCursorPos(veWindow::getGLFWwindow(), &xpos, &ypos);
-		return { (float)xpos, (float)ypos };
+		return { xpos, ypos };
 	}
-	
+
+	void Input::setCursorModeImpl(int mode)
+	{
+		glfwSetInputMode(veWindow::getGLFWwindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL + mode);
+		CursorMode = mode;
+	}
+
 	// float Input::getMouseXImpl()
 	// {
 	// 	auto [x, y] = getMousePositionImpl();
