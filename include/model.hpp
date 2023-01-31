@@ -60,6 +60,20 @@ namespace ve
         void draw(VkCommandBuffer commandBuffer) const;
 		void loadModel();
 
+		static std::shared_ptr<veModel> CreateModel(const std::string& filepath)
+		{
+			if (models.find(filepath) == models.end())
+			{
+				models[filepath] = std::make_shared<veModel>(filepath);
+			    
+            }
+			return models[filepath];
+		}
+
+		using ModelMap = std::unordered_map<std::string, std::shared_ptr<veModel>>;
+
+		inline static ModelMap& GetModels() { return models; }
+
     private:
         void createVertexBuffers(const std::vector<Vertex> &vertices);
         void createIndexBuffers(const std::vector<uint32_t> &indices);
@@ -73,5 +87,6 @@ namespace ve
 
         std::unique_ptr<veBuffer> indexBuffer;
         uint32_t indexCount;
-    };
+        static ModelMap models;
+	};
 }

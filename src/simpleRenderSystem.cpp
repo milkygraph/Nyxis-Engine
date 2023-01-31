@@ -77,31 +77,25 @@ namespace ve
                                 0, 1,
                                 &frameInfo.globalDescriptorSet, 0, nullptr);
 
-        auto view = frameInfo.scene.getComponentView<TransformComponent, veModel>();
-
-		std::mutex vulkanGuard;
-        for (auto& entity : view)
-        {
-	        auto [transform, model] = view.get<TransformComponent, veModel>(entity);
-			auto name = frameInfo.scene.getComponent<TagComponent>(entity).Tag;
+        frameInfo.scene.m_Registry.view<TransformComponent, MeshComponent>().each([&](auto entity, auto& transform, auto& mesh)
+		{
+			auto& model = *mesh.model;
 			if(model.loaded)
-				{
-					SimplePushConstantData push{};
-					push.modelMatrix = transform.mat4 ();
-					push.normalMatrix = transform.normalMatrix ();
-					push.roughness = transform.roughness;
-
-					std::unique_lock<std::mutex> lock(vulkanGuard);
-					vkCmdPushConstants (
-						frameInfo.commandBuffer,
-						pipelineLayout,
-						VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-						0,
-						sizeof (SimplePushConstantData),
-						&push);
-					model.bind (frameInfo.commandBuffer);
-					model.draw (frameInfo.commandBuffer);
-				}
-		}
+			{
+				SimplePushConstantData push{};
+				push.modelMatrix = transform.mat4 ();
+				push.normalMatrix = transform.normalMatrix ();
+				push.roughness = transform.roughness;
+				vkCmdPushConstants (
+					frameInfo.commandBuffer,
+					pipelineLayout,
+					VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+					0,
+					sizeof (SimplePushConstantData),
+					&push);
+				model.bind (frameInfo.commandBuffer);
+				model.draw (frameInfo.commandBuffer);
+			}
+		});
     }
 } // namespace ve

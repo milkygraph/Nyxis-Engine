@@ -55,7 +55,8 @@ namespace ve
 		static veWindow& getWindow() { return pInstance->pWindow; }
 	    static veDevice& getDevice() { return pInstance->pDevice; }
 		static GLFWwindow* getGLFWwindow() { return pInstance->pWindow.getGLFWwindow(); }
-	private:
+		static Scene& getScene() { return pInstance->pScene; }
+    private:
 		static App* pInstance;
         void loadGameObjects();
         void renderGameObjects(VkCommandBuffer commandBuffer);

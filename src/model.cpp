@@ -28,6 +28,7 @@ namespace std
 
 namespace ve
 {
+	std::unordered_map<std::string, std::shared_ptr<veModel>> veModel::models;
     veModel::veModel(const std::string& filepath)
     {
 //        createVertexBuffers(builder.vertices);
@@ -99,14 +100,18 @@ namespace ve
 
 	void veModel::loadModel()
 	{
-		if(builder == nullptr)
-			throw std::runtime_error("Builder is not initialized yet!");
-		builder->loadModel();
-		createVertexBuffers(builder->vertices);
-		createIndexBuffers(builder->indices);
-		loaded = true;
-		delete builder;
-		builder = nullptr;
+        if (!loaded)
+		{
+            if (builder == nullptr)
+                throw std::runtime_error("Builder is not initialized yet!");
+
+            builder->loadModel();
+            createVertexBuffers(builder->vertices);
+            createIndexBuffers(builder->indices);
+            loaded = true;
+            delete builder;
+            builder = nullptr;
+        }
 	}
 
     void veModel::draw(VkCommandBuffer commandBuffer) const

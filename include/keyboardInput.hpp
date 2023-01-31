@@ -26,6 +26,7 @@ namespace ve
             int lookUp = GLFW_KEY_UP;
             int lookDown = GLFW_KEY_DOWN;
             int fast = GLFW_KEY_LEFT_SHIFT;
+			int load = GLFW_KEY_L;
         };
 
         void moveInPlaneXZ(float dt, veGameObject &gameObject);

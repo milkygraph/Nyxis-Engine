@@ -24,7 +24,7 @@ namespace ve
 
     void veRenderer::recreateSwapChain()
     {
-        auto extent = window.getExtent();
+	    auto extent = window.getExtent();
         while (extent.width == 0 || extent.height == 0)
         {
             extent = window.getExtent();
@@ -65,7 +65,7 @@ namespace ve
 
     void veRenderer::freeCommandBuffers()
     {
-        vkFreeCommandBuffers(device.device(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+	    vkFreeCommandBuffers(device.device(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
         commandBuffers.clear();
     }
 

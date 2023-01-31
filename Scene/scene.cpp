@@ -33,28 +33,25 @@ namespace ve
         auto name = filename.substr(0, filename.find_last_of('.'));
         auto entity = createEntity(name);
         addComponent<TransformComponent>(entity, glm::vec3(0.f, 0.f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.f, 1.f, 1.f), 0.0f);
-        addComponent<veModel>(entity, model_path + filename);
-		auto &model = getComponent<veModel>(entity);
-		model.loadModel();
+		addComponent<MeshComponent>(entity, model_path + filename);
+		auto &model = getComponent<MeshComponent>(entity);
+		model.model->loadModel();
 		return {name, entity};
     }
 
 	void Scene::loadModels()
 	{
-		auto view = getComponentView<veModel>();
+		auto& models = veModel::GetModels();
 
-//		std::vector<std::future<void>> futures;
-//		for (auto &entity : view)
-//		{
-//			auto& model = getComponent<veModel>(entity);
-//			futures.push_back(std::async(std::launch::async, [&]() { model.loadModel(); }));
-//		}
+		if(models.empty())
+			return;
 
 		ThreadPool pool;
-		for(auto& entity : view)
+		std::vector<std::string> loadingModels(m_EntityCount);
+        
+		for(auto& model : models)
 		{
-			auto& model = getComponent<veModel>(entity);
-			pool.enqueue([&]() { model.loadModel(); });
+            pool.enqueue([&]() { model.second->loadModel(); });
 		}
 	}
 } // namespace ve
