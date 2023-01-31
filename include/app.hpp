@@ -20,6 +20,9 @@
 #include <glm/gtc/constants.hpp>
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_structs.hpp>
+
+#include <future>
+
 namespace ve
 {
 
@@ -52,7 +55,8 @@ namespace ve
 		static veWindow& getWindow() { return pInstance->pWindow; }
 	    static veDevice& getDevice() { return pInstance->pDevice; }
 		static GLFWwindow* getGLFWwindow() { return pInstance->pWindow.getGLFWwindow(); }
-	private:
+		static Scene& getScene() { return pInstance->pScene; }
+    private:
 		static App* pInstance;
         void loadGameObjects();
         void renderGameObjects(VkCommandBuffer commandBuffer);
@@ -76,5 +80,6 @@ namespace ve
 
 	protected:
 	    App();
+	    std::vector<std::future<void>>futures;
     }; // class App
 } // namespace ve

@@ -28,24 +28,26 @@ namespace std
 
 namespace ve
 {
-    veModel::veModel(const veModel::Builder &builder)
+	std::unordered_map<std::string, std::shared_ptr<veModel>> veModel::models;
+    veModel::veModel(const std::string& filepath)
     {
-        createVertexBuffers(builder.vertices);
-        createIndexBuffers(builder.indices);
-    }
+//        createVertexBuffers(builder.vertices);
+//        createIndexBuffers(builder.indices);
+		builder = new Builder(filepath);
+	}
 
     veModel::~veModel() {}
 
-    std::shared_ptr<veModel> veModel::createModelFromFile(const std::string &filepath)
-    {
-        Builder builder{};
-        builder.loadModel(filepath);
-        #ifdef LOGGING
-		LOG_INFO("Model {} loaded, {} vertices", filepath, builder.vertices.size());
-        #endif // LOGGING
-
-        return std::make_shared<veModel>(builder);
-    }
+//    std::shared_ptr<veModel> veModel::createModelFromFile(const std::string &filepath)
+//    {
+//        Builder builder{};
+//        builder.loadModel(filepath);
+//        #ifdef LOGGING
+//		LOG_INFO("Model {} loaded, {} vertices", filepath, builder.vertices.size());
+//        #endif // LOGGING
+//
+//        return std::make_shared<veModel>(builder);
+//    }
 
     void veModel::createVertexBuffers(const std::vector<Vertex> &vertices)
     {
@@ -66,7 +68,8 @@ namespace ve
         vertexBuffer = std::make_unique<veBuffer>(vertexSize, vertexCount,
                             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        
+        std::mutex mutex;
+		std::unique_lock<std::mutex> lock(mutex);
         device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
     }
 
@@ -95,12 +98,28 @@ namespace ve
         device.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
     }
 
-    void veModel::draw(VkCommandBuffer commandBuffer)
+	void veModel::loadModel()
+	{
+        if (!loaded)
+		{
+            if (builder == nullptr)
+                throw std::runtime_error("Builder is not initialized yet!");
+
+            builder->loadModel();
+            createVertexBuffers(builder->vertices);
+            createIndexBuffers(builder->indices);
+            loaded = true;
+            delete builder;
+            builder = nullptr;
+        }
+	}
+
+    void veModel::draw(VkCommandBuffer commandBuffer) const
     {
-        if (hasIndexBuffer)
-            vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
-        else
-            vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
+		if (hasIndexBuffer)
+			vkCmdDrawIndexed (commandBuffer, indexCount, 1, 0, 0, 0);
+		else
+			vkCmdDraw (commandBuffer, vertexCount, 1, 0, 0);
     }
 
     void veModel::bind(VkCommandBuffer commandBuffer)
@@ -135,7 +154,7 @@ namespace ve
         return attributeDescriptions;
     }
 
-    void veModel::Builder::loadModel(const std::string &filepath)
+    void veModel::Builder::loadModel()
     {
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
@@ -198,5 +217,8 @@ namespace ve
                 indices.push_back(uniqueVertices[vertex]);
             }
         }
+		#ifdef LOGGING
+	    LOG_INFO("Model {} loaded, {} vertices", filepath, vertices.size());
+		#endif // LOGGING
     }
 }

@@ -13,11 +13,8 @@
 #include "path.hpp"
 #include "Log.hpp"
 
-#include <iostream>
 #include <chrono>
 #include <memory>
-#include <stdexcept>
-#include <array>
 #include <string>
 #include <algorithm>
 #include <filesystem>
@@ -83,7 +80,7 @@ void ShowExampleAppDockSpace()
 std::vector<std::string> getModelNames()
 {
     std::vector<std::string> modelNames;
-    for (const auto &entry : std::filesystem::directory_iterator(ve::currentPath() + "/../models"))
+    for (const auto &entry : std::filesystem::directory_iterator(ve::model_path))
     {
         modelNames.push_back(entry.path().filename().string());
     }
@@ -100,7 +97,10 @@ namespace ve
                          .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
                          .build();
         // calculate the time it takes for below code to execute
+	    auto start = std::chrono::high_resolution_clock::now();
         loadGameObjects();
+	    pScene.loadModels();
+	    std::cout << "loadGameObjects() took " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
 		pWindow.SetEventCallback(std::bind(&App::OnEvent, this, std::placeholders::_1));
         pInstance = this;
 	}
@@ -193,6 +193,7 @@ namespace ve
         static bool firstFrame = true;
 
         auto view = pScene.getComponentView<TagComponent>();
+		static std::string selectedEntity;
         if (firstFrame)
         {
             for (auto entity : view)
@@ -200,30 +201,36 @@ namespace ve
                 auto tag = view.get<TagComponent>(entity);
                 entity_names[tag.Tag] = entity;
             }
+			if(!entity_names.empty())
+				selectedEntity = entity_names.begin()->first;
             firstFrame = false;
         }
+		// select entity from list of entities, when there are no entities in the list, create a new one
+		if(entity_names.empty())
+		{
+		}
+		else
+		{
+			if (ImGui::BeginCombo("Objects", selectedEntity.c_str()))
+			{ // The second parameter is the label previewed before opening the combo.
+				for (auto& kv : entity_names)
+				{
+					bool is_selected = (selectedEntity
+						== kv.first); // You can store your selection however you want, outside or inside your objects
+					if (ImGui::Selectable(kv.first.c_str(), is_selected))
+						selectedEntity = kv.first;
+					if (is_selected)
+						ImGui::SetItemDefaultFocus(); // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
+				}
+				ImGui::EndCombo();
+			}
 
-        static std::string selectedEntity = entity_names.begin()->first;
-
-        if (ImGui::BeginCombo("Objects", selectedEntity.c_str()))
-        { // The second parameter is the label previewed before opening the combo.
-            for (auto &kv : entity_names)
-            {
-                bool is_selected = (selectedEntity == kv.first); // You can store your selection however you want, outside or inside your objects
-                if (ImGui::Selectable(kv.first.c_str(), is_selected))
-                    selectedEntity = kv.first;
-                if (is_selected)
-                    ImGui::SetItemDefaultFocus(); // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
-            }
-            ImGui::EndCombo();
-        }
-
-        auto &transform = pScene.getComponent<TransformComponent>(entity_names[selectedEntity]);
-        ImGui::DragFloat3("Position", &transform.translation.x, 0.1f);
-        ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.1f);
-        ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f);
-        ImGui::DragFloat("Roughness", &transform.roughness, 0.1f);
-
+			auto& transform = pScene.getComponent<TransformComponent>(entity_names[selectedEntity]);
+			ImGui::DragFloat3("Position", &transform.translation.x, 0.1f);
+			ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.1f);
+			ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f);
+			ImGui::DragFloat("Roughness", &transform.roughness, 0.1f);
+		}
         static auto modelNames = getModelNames();
 
         static auto &selectedModel = modelNames[0];
@@ -242,12 +249,15 @@ namespace ve
 
         if (ImGui::Button("Add Object"))
         {
-            // use addGameObject() to add a new object to the scene
-            auto [name, entity] = pScene.addEntity(selectedModel);
-            if(entity_names.find(name) != entity_names.end())
-                name = name + std::to_string(pScene.getEntityCount());
-            
-            entity_names[name] = entity;
+//             use addGameObject() to add a new object to the scene
+//			futures.emplace_back (std::async(std::launch::async, [&]()
+//			{
+			  auto [name, entity] = pScene.addEntity (selectedModel);
+			  if (entity_names.find (name) != entity_names.end ())
+				  name = name + std::to_string (pScene.getEntityCount ());
+			  entity_names[name] = entity;
+			  selectedEntity = name;
+//			}));
         }
 
     // ImGui::ColorPicker3("Sky Color", pScene.m_SkyColor);
@@ -273,9 +283,9 @@ void App::close_imgui()
 void App::OnEvent(Event &e)
 {
 	std::string event_name = e.toString();
-    #ifdef LOGGING
+    #if LOGGING_LEVEL == 0
 	LOG_INFO(event_name);
-    #endif // LOGGING
+    #endif // LOGGING_LEVEL
 }
 
 void App::run()
@@ -361,7 +371,7 @@ void App::run()
 
             // rendering
             pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
-            srs.renderGameObjects(frameInfo);
+	        srs.render (frameInfo);
             pls.render(frameInfo);
             render_imgui(frameInfo);
             pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
@@ -379,22 +389,24 @@ void App::loadGameObjects()
 
     auto vase = pScene.createEntity("Vase");
     pScene.addComponent<TransformComponent>(vase, glm::vec3(-.5f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
-    pScene.addComponent<MeshComponent>(vase, "smooth_vase.obj");
+    pScene.addComponent<MeshComponent>(vase, model_path + "smooth_vase.obj");
 
     auto pose = pScene.createEntity("Pose");
     pScene.addComponent<TransformComponent>(pose, glm::vec3(.2f, .5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.5f, 1.5f, 1.5f), 0.0f);
-    pScene.addComponent<MeshComponent>(pose, "pose.obj");
+    pScene.addComponent<MeshComponent>(pose, model_path + "pose.obj");
 
     auto floor = pScene.createEntity("Floor");
     pScene.addComponent<TransformComponent>(floor, glm::vec3(0.f, 0.5f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(10.f, 10.f, 10.f), 0.0f);
-    pScene.addComponent<MeshComponent>(floor, "floor.obj");
+    pScene.addComponent<MeshComponent>(floor, model_path + "floor.obj");
 
     for(int i = 0; i < 10; i++)
     {
         auto srad = pScene.createEntity("srad" + std::to_string(i));
-        pScene.addComponent<TransformComponent>(srad, glm::vec3((i - 15) / 2, 0, (i - 15) / 2));
-        pScene.addComponent<MeshComponent>(srad, "pose.obj");
+        pScene.addComponent<TransformComponent>(srad, glm::vec3((i - 15) / 4, 0, (i - 15) / 4));
+        pScene.addComponent<MeshComponent>(srad, model_path + "Srad 750.obj");
     }
+
+	pScene.addEntity("smooth_vase.obj");
 
     std::vector<glm::vec3> lightColors{
         {1.f, .1f, .1f},

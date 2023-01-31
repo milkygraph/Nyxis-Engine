@@ -38,22 +38,41 @@ namespace ve
 
         struct Builder
         {
+			Builder(std::string filepath) : filepath{filepath} {}
             std::vector<Vertex> vertices{};
             std::vector<uint32_t> indices{};
+			const std::string filepath;
 
-            void loadModel(const std::string& filepath);
+            void loadModel();
         };
 
-        veModel(const veModel::Builder &builder);
+        veModel(const std::string& filepath);
         ~veModel();
 
         veModel(const veModel &) = delete;
         veModel &operator=(const veModel &) = delete;
 
-        static std::shared_ptr<veModel> createModelFromFile(const std::string& filepath);
+//        static std::shared_ptr<veModel> createModelFromFile(const std::string& filepath);
+
+		bool loaded = false;
 
         void bind(VkCommandBuffer commandBuffer);
-        void draw(VkCommandBuffer commandBuffer);
+        void draw(VkCommandBuffer commandBuffer) const;
+		void loadModel();
+
+		static std::shared_ptr<veModel> CreateModel(const std::string& filepath)
+		{
+			if (models.find(filepath) == models.end())
+			{
+				models[filepath] = std::make_shared<veModel>(filepath);
+			    
+            }
+			return models[filepath];
+		}
+
+		using ModelMap = std::unordered_map<std::string, std::shared_ptr<veModel>>;
+
+		inline static ModelMap& GetModels() { return models; }
 
     private:
         void createVertexBuffers(const std::vector<Vertex> &vertices);
@@ -61,11 +80,13 @@ namespace ve
 
         bool hasIndexBuffer = false;
 
-        veDevice &device = veDevice::get();
+		Builder* builder = nullptr;
+		veDevice &device = veDevice::get();
         std::unique_ptr<veBuffer> vertexBuffer;
         uint32_t vertexCount;
 
         std::unique_ptr<veBuffer> indexBuffer;
         uint32_t indexCount;
-    };
+        static ModelMap models;
+	};
 }

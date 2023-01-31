@@ -552,6 +552,7 @@ namespace ve
 
     void veDevice::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
     {
+		std::unique_lock<std::mutex> lock(deviceGuard);
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
         VkBufferCopy copyRegion{};

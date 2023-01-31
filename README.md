@@ -45,8 +45,15 @@ To Build:
 ```
 
 ### Windows
+
+#### Install Dependencies
+- [Download and install MacOS Vulkan sdk](https://vulkan.lunarg.com/)
+- [Download and install CMake](https://cmake.org/download/)
+- [Install vcpkg]()
+
+### Windows
 #### Install Dependencies using vcpkg
-- [Download and install Vulkan sdk](https://vulkan.lunarg.com/) and [vcpkg](https://vcpkg.io) set path for glslc compiler from Vulkan sdk and vcpkg path in .env file
+- [Download and install Vulkan sdk](https://vulkan.lunarg.com/) and [vcpkg](https://vcpkg.io). Set path for glslc compiler from Vulkan sdk and vcpkg path in .env file
 
 - Install glfw:
  ```

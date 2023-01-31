@@ -66,8 +66,8 @@ namespace ve
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
         pipeline = std::make_unique<vePipeline>(
-            currentPath() + "/../shaders/point_light.vert.spv",
-            currentPath() + "/../shaders/point_light.frag.spv",
+            current_path + "/../shaders/point_light.vert.spv",
+            current_path + "/../shaders/point_light.frag.spv",
             pipelineConfig);
     }
 

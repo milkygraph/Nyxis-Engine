@@ -2,6 +2,7 @@
 
 #include "ve.hpp"
 #include <glm/glm.hpp>
+#include <vulkan/vulkan.hpp>
 #include "model.hpp"
 #include "path.hpp"
 
@@ -47,26 +48,23 @@ namespace ve
         glm::mat3 normalMatrix();
     };
 
-
-    static std::unordered_map<std::string, std::shared_ptr<veModel>> meshstuff();
-    struct MeshComponent
-    {
-        MeshComponent(std::string &modelName)
-        {
-            model = veModel::createModelFromFile(currentPath() + "/../models/" + modelName);
-        }
-
-        MeshComponent(std::string modelName)
-        {
-            model = veModel::createModelFromFile(currentPath() + "/../models/" + modelName);
-        }
-
-        std::shared_ptr<veModel> model;
-    };
-
-    struct PointLight
+	struct PointLight
     {
         glm::vec4 position{}; // ignore w
         glm::vec4 color{};    // w is intensity
+    };
+
+	class MeshComponent
+	{
+	public:
+		MeshComponent(const std::string& filepath)
+		{
+            model = veModel::CreateModel(filepath);
+        }
+		void draw(VkCommandBuffer commandBuffer)
+		{
+			model->draw(commandBuffer);
+		}
+		std::shared_ptr<veModel> model;
     };
 }

@@ -4,8 +4,6 @@
 
 namespace ve
 {
-    inline std::string currentPath()
-    {
-        return std::filesystem::current_path().std::filesystem::path::string();
-    }
+        const auto current_path = std::filesystem::current_path().std::filesystem::path::string();
+		const auto model_path = current_path + "/../models/";
 }
