@@ -1,13 +1,7 @@
 #pragma once
 #include "window.hpp"
 
-#include <string>
-#include <vector>
-#include <mutex>
-
-#include <imgui/imgui.h>
-#include <imgui/backends/imgui_impl_vulkan.h>
-#include <imgui/backends/imgui_impl_glfw.h>
+#include "vepch.hpp"
 
 namespace ve
 {

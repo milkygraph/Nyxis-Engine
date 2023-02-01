@@ -3,8 +3,7 @@
 #include "ve.hpp"
 #include "Events/event.hpp"
 
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
+#include "vepch.hpp"
 
 namespace ve
 {

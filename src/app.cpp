@@ -13,17 +13,7 @@
 #include "path.hpp"
 #include "Log.hpp"
 
-#include <chrono>
-#include <memory>
-#include <string>
-#include <algorithm>
-#include <filesystem>
-
-#include <utility>
-#include <vulkan/vulkan_core.h>
-#include <imgui/imgui.h>
-#include <imgui/backends/imgui_impl_vulkan.h>
-#include <imgui/backends/imgui_impl_glfw.h>
+#include "vepch.hpp"
 
 void ShowExampleAppDockSpace()
 {

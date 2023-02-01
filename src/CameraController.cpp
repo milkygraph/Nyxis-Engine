@@ -1,17 +1,11 @@
 #include "CameraController.hpp"
 #include "input.hpp"
 
-#include <GLFW/glfw3.h>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
 namespace ve
 {
 	void CameraController::processMouseMovement(float dt, veGameObject &gameObject)
 	{
-		if(Input::isMouseButtonPressed(MouseCodes::MouseButtonRight))
+		if(Input::isMouseButtonPressed(MouseCodes::MouseButtonLeft))
 		{
 			Input::setCursorMode(CursorMode::CursorDisabled);
 			glm::vec2 mousePosition = Input::getMousePosition();

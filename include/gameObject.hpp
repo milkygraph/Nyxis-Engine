@@ -3,10 +3,7 @@
 #include "model.hpp"
 #include "components.hpp"
 
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <memory>
-#include <unordered_map>
+#include "vepch.hpp"
 
 namespace ve
 {

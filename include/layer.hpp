@@ -1,5 +1,7 @@
 #pragma once
+
 #include "ve.hpp"
+#include "vepch.hpp"
 
 namespace ve
 {

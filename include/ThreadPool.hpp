@@ -1,10 +1,7 @@
 #pragma once
 #include "ve.hpp"
 
-#include <thread>
-#include <queue>
-#include <mutex>
-#include <condition_variable>
+#include "vepch.hpp"
 
 namespace ve
 {

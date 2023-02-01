@@ -7,8 +7,7 @@
 #include "pipeline.hpp"
 
 // std
-#include <memory>
-#include <vector>
+#include "vepch.hpp"
 
 namespace ve
 {

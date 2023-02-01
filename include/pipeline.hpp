@@ -1,9 +1,6 @@
 #pragma once
 #include "device.hpp"
-#include <vulkan/vulkan.hpp>
-#include <string>
-#include <vector>
-#include <vulkan/vulkan_core.h>
+#include "vepch.hpp"
 
 namespace ve
 {

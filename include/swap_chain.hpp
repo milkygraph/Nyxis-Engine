@@ -2,11 +2,7 @@
 
 #include "device.hpp"
 
-#include <vulkan/vulkan.h>
-
-#include <string>
-#include <vector>
-#include <memory>
+#include "vepch.hpp"
 
 namespace ve
 {

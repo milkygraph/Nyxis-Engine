@@ -1,12 +1,6 @@
 #pragma once
 
-
-
-#include <cstdint>
-#include <queue> 
-#include <bitset>
-#include <array>
-#include <cassert>
+#include "vepch.hpp"
 
 namespace ve
 {
