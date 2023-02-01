@@ -5,7 +5,7 @@ namespace ve
 {
 	void CameraController::processMouseMovement(float dt, veGameObject &gameObject)
 	{
-		if(Input::isMouseButtonPressed(MouseCodes::MouseButtonLeft))
+		if(Input::isMouseButtonPressed(MouseCodes::MouseButtonRight))
 		{
 			Input::setCursorMode(CursorMode::CursorDisabled);
 			glm::vec2 mousePosition = Input::getMousePosition();
@@ -31,10 +31,10 @@ namespace ve
 	    const glm::vec3 rightDir{forwardDir.z, 0.f, -forwardDir.x};
 	    const glm::vec3 upDir{0.f, -.5f, 0.f};
 
-	    if(Input::isKeyPressed(KeyCodes::LeftShift))
-		    moveSpeed = 5.f;
-	    else
-		    moveSpeed = 3.f;
+//	    if(Input::isKeyPressed(KeyCodes::LeftShift))
+//		    moveSpeed = 50.f;
+//	    else
+//		    moveSpeed = 30.f;
 
 	    glm::vec3 moveDir{0.f};
 	    if (Input::isKeyPressed(KeyCodes::W))

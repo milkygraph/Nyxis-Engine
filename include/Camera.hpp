@@ -28,6 +28,7 @@ namespace ve
         [[nodiscard]] const glm::mat4& getViewMatrix() const { return viewMatrix; }
         [[nodiscard]] const glm::mat4& getInverseViewMatrix() const { return inverseViewMatrix; }
 
+        CameraController& getCameraController() { return cameraController; }
     private:
 		veGameObject cameraObject = veGameObject::createGameObject();
 		CameraController cameraController;

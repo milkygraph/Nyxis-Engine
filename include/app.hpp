@@ -10,6 +10,7 @@
 #include "layer.hpp"
 #include "input.hpp"
 #include "Log.hpp"
+#include "ImguiLayer.hpp"
 
 #include "vepch.hpp"
 
@@ -38,9 +39,6 @@ namespace ve
 	    void OnEvent(Event& e);
 
         void run();
-        void init_imgui(VkCommandBuffer commandBuffer);
-        void render_imgui(FrameInfo& frameInfo);
-        static void close_imgui();
 
 		static veWindow& getWindow() { return pInstance->pWindow; }
 	    static veDevice& getDevice() { return pInstance->pDevice; }
@@ -57,6 +55,7 @@ namespace ve
         veWindow& pWindow = veWindow::get(WIDTH, HEIGHT, "Vulkan Engine");
         veDevice& pDevice = veDevice::get();
         veRenderer pRenderer{pScene};
+        ImguiLayer pImguiLayer{};
 
         // TODO: Create third(or first) person Player View
         // std::unique_ptr<veGameObject> Player;

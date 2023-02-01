@@ -15,380 +15,196 @@
 
 #include "vepch.hpp"
 
-void ShowExampleAppDockSpace()
-{
-	// this is a copy of the imgui demo code
-	bool p_open = true;
-	static bool opt_fullscreen = true;
-	static bool opt_padding = false;
-	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
+void ShowExampleAppDockSpace() {
+    // this is a copy of the imgui demo code
+    bool p_open = true;
+    static bool opt_fullscreen = true;
+    static bool opt_padding = false;
+    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
 
-	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-	// because it would be confusing to have two docking targets within each others.
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
-	if (opt_fullscreen)
-	{
-		const ImGuiViewport* viewport = ImGui::GetMainViewport();
-		ImGui::SetNextWindowPos(viewport->WorkPos);
-		ImGui::SetNextWindowSize(viewport->WorkSize);
-		ImGui::SetNextWindowViewport(viewport->ID);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize
-			| ImGuiWindowFlags_NoMove;
-		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-	}
-	else
-	{
-		dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
-	}
+    // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+    // because it would be confusing to have two docking targets within each others.
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
+    if (opt_fullscreen) {
+        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize
+                        | ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    } else {
+        dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
+    }
 
-	// When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
-	// and handle the pass-thru hole, so we ask Begin() to not render a background.
-	if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-		window_flags |= ImGuiWindowFlags_NoBackground;
+    // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
+    // and handle the pass-thru hole, so we ask Begin() to not render a background.
+    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+        window_flags |= ImGuiWindowFlags_NoBackground;
 
-	if (!opt_padding)
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-	ImGui::Begin("DockSpace Demo", &p_open, window_flags);
-	if (!opt_padding)
-		ImGui::PopStyleVar();
+    if (!opt_padding)
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("DockSpace Demo", &p_open, window_flags);
+    if (!opt_padding)
+        ImGui::PopStyleVar();
 
-	if (opt_fullscreen)
-		ImGui::PopStyleVar(2);
+    if (opt_fullscreen)
+        ImGui::PopStyleVar(2);
 
-	// Submit the DockSpace
-	ImGuiIO& io = ImGui::GetIO();
-	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-	{
-		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-	}
+    // Submit the DockSpace
+    ImGuiIO &io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) {
+        ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+    }
 
-	ImGui::End();
+    ImGui::End();
 }
 
-std::vector<std::string> getModelNames()
-{
-	std::vector<std::string> modelNames;
-	for (const auto& entry : std::filesystem::directory_iterator(ve::model_path))
-	{
-		modelNames.push_back(entry.path().filename().string());
-	}
-	return modelNames;
+std::vector<std::string> getModelNames() {
+    std::vector<std::string> modelNames;
+    for (const auto &entry: std::filesystem::directory_iterator(ve::model_path)) {
+        modelNames.push_back(entry.path().filename().string());
+    }
+    return modelNames;
 }
 
 namespace ve
 {
-	App* App::pInstance = nullptr;
-	App::App()
-	{
-		globalPool = veDescriptorPool::Builder()
-			.setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
-			.build();
-		// calculate the time it takes for below code to execute
-		auto start = std::chrono::high_resolution_clock::now();
-		loadGameObjects();
-		pScene.loadModels();
-		std::cout << "loadGameObjects() took " << std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
-		pWindow.SetEventCallback(std::bind(&App::OnEvent, this, std::placeholders::_1));
-		pInstance = this;
-	}
+    App *App::pInstance = nullptr;
 
-	App::~App() = default;
+    App::App() {
+        globalPool = veDescriptorPool::Builder()
+                .setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
+                .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
+                .build();
+        // calculate the time it takes for below code to execute
+        auto start = std::chrono::high_resolution_clock::now();
+        loadGameObjects();
+        pScene.loadModels();
+        std::cout << "loadGameObjects() took " << std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
+        pWindow.SetEventCallback(std::bind(&App::OnEvent, this, std::placeholders::_1));
+        pInstance = this;
+    }
 
-	void App::init_imgui(VkCommandBuffer commandBuffer)
-	{
-		// 1: create descriptor pool for IMGUI
-		//  the size of the pool is very oversize, but it's copied from imgui demo itself.
+    App::~App() = default;
 
-		imguiPool = veDescriptorPool::Builder()
-			.addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000)
-			.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
-			.setMaxSets(1000)
-			.build();
-
-		// 2: initialize imgui library
-
-		// this initializes the core structures of imgui
-		ImGui::CreateContext();
-		ImGuiIO* IO = &ImGui::GetIO();
-		IO->WantCaptureMouse = true;
-		IO->WantCaptureKeyboard = true;
-		IO->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable  Docking
-		IO->ConfigDockingWithShift = true;
-		ImGui::StyleColorsDark();
-
-		ImGui_ImplGlfw_InitForVulkan(pWindow.getGLFWwindow(), true);
-
-		ImGui_ImplVulkan_InitInfo init_info = {};
-
-		pDevice.createImGuiInitInfo(init_info);
-		init_info.DescriptorPool = imguiPool->getDescriptorPool();
-
-		ImGui_ImplVulkan_Init(&init_info, pRenderer.getSwapChainRenderPass());
-
-		// execute a gpu command to upload imgui font textures
-		// immediate_submit([&](VkCommandBuffer cmd)
-		//                  { ImGui_ImplVulkan_CreateFontsTexture(cmd); });
-
-		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-
-		// clear font textures from cpu data
-
-		// vkDestroyDescriptorPool(pDevice.device(), imguiPool->getDescriptorPool(), nullptr);
-
-		ImVec4* colors = ImGui::GetStyle().Colors;
-		colors[ImGuiCol_WindowBg] = ImVec4(0.00f, 0.00f, 0.02f, 1.00f);
-		colors[ImGuiCol_FrameBg] = ImVec4(0.28f, 0.42f, 0.62f, 0.54f);
-		colors[ImGuiCol_PopupBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.94f);
-		colors[ImGuiCol_TitleBgActive] = ImVec4(0.12f, 0.22f, 0.36f, 1.00f);
-		colors[ImGuiCol_FrameBgHovered] = ImVec4(0.09f, 0.11f, 0.14f, 0.40f);
-		colors[ImGuiCol_TitleBg] = ImVec4(0.06f, 0.06f, 0.09f, 1.00f);
-
-		ImGui::GetStyle().WindowBorderSize = 0.0f;
-		ImGui::GetStyle().FrameBorderSize = 0.0f;
-		ImGui::GetStyle().PopupBorderSize = 0.0f;
-		ImGui::GetStyle().ChildBorderSize = 0.0f;
-		ImGui::GetStyle().FrameRounding = 5;
-		ImGui::GetStyle().WindowRounding = 5;
-		ImGui::GetStyle().PopupRounding = 5;
-		ImGui::GetStyle().ChildRounding = 5;
-	}
-
-	// TODO: Fix object adding functionality
-	// TODO: Create abstraction layer for ImGui
-	void App::render_imgui(FrameInfo& frameInfo)
-	{
-		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-
-		ShowExampleAppDockSpace();
-
-		ImGui::Begin("Object"); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-
-		static std::unordered_map<std::string, Entity> entity_names;
-
-		static bool firstFrame = true;
-
-		auto view = pScene.getComponentView<TagComponent>();
-		static std::string selectedEntity;
-		if (firstFrame)
-		{
-			for (auto entity : view)
-			{
-				auto tag = view.get<TagComponent>(entity);
-				entity_names[tag.Tag] = entity;
-			}
-			if (!entity_names.empty())
-				selectedEntity = entity_names.begin()->first;
-			firstFrame = false;
-		}
-		// select entity from list of entities, when there are no entities in the list, create a new one
-		if (entity_names.empty())
-		{
-		}
-		else
-		{
-			if (ImGui::BeginCombo("Objects", selectedEntity.c_str()))
-			{ // The second parameter is the label previewed before opening the combo.
-				for (auto& kv : entity_names)
-				{
-					bool is_selected = (selectedEntity
-						== kv.first); // You can store your selection however you want, outside or inside your objects
-					if (ImGui::Selectable(kv.first.c_str(), is_selected))
-						selectedEntity = kv.first;
-					if (is_selected)
-						ImGui::SetItemDefaultFocus(); // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
-				}
-				ImGui::EndCombo();
-			}
-
-			auto& transform = pScene.getComponent<TransformComponent>(entity_names[selectedEntity]);
-			ImGui::DragFloat3("Position", &transform.translation.x, 0.1f);
-			ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.1f);
-			ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f);
-			ImGui::DragFloat("Roughness", &transform.roughness, 0.1f);
-		}
-		static auto modelNames = getModelNames();
-
-		static auto& selectedModel = modelNames[0];
-		if (ImGui::BeginCombo("Models", selectedModel.c_str()))
-		{ // The second parameter is the label previewed before opening the combo.
-			for (auto& model : modelNames)
-			{
-				bool is_selected = (selectedModel
-					== model); // You can store your selection however you want, outside or inside your objects
-				if (ImGui::Selectable(model.c_str(), is_selected))
-					selectedModel = model;
-				if (is_selected)
-					ImGui::SetItemDefaultFocus(); // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
-			}
-			ImGui::EndCombo();
-		}
-
-		if (ImGui::Button("Add Object"))
-		{
-			auto [name, entity] = pScene.addEntity(selectedModel);
-			if (entity_names.find(name) != entity_names.end())
-				name = name + std::to_string(pScene.getEntityCount());
-			entity_names[name] = entity;
-			selectedEntity = name;
-		}
-
-		ImGui::End();
-
-		ImGui::Begin("Statistics");
-		ImGui::Text("Entity Count: %d", pScene.getEntityCount());
-		ImGui::Text("Frame Time: %fms", frameInfo.frameTime);
-		ImGui::End();
-
-		ImGui::Render();
-		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
-	}
-
-	void App::close_imgui()
-	{
-		ImGui_ImplVulkan_Shutdown();
-		ImGui_ImplGlfw_Shutdown();
-		ImGui::DestroyContext();
-	}
-
-	void App::OnEvent(Event& e)
-	{
-		std::string event_name = e.toString();
+    void App::OnEvent(Event &e) {
+        std::string event_name = e.toString();
 #if LOGGING_LEVEL == 0
-		LOG_INFO(event_name);
+        LOG_INFO(event_name);
 #endif // LOGGING_LEVEL
-	}
+    }
 
-	void App::run()
-	{
-		std::vector<std::unique_ptr<veBuffer>> uboBuffers(veSwapChain::MAX_FRAMES_IN_FLIGHT);
-		for (auto & uboBuffer : uboBuffers)
-		{
-			uboBuffer = std::make_unique<veBuffer>(
-				sizeof(GlobalUbo),
-				1,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-			uboBuffer->map();
-		}
+    void App::run() {
+        std::vector<std::unique_ptr<veBuffer>> uboBuffers(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for (auto &uboBuffer: uboBuffers) {
+            uboBuffer = std::make_unique<veBuffer>(
+                    sizeof(GlobalUbo),
+                    1,
+                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+            uboBuffer->map();
+        }
 
-		auto globalSetLayout = veDescriptorSetLayout::Builder()
-			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
-			.build();
+        auto globalSetLayout = veDescriptorSetLayout::Builder()
+                .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+                .build();
 
-		std::vector<VkDescriptorSet> globalDescriptorSets(veSwapChain::MAX_FRAMES_IN_FLIGHT);
-		for (int i = 0; i < globalDescriptorSets.size(); i++)
-		{
-			auto bufferInfo = uboBuffers[i]->descriptorInfo();
-			veDescriptorWriter(*globalSetLayout, *globalPool)
-				.writeBuffer(0, &bufferInfo)
-				.build(globalDescriptorSets[i]);
-		}
+        std::vector<VkDescriptorSet> globalDescriptorSets(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+        for (int i = 0; i < globalDescriptorSets.size(); i++) {
+            auto bufferInfo = uboBuffers[i]->descriptorInfo();
+            veDescriptorWriter(*globalSetLayout, *globalPool)
+                    .writeBuffer(0, &bufferInfo)
+                    .build(globalDescriptorSets[i]);
+        }
 
-		SimpleRenderSystem srs{ pRenderer.getSwapChainRenderPass(),
-		                        globalSetLayout->getDescriptorSetLayout() }; // srs - simpleRenderSystem
+        SimpleRenderSystem srs{pRenderer.getSwapChainRenderPass(),
+                               globalSetLayout->getDescriptorSetLayout()}; // srs - simpleRenderSystem
 		PointLightSystem pls{ pRenderer.getSwapChainRenderPass(),
 		                      globalSetLayout->getDescriptorSetLayout() };   // pls - pointLightSystem
 
-		Camera Camera({0, -1, -2.5});
+        Camera Camera({0, -1, -2.5});
 
-		auto currentTime = std::chrono::high_resolution_clock::now();
+        auto currentTime = std::chrono::high_resolution_clock::now();
 
-		bool firstFrame = true;
+        bool firstFrame = true;
 
-		while (!pWindow.shouldClose())
-		{
-			glfwPollEvents();
-			auto newTime = std::chrono::high_resolution_clock::now();
-			float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
-			currentTime = newTime;
+        pImguiLayer.AddFunction([&]() {
+            //
+            ImGui::Begin("Statistics");
+            ImGui::Text("Entity Count: %d", pScene.getEntityCount());
+            ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+            ImGui::End();
+        });
 
-			float aspect = pRenderer.getAspectRatio();
+        pImguiLayer.AddFunction([&]() {
+            ImGui::Begin("Camera");
+            ImGui::DragFloat("Move Speed", &Camera.getCameraController().moveSpeed, 0.1f);
+            ImGui::End();
+        });
 
-			Camera.setPerspectiveProjection(glm::radians(60.f), aspect, 0.01f, 20.f);
+        pImguiLayer.AddEntityLoader(pScene);
 
-			if (auto commandBuffer = pRenderer.beginFrame())
-			{
-				if (firstFrame)
-				{
-					init_imgui(commandBuffer);
-					firstFrame = false;
-				}
+        auto commandBuffer = pRenderer.beginFrame();
+        pImguiLayer.init(pRenderer.getSwapChainRenderPass(), commandBuffer);
+        pRenderer.beginSwapChainRenderPass(commandBuffer);
+        pRenderer.endSwapChainRenderPass(commandBuffer);
+        pRenderer.endFrame();
 
-				int frameIndex = pRenderer.getFrameIndex();
-				FrameInfo frameInfo
-					{ frameIndex, frameTime, commandBuffer, Camera, globalDescriptorSets[frameIndex], gameObjects,
-					  pScene, 0 };
+        while (!pWindow.shouldClose()) {
+            glfwPollEvents();
+            auto newTime = std::chrono::high_resolution_clock::now();
+            float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+            currentTime = newTime;
+            commandBuffer = pRenderer.beginFrame();
 
-				// updating Camera
-				Camera.OnUpdate(frameInfo.frameTime);
 
-				// updating buffers
-				GlobalUbo ubo{};
-				ubo.projection = Camera.getProjectionMatrix();
-				ubo.view = Camera.getViewMatrix();
-				ubo.inverseViewMatrix = Camera.getInverseViewMatrix();
-				pls.update(frameInfo, ubo);
-				uboBuffers[frameIndex]->writeToBuffer(&ubo);
-				uboBuffers[frameIndex]->flush();
+            float aspect = pRenderer.getAspectRatio();
 
-				// rendering
-				pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
-				srs.render(frameInfo);
-				pls.render(frameInfo);
-				render_imgui(frameInfo);
-				pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
-				pRenderer.endFrame();
+            Camera.setPerspectiveProjection(glm::radians(60.f), aspect, 0.01f, 1000.f);
 
-			}
-		}
+            int frameIndex = pRenderer.getFrameIndex();
+            FrameInfo frameInfo
+                    {frameIndex, frameTime, commandBuffer, Camera, globalDescriptorSets[frameIndex], gameObjects,
+                     pScene, 0};
 
-		vkDeviceWaitIdle(pDevice.device());
-		close_imgui();
-	}
+            // updating Camera
+            Camera.OnUpdate(frameInfo.frameTime);
 
-	void App::loadGameObjects()
-	{
+            // updating buffers
+            GlobalUbo ubo{};
+            ubo.projection = Camera.getProjectionMatrix();
+            ubo.view = Camera.getViewMatrix();
+            ubo.inverseViewMatrix = Camera.getInverseViewMatrix();
+            pls.update(frameInfo, ubo);
+            uboBuffers[frameIndex]->writeToBuffer(&ubo);
+            uboBuffers[frameIndex]->flush();
 
-		auto vase = pScene.createEntity("Vase");
-		pScene.addComponent<TransformComponent>(vase,
-			glm::vec3(-.5f, .5f, 0.f),
-			glm::vec3(.0f, .0f, 0.0f),
-			glm::vec3(1.5f, 1.5f, 1.5f),
-			0.0f);
-		pScene.addComponent<MeshComponent>(vase, model_path + "smooth_vase.obj");
+            // rendering
+            pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
+            srs.render(frameInfo);
+            pls.render(frameInfo);
+            pImguiLayer.OnUpdate(frameInfo);
+            pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
+            pRenderer.endFrame();
+        }
 
+        vkDeviceWaitIdle(pDevice.device());
+    }
+
+    void App::loadGameObjects()
+    {
 		auto pose = pScene.createEntity("Pose");
 		pScene.addComponent<TransformComponent>(pose,
 			glm::vec3(.2f, .5f, 0.f),
 			glm::vec3(.0f, .0f, 0.0f),
 			glm::vec3(1.5f, 1.5f, 1.5f),
 			0.0f);
-		pScene.addComponent<MeshComponent>(pose, model_path + "pose.obj");
-
-		auto floor = pScene.createEntity("Floor");
-		pScene.addComponent<TransformComponent>(floor,
-			glm::vec3(0.f, 0.5f, 0.f),
-			glm::vec3(.0f, .0f, 0.0f),
-			glm::vec3(10.f, 10.f, 10.f),
-			0.0f);
-		pScene.addComponent<MeshComponent>(floor, model_path + "floor.obj");
+		pScene.addComponent<MeshComponent>(pose, model_path + "Srad 750.obj");
 
 		std::vector<glm::vec3> lightColors{
 			{ 1.f, .1f, .1f },
@@ -409,5 +225,5 @@ namespace ve
 			pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
 			gameObjects.emplace(pointLight.getId(), std::move(pointLight));
 		}
-	}
+    }
 } // namespace ve
