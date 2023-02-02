@@ -17,7 +17,14 @@ namespace ve
 
 			gameObject.transform.rotation.x = glm::clamp(gameObject.transform.rotation.x, -glm::half_pi<float>(), glm::half_pi<float>());
 			gameObject.transform.rotation.y = glm::mod(gameObject.transform.rotation.y, glm::two_pi<float>());
-		}
+
+            float yaw = gameObject.transform.rotation.y;
+            ForwardDir = {sin(yaw), 0.f, cos(yaw)};
+            RightDir = {ForwardDir.z, 0.f, -ForwardDir.x};
+            UpDir = {0.f, -1.f, 0.f};
+
+            moveInPlaneXZ(dt, gameObject);
+        }
 		else
 		{
 			Input::setCursorMode(CursorMode::CursorNormal);
@@ -26,29 +33,20 @@ namespace ve
 	}
     void CameraController::moveInPlaneXZ(float dt, veGameObject &gameObject)
     {
-	    float yaw = gameObject.transform.rotation.y;
-	    const glm::vec3 forwardDir{sin(yaw), 0.f, cos(yaw)};
-	    const glm::vec3 rightDir{forwardDir.z, 0.f, -forwardDir.x};
-	    const glm::vec3 upDir{0.f, -.5f, 0.f};
-
-//	    if(Input::isKeyPressed(KeyCodes::LeftShift))
-//		    moveSpeed = 50.f;
-//	    else
-//		    moveSpeed = 30.f;
 
 	    glm::vec3 moveDir{0.f};
 	    if (Input::isKeyPressed(KeyCodes::W))
-		    moveDir += forwardDir;
+		    moveDir += ForwardDir;
 	    if (Input::isKeyPressed(KeyCodes::S))
-		    moveDir -= forwardDir;
+		    moveDir -= ForwardDir;
 	    if (Input::isKeyPressed(KeyCodes::D))
-		    moveDir += rightDir;
+		    moveDir += RightDir;
 	    if (Input::isKeyPressed(KeyCodes::A))
-		    moveDir -= rightDir;
+		    moveDir -= RightDir;
 	    if (Input::isKeyPressed(KeyCodes::E))
-		    moveDir += upDir;
+		    moveDir += UpDir;
 	    if (Input::isKeyPressed(KeyCodes::Q))
-		    moveDir -= upDir;
+		    moveDir -= UpDir;
 
 	    if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon())
 	    {

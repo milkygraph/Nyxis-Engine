@@ -14,9 +14,13 @@ namespace ve
     public:
 	    void processMouseMovement(float dt, veGameObject &gameObject);
         void moveInPlaneXZ(float dt, veGameObject &gameObject);
-        float moveSpeed{30.f};
+        float moveSpeed{10.f};
     private:
-		glm::vec2 lastMousePosition{0.f};
+		glm::vec3 ForwardDir = {0.f, 0.f, 1.f};
+        glm::vec3 RightDir = {1.f, 0.f, 0.f};
+        glm::vec3 UpDir = {0.f, 1.f, 0.f};
+
+        glm::vec2 lastMousePosition{0.f};
         float lookSpeed{1.5f};
 		float rotationSpeed = 0.002f;
     };

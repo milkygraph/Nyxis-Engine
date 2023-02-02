@@ -8,7 +8,7 @@ namespace ve
 	void Camera::OnUpdate(float dt)
 	{
 		cameraController.processMouseMovement(dt, cameraObject);
-		cameraController.moveInPlaneXZ(dt, cameraObject);
+//		cameraController.moveInPlaneXZ(dt, cameraObject);
 		setViewYXZ(cameraObject.transform.translation, cameraObject.transform.rotation);
 	}
 
