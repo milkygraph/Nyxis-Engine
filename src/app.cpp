@@ -157,9 +157,9 @@ namespace ve
 
             // rendering
             pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
-	        trs.Render(frameInfo);
             srs.render(frameInfo);
             pls.render(frameInfo);
+	        trs.Render(frameInfo);
             pImguiLayer.OnUpdate(frameInfo);
             pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
             pRenderer.endFrame();

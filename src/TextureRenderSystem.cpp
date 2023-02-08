@@ -6,6 +6,7 @@ namespace ve
 	struct TexturePushConstantData {
 		glm::mat4 modelMatrix{1.f};
 		glm::mat4 normalMatrix{1.f};
+		float roughness{0.0f};
 	};
 
 	TextureRenderSystem::TextureRenderSystem(VkRenderPass RenderPass, VkDescriptorSetLayout globalDescriptorSetLayout)
@@ -62,6 +63,7 @@ namespace ve
 				  TexturePushConstantData push{};
 				  push.modelMatrix = transform.mat4 ();
 				  push.normalMatrix = transform.normalMatrix ();
+				  push.roughness = transform.roughness;
 
 				  vkCmdPushConstants (
 					  frameInfo.commandBuffer,
