@@ -62,6 +62,8 @@ namespace ve
 
         std::unique_ptr<veDescriptorPool> globalPool{};
         std::unique_ptr<veDescriptorPool> imguiPool{};
+		std::vector<std::unique_ptr<veDescriptorPool>> texturePool{};
+
         veGameObject::Map gameObjects;
 
         Scene pScene{};

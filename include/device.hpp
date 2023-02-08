@@ -78,7 +78,8 @@ namespace ve
 
         VkPhysicalDeviceProperties properties;
 
-        void createImGuiInitInfo(ImGui_ImplVulkan_InitInfo &init_info);
+		void generateMipmaps(VkImage& image, VkFormat& imageFormat, int32_t& texWidth, int32_t& texHeight, uint32_t& mipLevels);
+		void createImGuiInitInfo(ImGui_ImplVulkan_InitInfo &init_info);
 
     private:
 		static veDevice* pInstance;

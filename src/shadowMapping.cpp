@@ -87,7 +87,7 @@
 // 		VkDescriptorSet debug;
 // 	} descriptorSets;
 
-// 	VkDescriptorSetLayout descriptorSetLayout;
+// 	VkDescriptorSetLayout TextureSetLayout;
 
 // 	// Framebuffer for offscreen rendering
 // 	struct FrameBufferAttachment {
@@ -138,7 +138,7 @@
 
 // 		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 
-// 		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+// 		vkDestroyDescriptorSetLayout(device, TextureSetLayout, nullptr);
 
 // 		// Uniform buffers
 // 		uniformBuffers.offscreen.destroy();
@@ -399,8 +399,8 @@
 // 			vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)
 // 		};
 // 		VkDescriptorSetLayoutCreateInfo descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
-// 		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &descriptorSetLayout));
-// 		VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(&descriptorSetLayout, 1);
+// 		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &TextureSetLayout));
+// 		VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(&TextureSetLayout, 1);
 // 		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout));
 // 	}
 
@@ -416,7 +416,7 @@
 // 		        VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
 
 // 		// Debug display
-// 		VkDescriptorSetAllocateInfo allocInfo = vks::initializers::descriptorSetAllocateInfo(descriptorPool, &descriptorSetLayout, 1);
+// 		VkDescriptorSetAllocateInfo allocInfo = vks::initializers::descriptorSetAllocateInfo(descriptorPool, &TextureSetLayout, 1);
 // 		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.debug));
 // 		writeDescriptorSets = {
 // 			// Binding 0 : Parameters uniform buffer

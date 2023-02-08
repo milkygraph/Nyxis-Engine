@@ -10,6 +10,7 @@
 #include "frameInfo.hpp"
 #include "simpleRenderSystem.hpp"
 #include "pointLightSystem.hpp"
+#include "TextureRenderSystem.hpp"
 #include "path.hpp"
 #include "Log.hpp"
 
@@ -31,7 +32,20 @@ namespace ve
         globalPool = veDescriptorPool::Builder()
                 .setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
                 .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
+	            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
                 .build();
+
+		texturePool.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+	    auto framePoolBuilder = veDescriptorPool::Builder()
+		    .setMaxSets(1000)
+		    .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
+		    .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
+		    .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
+
+	    for (auto & pool : texturePool) {
+		    pool = framePoolBuilder.build();
+	    }
+
         // calculate the time it takes for below code to execute
         auto start = std::chrono::high_resolution_clock::now();
         loadGameObjects();
@@ -64,6 +78,7 @@ namespace ve
 
         auto globalSetLayout = veDescriptorSetLayout::Builder()
                 .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+				.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
                 .build();
 
         std::vector<VkDescriptorSet> globalDescriptorSets(veSwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -74,10 +89,13 @@ namespace ve
                     .build(globalDescriptorSets[i]);
         }
 
+
         SimpleRenderSystem srs{pRenderer.getSwapChainRenderPass(),
                                globalSetLayout->getDescriptorSetLayout()}; // srs - simpleRenderSystem
 		PointLightSystem pls{ pRenderer.getSwapChainRenderPass(),
 		                      globalSetLayout->getDescriptorSetLayout() };   // pls - pointLightSystem
+		TextureRenderSystem trs{ pRenderer.getSwapChainRenderPass(),
+		                         globalSetLayout->getDescriptorSetLayout() }; // trs - textureRenderSystem
 
         Camera Camera({0, -1, -2.5});
 
@@ -120,8 +138,9 @@ namespace ve
             Camera.setPerspectiveProjection(glm::radians(60.f), aspect, 0.01f, 1000.f);
 
             int frameIndex = pRenderer.getFrameIndex();
+			texturePool[frameIndex]->resetPool();
             FrameInfo frameInfo
-                    {frameIndex, frameTime, commandBuffer, Camera, globalDescriptorSets[frameIndex], gameObjects,
+                    {frameIndex, frameTime, commandBuffer, Camera, globalDescriptorSets[frameIndex], *texturePool[frameIndex], gameObjects,
                      pScene, 0};
 
             // updating Camera
@@ -138,6 +157,7 @@ namespace ve
 
             // rendering
             pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
+	        trs.Render(frameInfo);
             srs.render(frameInfo);
             pls.render(frameInfo);
             pImguiLayer.OnUpdate(frameInfo);
@@ -156,9 +176,20 @@ namespace ve
 			glm::vec3(.0f, .0f, 0.0f),
 			glm::vec3(1.5f, 1.5f, 1.5f),
 			0.0f);
-		pScene.addComponent<MeshComponent>(pose, model_path + "Srad 750.obj");
+		pScene.addComponent<MeshComponent>(pose, model_path + "pose.obj");
+		pScene.addComponent<Texture>(pose, "../textures/man.jpg");
 
-		std::vector<glm::vec3> lightColors{
+	    auto floor = pScene.createEntity("Floor");
+	    pScene.addComponent<TransformComponent>(floor,
+		    glm::vec3(.2f, .5f, 0.f),
+		    glm::vec3(.0f, .0f, 0.0f),
+		    glm::vec3(1.5f, 1.5f, 1.5f),
+		    0.0f);
+	    pScene.addComponent<MeshComponent>(floor, model_path + "floor.obj");
+	    pScene.addComponent<Texture>(floor, "../textures/pavement.jpg");
+
+
+	    std::vector<glm::vec3> lightColors{
 			{ 1.f, .1f, .1f },
 			{ .1f, .1f, 1.f },
 			{ .1f, 1.f, .1f },

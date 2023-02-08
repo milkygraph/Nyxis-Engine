@@ -30,6 +30,7 @@ namespace ve
         VkCommandBuffer commandBuffer;
         Camera &camera;
         VkDescriptorSet globalDescriptorSet;
+		veDescriptorPool& TexturePool;
         veGameObject::Map &gameObjects;
         Scene& scene;
         int fps;

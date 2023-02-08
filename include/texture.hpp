@@ -1,36 +1,43 @@
 #pragma once
 #include "device.hpp"
+#include "buffer.hpp"
+#include "descriptors.hpp"
+#include "swap_chain.hpp"
+
 #include <vulkan/vulkan_core.h>
 
-//createImageViews gonna be implemented to texture.cpp later
-//cleanup for the createTextureImageView and CreatTextureSampler gonna be implemented later
 namespace ve{
-    class veTexture
-    {
-        // Vulkan Texture Class
-        // This class is used to load textures into the Vulkan API
-        // It is used to load textures from files and create Vulkan textures from them
 
-        public:
-            veTexture();
-            ~veTexture();
+	class Texture
+	{
+	public:
+		explicit Texture(const std::string& filepath);
+		~Texture();
 
-            void loadTexture(std::string& filename);
-            void createTextureImageView();
-            void createTextureSampler();
-            void createImage();
-            VkImageView createImageView();
-            void createImageViews();
+		Texture(const Texture&) = delete;
+		Texture& operator=(const Texture&) = delete;
+		Texture(Texture&&) = delete;
+		Texture& operator=(Texture&&) = delete;
 
-            VkImage textureImage;
-            VkDeviceMemory textureImageMemory;
-            VkImageView textureImageView;
-            VkSampler textureSampler;
-            int texWidth;
-            int texHeight;
-            int texChannels;
-        private:
-            veDevice& device = veDevice::get();
-    };
+		void ChangeImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
+		VkDescriptorImageInfo GetDescriptorImageInfo() const { return descriptorImageInfo; }
 
+	private:
+		veDevice& device = veDevice::get();
+		int texWidth = 0;
+		int texHeight = 0;
+		int texChannels = 0;
+		int bytesPerPixel = 0;
+		uint32_t mipLevels = 0;
+
+		VkImage textureImage = VK_NULL_HANDLE;
+		VkDeviceMemory textureImageMemory = VK_NULL_HANDLE;
+		VkImageView textureImageView = VK_NULL_HANDLE;
+		VkSampler textureSampler = VK_NULL_HANDLE;
+		VkDescriptorImageInfo descriptorImageInfo = {};
+
+		VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+
+		VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	};
 }
