@@ -55,7 +55,12 @@ void main() {
     blinnTerm = pow(blinnTerm, 512.0); // higher values -> sharper highlight
     specularLight += intensity * blinnTerm;
   }
+  vec4 color = texture(diffuseMap, fragUv);
 
-  vec3 color = texture(diffuseMap, fragUv).xyz;
-  outColor = vec4(diffuseLight * color + specularLight * fragColor * (1 - push.roughness), 1.0);
+  float alphaTreshold = 0.5;
+    if (color.a < alphaTreshold) {
+        discard;
+    }
+
+  outColor = vec4(diffuseLight * color.xyz + specularLight * fragColor * (1 - push.roughness), 1.0);
 }
