@@ -39,7 +39,7 @@ namespace ve
 		return {name, entity};
     }
 
-	void Scene::loadModels()
+	void Scene::LoadModels()
 	{
 		auto& models = veModel::GetModels();
 
@@ -53,5 +53,14 @@ namespace ve
 		{
             pool.enqueue([&]() { model.second->loadModel(); });
 		}
+	}
+	void Scene::OnUpdate(float dt, float aspect, bool projection)
+	{
+		if(projection)
+			m_Camera->setPerspectiveProjection(glm::radians(45.0f), aspect, 0.1f, 1000.0f);
+		else
+			m_Camera->setOrthographicProjection(-aspect, aspect, -1.0f, 1.0f, 0.1f, 1000.0f);
+
+		m_Camera->OnUpdate(dt);
 	}
 } // namespace ve

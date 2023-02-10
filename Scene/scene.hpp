@@ -1,6 +1,7 @@
 #pragma once
 #include "ve.hpp"
 #include "components.hpp"
+#include "Camera.hpp"
 
 #include <entt/entt.hpp>
 
@@ -20,7 +21,12 @@ namespace ve
     class Scene
     {
     public:
-        Scene() {}
+        Scene()
+		{
+			m_CameraEntity = createEntity("Camera");
+			auto& transform = addComponent<TransformComponent>(m_CameraEntity);
+			m_Camera = new Camera(transform);
+		}
         ~Scene();
 
         Entity createEntity(const std::string &name);
@@ -67,12 +73,16 @@ namespace ve
 			return m_Registry.view<Comps...>();
         }
 
-		void loadModels();
+		void OnUpdate(float dt, float aspect, bool projection);
+		void LoadModels();
+		Camera *GetCamera() { return m_Camera; }
 
         float m_SkyColor[3] = {0.0f, 0.0f, 0.0f};
         Registry m_Registry;
 
     private:
+		Camera* m_Camera = nullptr;
+		Entity m_CameraEntity = entt::null;
         uint32_t m_EntityCount = 0;
         std::atomic_int m_loadingEntity = 0;
         veDevice &device = veDevice::get();

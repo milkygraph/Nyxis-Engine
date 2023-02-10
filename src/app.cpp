@@ -49,7 +49,7 @@ namespace ve
         // calculate the time it takes for below code to execute
         auto start = std::chrono::high_resolution_clock::now();
         loadGameObjects();
-        pScene.loadModels();
+	    pScene.LoadModels();
         std::cout << "loadGameObjects() took " << std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
         pWindow.SetEventCallback(std::bind(&App::OnEvent, this, std::placeholders::_1));
@@ -100,7 +100,6 @@ namespace ve
 	    auto cameraEntity = pScene.createEntity("Camera");
 		auto& transform = pScene.addComponent<TransformComponent>(cameraEntity, glm::vec3{0, -1, -2.5});
 
-        Camera Camera(transform);
 
         auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -114,19 +113,17 @@ namespace ve
             ImGui::End();
         });
 
-        pImguiLayer.AddFunction([&]() {
+        pImguiLayer.AddFunction([&CameraController = pScene.GetCamera()->getCameraController()]() {
             ImGui::Begin("Camera");
-            ImGui::DragFloat("Move Speed", &Camera.getCameraController().moveSpeed, 0.1f);
+            ImGui::DragFloat("Move Speed", &(CameraController.moveSpeed), 0.1f);
             ImGui::End();
         });
 
         pImguiLayer.AddEntityLoader(pScene);
 
-        auto commandBuffer = pRenderer.beginFrame();
-        pImguiLayer.init(pRenderer.getSwapChainRenderPass(), commandBuffer);
-        pRenderer.beginSwapChainRenderPass(commandBuffer);
-        pRenderer.endSwapChainRenderPass(commandBuffer);
-        pRenderer.endFrame();
+		auto commandBuffer = pDevice.beginSingleTimeCommands();
+		pImguiLayer.init(pRenderer.getSwapChainRenderPass(), commandBuffer);
+		pDevice.endSingleTimeCommands(commandBuffer);
 
         while (!pWindow.shouldClose()) {
             glfwPollEvents();
@@ -135,10 +132,7 @@ namespace ve
             currentTime = newTime;
             commandBuffer = pRenderer.beginFrame();
 
-
             float aspect = pRenderer.getAspectRatio();
-
-            Camera.setPerspectiveProjection(glm::radians(60.f), aspect, 0.01f, 1000.f);
 
             int frameIndex = pRenderer.getFrameIndex();
 			texturePool[frameIndex]->resetPool();
@@ -146,18 +140,18 @@ namespace ve
                     {frameIndex, frameTime, commandBuffer, globalDescriptorSets[frameIndex], *texturePool[frameIndex], gameObjects, pScene};
 
             // updating Camera
-            Camera.OnUpdate(frameInfo.frameTime);
+			pScene.OnUpdate(frameInfo.frameTime, aspect, true);
 
-            // updating buffers
+            // updating buffers TODO move to scene update
             GlobalUbo ubo{};
-            ubo.projection = Camera.getProjectionMatrix();
-            ubo.view = Camera.getViewMatrix();
-            ubo.inverseViewMatrix = Camera.getInverseViewMatrix();
+            ubo.projection = pScene.GetCamera()->getProjectionMatrix();
+            ubo.view = pScene.GetCamera()->getViewMatrix();
+            ubo.inverseViewMatrix = pScene.GetCamera()->getInverseViewMatrix();
             pls.update(frameInfo, ubo);
             uboBuffers[frameIndex]->writeToBuffer(&ubo);
             uboBuffers[frameIndex]->flush();
 
-            // rendering
+            // rendering TODO move to scene update
             pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
 	        trs.Render(frameInfo);
             srs.render(frameInfo);
