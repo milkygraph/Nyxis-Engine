@@ -3,7 +3,7 @@
 
 namespace ve
 {
-	void CameraController::processMouseMovement(float dt, veGameObject &gameObject)
+	void CameraController::processMouseMovement(float dt, TransformComponent& transform)
 	{
 		if(Input::isMouseButtonPressed(MouseCodes::MouseButtonRight))
 		{
@@ -12,18 +12,18 @@ namespace ve
 			glm::vec2 mouseDelta = (mousePosition - lastMousePosition) * rotationSpeed;
 			lastMousePosition = mousePosition;
 
-			gameObject.transform.rotation.y += mouseDelta.x;
-			gameObject.transform.rotation.x += -mouseDelta.y;
+			transform.rotation.y += mouseDelta.x;
+			transform.rotation.x += -mouseDelta.y;
 
-			gameObject.transform.rotation.x = glm::clamp(gameObject.transform.rotation.x, -glm::half_pi<float>(), glm::half_pi<float>());
-			gameObject.transform.rotation.y = glm::mod(gameObject.transform.rotation.y, glm::two_pi<float>());
+			transform.rotation.x = glm::clamp(transform.rotation.x, -glm::half_pi<float>(), glm::half_pi<float>());
+			transform.rotation.y = glm::mod(transform.rotation.y, glm::two_pi<float>());
 
-            float yaw = gameObject.transform.rotation.y;
+            float yaw = transform.rotation.y;
             ForwardDir = {sin(yaw), 0.f, cos(yaw)};
             RightDir = {ForwardDir.z, 0.f, -ForwardDir.x};
             UpDir = {0.f, -1.f, 0.f};
 
-            moveInPlaneXZ(dt, gameObject);
+            moveInPlaneXZ(dt, transform);
         }
 		else
 		{
@@ -31,7 +31,7 @@ namespace ve
 			lastMousePosition = Input::getMousePosition();
 		}
 	}
-    void CameraController::moveInPlaneXZ(float dt, veGameObject &gameObject)
+    void CameraController::moveInPlaneXZ(float dt, TransformComponent& transform)
     {
 
 	    glm::vec3 moveDir{0.f};
@@ -50,7 +50,7 @@ namespace ve
 
 	    if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon())
 	    {
-		    gameObject.transform.translation += moveSpeed * dt * glm::normalize(moveDir);
+		    transform.translation += moveSpeed * dt * glm::normalize(moveDir);
 	    }
     }
 }

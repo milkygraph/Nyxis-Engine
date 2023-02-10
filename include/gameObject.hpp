@@ -5,6 +5,7 @@
 
 #include "vepch.hpp"
 
+// Deprecated
 namespace ve
 {
     struct PointLightComponent

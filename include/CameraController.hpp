@@ -4,6 +4,7 @@
 #include "window.hpp"
 #include "Events/mouseEvents.hpp"
 #include "Events/keyEvents.hpp"
+#include "components.hpp"
 
 #include "vepch.hpp"
 
@@ -12,8 +13,8 @@ namespace ve
     class CameraController
     {
     public:
-	    void processMouseMovement(float dt, veGameObject &gameObject);
-        void moveInPlaneXZ(float dt, veGameObject &gameObject);
+	    void processMouseMovement(float dt, TransformComponent& transform);
+        void moveInPlaneXZ(float dt, TransformComponent& transform);
         float moveSpeed{10.f};
     private:
 		glm::vec3 ForwardDir = {0.f, 0.f, 1.f};

@@ -97,7 +97,10 @@ namespace ve
 		TextureRenderSystem trs{ pRenderer.getSwapChainRenderPass(),
 		                         globalSetLayout->getDescriptorSetLayout() }; // trs - textureRenderSystem
 
-        Camera Camera({0, -1, -2.5});
+	    auto cameraEntity = pScene.createEntity("Camera");
+		auto& transform = pScene.addComponent<TransformComponent>(cameraEntity, glm::vec3{0, -1, -2.5});
+
+        Camera Camera(transform);
 
         auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -140,8 +143,7 @@ namespace ve
             int frameIndex = pRenderer.getFrameIndex();
 			texturePool[frameIndex]->resetPool();
             FrameInfo frameInfo
-                    {frameIndex, frameTime, commandBuffer, Camera, globalDescriptorSets[frameIndex], *texturePool[frameIndex], gameObjects,
-                     pScene, 0};
+                    {frameIndex, frameTime, commandBuffer, globalDescriptorSets[frameIndex], *texturePool[frameIndex], gameObjects, pScene};
 
             // updating Camera
             Camera.OnUpdate(frameInfo.frameTime);
@@ -157,9 +159,9 @@ namespace ve
 
             // rendering
             pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
+	        trs.Render(frameInfo);
             srs.render(frameInfo);
             pls.render(frameInfo);
-	        trs.Render(frameInfo);
             pImguiLayer.OnUpdate(frameInfo);
             pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
             pRenderer.endFrame();

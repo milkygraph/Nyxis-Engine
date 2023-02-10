@@ -7,9 +7,9 @@ namespace ve
 {
 	void Camera::OnUpdate(float dt)
 	{
-		cameraController.processMouseMovement(dt, cameraObject);
+		cameraController.processMouseMovement(dt, cameraTransform);
 //		cameraController.moveInPlaneXZ(dt, cameraObject);
-		setViewYXZ(cameraObject.transform.translation, cameraObject.transform.rotation);
+		setViewYXZ(cameraTransform.translation, cameraTransform.rotation);
 	}
 
 	void Camera::setOrthographicProjection(

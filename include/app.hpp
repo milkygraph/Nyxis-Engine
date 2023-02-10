@@ -57,8 +57,6 @@ namespace ve
         veRenderer pRenderer{pScene};
         ImguiLayer pImguiLayer{};
 
-        // TODO: Create third(or first) person Player View
-        // std::unique_ptr<veGameObject> Player;
 
         std::unique_ptr<veDescriptorPool> globalPool{};
         std::unique_ptr<veDescriptorPool> imguiPool{};

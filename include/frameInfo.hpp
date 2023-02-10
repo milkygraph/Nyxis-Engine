@@ -28,11 +28,9 @@ namespace ve
         int frameIndex;
         float frameTime;
         VkCommandBuffer commandBuffer;
-        Camera &camera;
         VkDescriptorSet globalDescriptorSet;
 		veDescriptorPool& TexturePool;
         veGameObject::Map &gameObjects;
         Scene& scene;
-        int fps;
     };
 }

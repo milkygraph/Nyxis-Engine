@@ -11,12 +11,8 @@ namespace ve
     class Camera
     {
     public:
-		Camera() = default;
-		Camera(glm::vec3 translation = glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3 rotation = glm::vec3{0.0f, 0.0f, 0.0f})
-		{
-			cameraObject.transform.translation = translation;
-			cameraObject.transform.rotation = rotation;
-		}
+		Camera(TransformComponent& transformComponent) : cameraTransform(transformComponent) {}
+
 		void OnUpdate(float dt);
         void setOrthographicProjection(float left, float right, float top, float bottom, float near, float far);
         void setPerspectiveProjection(float fovy, float aspect, float near, float far);
@@ -30,7 +26,7 @@ namespace ve
 
         CameraController& getCameraController() { return cameraController; }
     private:
-		veGameObject cameraObject = veGameObject::createGameObject();
+		TransformComponent& cameraTransform;
 		CameraController cameraController;
         glm::mat4 projectionMatrix{1.0f};
         glm::mat4 viewMatrix{1.0f};
