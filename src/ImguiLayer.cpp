@@ -174,7 +174,7 @@ namespace ve
 
                 auto &transform = scene.getComponent<TransformComponent>(entity_names[selectedEntity]);
                 ImGui::DragFloat3("Position", &transform.translation.x, 0.1f);
-                ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.1f, -180.0f, 180.0f);
+                ImGui::DragFloat3("Rotation", &transform.rotation.x,0.1f, -180.0f, 180.0f);
                 ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f);
                 ImGui::DragFloat("Roughness", &transform.roughness, 0.1f);
             }

@@ -39,7 +39,7 @@ namespace ve
 	    void OnEvent(Event& e);
 
         void run();
-
+		void Setup();
 		static veWindow& getWindow() { return pInstance->pWindow; }
 	    static veDevice& getDevice() { return pInstance->pDevice; }
 		static GLFWwindow* getGLFWwindow() { return pInstance->pWindow.getGLFWwindow(); }
@@ -59,8 +59,15 @@ namespace ve
 
 
         std::unique_ptr<veDescriptorPool> globalPool{};
-        std::unique_ptr<veDescriptorPool> imguiPool{};
+        std::unique_ptr<veDescriptorSetLayout> globalSetLayout{};
+		std::vector<VkDescriptorSet> globalDescriptorSets;
+
+		std::unique_ptr<veDescriptorPool> imguiPool{};
 		std::vector<std::unique_ptr<veDescriptorPool>> texturePool{};
+
+
+	    std::vector<std::unique_ptr<veBuffer>> uboBuffers;
+
 
         veGameObject::Map gameObjects;
 

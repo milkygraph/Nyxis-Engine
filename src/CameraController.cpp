@@ -1,5 +1,4 @@
 #include "CameraController.hpp"
-#include "input.hpp"
 
 namespace ve
 {
@@ -33,20 +32,33 @@ namespace ve
 	}
     void CameraController::moveInPlaneXZ(float dt, TransformComponent& transform)
     {
-
-	    glm::vec3 moveDir{0.f};
-	    if (Input::isKeyPressed(KeyCodes::W))
-		    moveDir += ForwardDir;
-	    if (Input::isKeyPressed(KeyCodes::S))
-		    moveDir -= ForwardDir;
-	    if (Input::isKeyPressed(KeyCodes::D))
-		    moveDir += RightDir;
-	    if (Input::isKeyPressed(KeyCodes::A))
-		    moveDir -= RightDir;
-	    if (Input::isKeyPressed(KeyCodes::E))
-		    moveDir += UpDir;
-	    if (Input::isKeyPressed(KeyCodes::Q))
-		    moveDir -= UpDir;
+		glm::vec3 moveDir{ 0.f };
+		if(cameraType == CameraType::Perspective)
+		{
+			if (Input::isKeyPressed(KeyCodes::W))
+				moveDir += ForwardDir;
+			if (Input::isKeyPressed(KeyCodes::S))
+				moveDir -= ForwardDir;
+			if (Input::isKeyPressed(KeyCodes::D))
+				moveDir += RightDir;
+			if (Input::isKeyPressed(KeyCodes::A))
+				moveDir -= RightDir;
+			if (Input::isKeyPressed(KeyCodes::E))
+				moveDir += UpDir;
+			if (Input::isKeyPressed(KeyCodes::Q))
+				moveDir -= UpDir;
+		}
+		else
+		{
+			if (Input::isKeyPressed(KeyCodes::W))
+				moveDir += glm::vec3{ 0.f, -1.f, 0.f };
+			if (Input::isKeyPressed(KeyCodes::S))
+				moveDir -= glm::vec3{ 0.f, -1.f, 0.f };
+			if (Input::isKeyPressed(KeyCodes::D))
+				moveDir += glm::vec3{ 1.f, 0.f, 0.f };
+			if (Input::isKeyPressed(KeyCodes::A))
+				moveDir -= glm::vec3{ 1.f, 0.f, 0.f };
+		}
 
 	    if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon())
 	    {

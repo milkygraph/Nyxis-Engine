@@ -29,25 +29,10 @@ namespace ve
     App *App::pInstance = nullptr;
 
     App::App() {
-        globalPool = veDescriptorPool::Builder()
-                .setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
-                .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
-	            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
-                .build();
-
-		texturePool.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
-	    auto framePoolBuilder = veDescriptorPool::Builder()
-		    .setMaxSets(1000)
-		    .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
-		    .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
-		    .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
-
-	    for (auto & pool : texturePool) {
-		    pool = framePoolBuilder.build();
-	    }
 
         // calculate the time it takes for below code to execute
         auto start = std::chrono::high_resolution_clock::now();
+		Setup();
         loadGameObjects();
 	    pScene.LoadModels();
         std::cout << "loadGameObjects() took " << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -65,31 +50,54 @@ namespace ve
 #endif // LOGGING_LEVEL
     }
 
+	void App::Setup()
+	{
+		globalPool = veDescriptorPool::Builder()
+			.setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
+			.build();
+
+		texturePool.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+		auto framePoolBuilder = veDescriptorPool::Builder()
+			.setMaxSets(1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
+			.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
+
+		for (auto & pool : texturePool) {
+			pool = framePoolBuilder.build();
+		}
+
+		uboBuffers.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+		for (auto &uboBuffer: uboBuffers) {
+			uboBuffer = std::make_unique<veBuffer>(
+				sizeof(GlobalUbo),
+				1,
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+			uboBuffer->map();
+		}
+
+		globalSetLayout = veDescriptorSetLayout::Builder()
+			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+			.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.build();
+
+		globalDescriptorSets.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+		for (int i = 0; i < globalDescriptorSets.size(); i++) {
+			auto bufferInfo = uboBuffers[i]->descriptorInfo();
+			veDescriptorWriter(*globalSetLayout, *globalPool)
+				.writeBuffer(0, &bufferInfo)
+				.build(globalDescriptorSets[i]);
+		}
+
+		auto commandBuffer = pDevice.beginSingleTimeCommands();
+		pImguiLayer.init(pRenderer.getSwapChainRenderPass(), commandBuffer);
+		pDevice.endSingleTimeCommands(commandBuffer);
+	}
+
     void App::run() {
-        std::vector<std::unique_ptr<veBuffer>> uboBuffers(veSwapChain::MAX_FRAMES_IN_FLIGHT);
-        for (auto &uboBuffer: uboBuffers) {
-            uboBuffer = std::make_unique<veBuffer>(
-                    sizeof(GlobalUbo),
-                    1,
-                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-            uboBuffer->map();
-        }
-
-        auto globalSetLayout = veDescriptorSetLayout::Builder()
-                .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
-				.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-                .build();
-
-        std::vector<VkDescriptorSet> globalDescriptorSets(veSwapChain::MAX_FRAMES_IN_FLIGHT);
-        for (int i = 0; i < globalDescriptorSets.size(); i++) {
-            auto bufferInfo = uboBuffers[i]->descriptorInfo();
-            veDescriptorWriter(*globalSetLayout, *globalPool)
-                    .writeBuffer(0, &bufferInfo)
-                    .build(globalDescriptorSets[i]);
-        }
-
-
         SimpleRenderSystem srs{pRenderer.getSwapChainRenderPass(),
                                globalSetLayout->getDescriptorSetLayout()}; // srs - simpleRenderSystem
 		PointLightSystem pls{ pRenderer.getSwapChainRenderPass(),
@@ -97,16 +105,9 @@ namespace ve
 		TextureRenderSystem trs{ pRenderer.getSwapChainRenderPass(),
 		                         globalSetLayout->getDescriptorSetLayout() }; // trs - textureRenderSystem
 
-	    auto cameraEntity = pScene.createEntity("Camera");
-		auto& transform = pScene.addComponent<TransformComponent>(cameraEntity, glm::vec3{0, -1, -2.5});
-
-
         auto currentTime = std::chrono::high_resolution_clock::now();
 
-        bool firstFrame = true;
-
         pImguiLayer.AddFunction([&]() {
-            //
             ImGui::Begin("Statistics");
             ImGui::Text("Entity Count: %d", pScene.getEntityCount());
             ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
@@ -121,16 +122,12 @@ namespace ve
 
         pImguiLayer.AddEntityLoader(pScene);
 
-		auto commandBuffer = pDevice.beginSingleTimeCommands();
-		pImguiLayer.init(pRenderer.getSwapChainRenderPass(), commandBuffer);
-		pDevice.endSingleTimeCommands(commandBuffer);
-
         while (!pWindow.shouldClose()) {
             glfwPollEvents();
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
-            commandBuffer = pRenderer.beginFrame();
+            auto commandBuffer = pRenderer.beginFrame();
 
             float aspect = pRenderer.getAspectRatio();
 
@@ -140,7 +137,7 @@ namespace ve
                     {frameIndex, frameTime, commandBuffer, globalDescriptorSets[frameIndex], *texturePool[frameIndex], gameObjects, pScene};
 
             // updating Camera
-			pScene.OnUpdate(frameInfo.frameTime, aspect, true);
+			pScene.OnUpdate(frameInfo.frameTime, aspect, false);
 
             // updating buffers TODO move to scene update
             GlobalUbo ubo{};
@@ -166,43 +163,14 @@ namespace ve
 
     void App::loadGameObjects()
     {
-		auto pose = pScene.createEntity("Pose");
-		pScene.addComponent<TransformComponent>(pose,
-			glm::vec3(.2f, .5f, 0.f),
-			glm::vec3(.0f, .0f, 0.0f),
-			glm::vec3(1.5f, 1.5f, 1.5f),
-			0.0f);
-		pScene.addComponent<MeshComponent>(pose, model_path + "pose.obj");
-		pScene.addComponent<Texture>(pose, "../textures/man.jpg");
-
-	    auto floor = pScene.createEntity("Floor");
-	    pScene.addComponent<TransformComponent>(floor,
-		    glm::vec3(.2f, .5f, 0.f),
+		auto background = pScene.createEntity("Background");
+	    pScene.addComponent<TransformComponent>( background,
+		    glm::vec3(0.f, 0.f, 0.f),
 		    glm::vec3(.0f, .0f, 0.0f),
-		    glm::vec3(1.5f, 1.5f, 1.5f),
+		    glm::vec3(0.1f, 0.1f, 0.1f),
 		    0.0f);
-	    pScene.addComponent<MeshComponent>(floor, model_path + "floor.obj");
-	    pScene.addComponent<Texture>(floor, "../textures/pavement.jpg");
-
-
-	    std::vector<glm::vec3> lightColors{
-			{ 1.f, .1f, .1f },
-			{ .1f, .1f, 1.f },
-			{ .1f, 1.f, .1f },
-			{ 1.f, 1.f, .1f },
-			{ .1f, 1.f, 1.f },
-			{ 1.f, 1.f, 1.f }};
-
-		for (int i = 0; i < lightColors.size(); i++)
-		{
-			auto pointLight = veGameObject::makePointLight(0.8f);
-			pointLight.color = lightColors[i];
-			auto rotateLight = glm::rotate(
-				glm::mat4(1.f),
-				(i * glm::two_pi<float>()) / lightColors.size(),
-				{ 0.f, -1.f, 0.f });
-			pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
-			gameObjects.emplace(pointLight.getId(), std::move(pointLight));
-		}
-    }
+		pScene.addComponent<MeshComponent>(background, model_path + "background.obj");
+		pScene.addComponent<Texture>(background, texture_path + "pngegg.png");
+		pScene.addComponent<Player>(background);
+	}
 } // namespace ve

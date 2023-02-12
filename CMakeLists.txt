@@ -34,3 +34,6 @@ target_link_libraries(${PROJECT} PUBLIC Vulkan::Vulkan glfw)
 
 add_subdirectory(libs/spdlog)
 target_link_libraries(${PROJECT} PRIVATE spdlog::spdlog)
+
+# precompile headers
+#set_source_files_properties(${SOURCES} PROPERTIES COMPILE_FLAGS "-include vepch.hpp")

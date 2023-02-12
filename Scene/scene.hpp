@@ -24,7 +24,7 @@ namespace ve
         Scene()
 		{
 			m_CameraEntity = createEntity("Camera");
-			auto& transform = addComponent<TransformComponent>(m_CameraEntity);
+			auto& transform = addComponent<TransformComponent>(m_CameraEntity, glm::vec3{ 0, 0, -14 });
 			m_Camera = new Camera(transform);
 		}
         ~Scene();
