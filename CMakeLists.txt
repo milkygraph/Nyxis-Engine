@@ -28,7 +28,7 @@ endforeach(SHADER)
 
 add_executable(${PROJECT} ${SOURCES} ${HEADERS})
 
-target_include_directories(${PROJECT} PUBLIC include Scene libs libs/imgui libs/imgui/backends)
+target_include_directories(${PROJECT} PUBLIC include Scene libs libs/imgui libs/imgui/backends libs/assimp/include)
 target_link_directories(${PROJECT} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 target_link_libraries(${PROJECT} PUBLIC Vulkan::Vulkan glfw)
 
