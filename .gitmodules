@@ -5,3 +5,6 @@
 	path = libs/imgui
 	url = https://github.com/ocornut/imgui/
 	branch = docking
+[submodule "libs/assimp"]
+	path = libs/assimp
+	url = https://github.com/assimp/assimp
