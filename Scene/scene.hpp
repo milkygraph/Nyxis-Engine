@@ -2,6 +2,7 @@
 #include "ve.hpp"
 #include "components.hpp"
 #include "Camera.hpp"
+#include "Log.hpp"
 
 #include <entt/entt.hpp>
 
@@ -26,6 +27,7 @@ namespace ve
 			m_CameraEntity = createEntity("Camera");
 			auto& transform = addComponent<TransformComponent>(m_CameraEntity, glm::vec3{ 0, 0, -14 });
 			m_Camera = new Camera(transform);
+            m_Camera->getCameraController().setCameraType(CameraType::Orthographic);
 		}
         ~Scene();
 
@@ -73,12 +75,20 @@ namespace ve
 			return m_Registry.view<Comps...>();
         }
 
+        void ClearScene();
+        void SaveScene(const std::string &filename = "scene.json");
+        void LoadScene(const std::string &filename);
+        void LoadModels();
+
 		void OnUpdate(float dt, float aspect, bool projection);
-		void LoadModels();
+
 		Camera *GetCamera() { return m_Camera; }
 
-        float m_SkyColor[3] = {0.0f, 0.0f, 0.0f};
         Registry m_Registry;
+        bool SaveSceneFlag = false;
+        bool LoadSceneFlag = false;
+
+        std::string SceneName = "scene.json";
 
     private:
 		Camera* m_Camera = nullptr;

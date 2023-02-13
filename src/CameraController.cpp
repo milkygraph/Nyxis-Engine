@@ -4,7 +4,7 @@ namespace ve
 {
 	void CameraController::processMouseMovement(float dt, TransformComponent& transform)
 	{
-		if(Input::isMouseButtonPressed(MouseCodes::MouseButtonRight))
+		if(Input::isMouseButtonPressed(MouseCodes::MouseButtonRight) && cameraType == CameraType::Perspective)
 		{
 			Input::setCursorMode(CursorMode::CursorDisabled);
 			glm::vec2 mousePosition = Input::getMousePosition();

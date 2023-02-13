@@ -1,10 +1,15 @@
 #pragma once
 
+#include "model.hpp"
+#include "path.hpp"
+#include "input.hpp"
+#include "Events/keyEvents.hpp"
+#include "path.hpp"
+
 #include "ve.hpp"
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.hpp>
-#include "model.hpp"
-#include "path.hpp"
+#include "json/json.hpp"
 
 namespace ve
 {
@@ -23,6 +28,11 @@ namespace ve
         TagComponent(const std::string &tag)
             : Tag(tag)
         {
+        }
+
+        void ToJson(nlohmann::json& j) const
+        {
+            j["Tag"] = Tag;
         }
     };
 
@@ -46,25 +56,137 @@ namespace ve
 
         glm::mat4 mat4();
         glm::mat3 normalMatrix();
+
+        void ToJson(nlohmann::json& j) const
+        {
+            j["Transform"] = {
+                    {translation.x, translation.y, translation.z},
+                    {rotation.x, rotation.y, rotation.z},
+                    {scale.x, scale.y, scale.z},
+                    {roughness}
+                };
+        }
+
+        void FromJson(const nlohmann::json& j)
+        {
+        }
     };
 
 	struct PointLight
     {
         glm::vec4 position{}; // ignore w
         glm::vec4 color{};    // w is intensity
+
+        void ToJson(nlohmann::json& j) const
+        {
+            j["PointLight"] = {
+                    {"position", {position.x, position.y, position.z}},
+                    {"color", {color.x, color.y, color.z, color.w}},
+                };
+        }
+
+        void FromJson(const nlohmann::json& j)
+        {
+            position.x = j["PointLight"]["position"][0];
+            position.y = j["PointLight"]["position"][1];
+            position.z = j["PointLight"]["position"][2];
+
+            color.x = j["PointLight"]["color"][0];
+            color.y = j["PointLight"]["color"][1];
+            color.z = j["PointLight"]["color"][2];
+            color.w = j["PointLight"]["color"][3];
+        }
     };
 
-	class MeshComponent
+    class MeshComponent
 	{
 	public:
+        MeshComponent() = default;
 		MeshComponent(const std::string& filepath)
 		{
             model = veModel::CreateModel(filepath);
+            this->filepath = filepath;
         }
 		void draw(VkCommandBuffer commandBuffer)
 		{
 			model->draw(commandBuffer);
 		}
 		std::shared_ptr<veModel> model;
+        std::string filepath;
+
+        void ToJson(nlohmann::json& j) const
+        {
+            j["MeshComponent"] ={ {"filepath", filepath} };
+        }
+
+        void FromJson(const nlohmann::json& j)
+        {
+            filepath = j["MeshComponent"]["filepath"];
+            model = veModel::CreateModel(model_path + filepath);
+        }
+    };
+
+    struct Player
+    {
+        float moveSpeed{ 1.f };
+
+        void OnUpdate(float dt, TransformComponent& transform)
+        {
+            // 2d movement
+            glm::vec3 moveDir{ 0.f };
+            if (Input::isKeyPressed(KeyCodes::W))
+                moveDir += glm::vec3{ 0.f, -1.f, 0.f };
+            if (Input::isKeyPressed(KeyCodes::S))
+                moveDir -= glm::vec3{ 0.f, -1.f, 0.f };
+            if (Input::isKeyPressed(KeyCodes::D))
+                moveDir += glm::vec3{ 1.f, 0.f, 0.f };
+            if (Input::isKeyPressed(KeyCodes::A))
+                moveDir -= glm::vec3{ 1.f, 0.f, 0.f };
+
+            if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon())
+            {
+                transform.translation += moveSpeed * dt * glm::normalize(moveDir);
+            }
+        }
+
+        void ToJson(nlohmann::json& j) const
+        {
+            j["Player"] ={ {"moveSpeed", moveSpeed} };
+        }
+
+        void FromJson(const nlohmann::json& j)
+        {
+            moveSpeed = j["Player"]["moveSpeed"];
+        }
+    };
+
+    struct SquareCollider
+    {
+        glm::vec2 size;
+        glm::vec2 offset;
+
+        void ToJson(nlohmann::json& j) const
+        {
+            j = nlohmann::json
+                {
+                    {"size", {size.x, size.y}},
+                    {"offset", {offset.x, offset.y}}
+                };
+        }
+    };
+
+    struct CircleCollider
+    {
+        float radius;
+        glm::vec2 offset;
+
+        void ToJson(nlohmann::json& j) const
+        {
+            j = nlohmann::json
+                {
+                    {"radius", radius},
+                    {"offset", {offset.x, offset.y}}
+                };
+        }
     };
 }

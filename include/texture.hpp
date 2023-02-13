@@ -5,6 +5,7 @@
 #include "swap_chain.hpp"
 
 #include <vulkan/vulkan_core.h>
+#include <json/json.hpp>
 
 namespace ve{
 
@@ -22,8 +23,15 @@ namespace ve{
 		void ChangeImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
 		VkDescriptorImageInfo GetDescriptorImageInfo() const { return descriptorImageInfo; }
 
+		void ToJson(nlohmann::json& j) const
+		{
+			j["Texture"] = {
+				{"filepath", filepath}
+			};
+		}
 	private:
 		veDevice& device = veDevice::get();
+		std::string filepath;
 		int texWidth = 0;
 		int texHeight = 0;
 		int texChannels = 0;

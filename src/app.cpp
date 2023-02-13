@@ -16,6 +16,7 @@
 
 #include "vepch.hpp"
 
+
 std::vector<std::string> getModelNames() {
     std::vector<std::string> modelNames;
     for (const auto &entry: std::filesystem::directory_iterator(ve::model_path)) {
@@ -122,6 +123,20 @@ namespace ve
 
         pImguiLayer.AddEntityLoader(pScene);
 
+        pImguiLayer.AddFunction([&]() {
+            ImGui::Begin("Scene");
+            if (ImGui::Button("Save Scene")) {
+                pScene.SaveSceneFlag = true;
+            }
+            if(ImGui::Button("Load Scene")) {
+                vkDeviceWaitIdle(pDevice.device());
+                pScene.LoadSceneFlag = true;
+                pImguiLayer.update = true;
+            }
+            ImGui::End();
+        });
+
+
         while (!pWindow.shouldClose()) {
             glfwPollEvents();
             auto newTime = std::chrono::high_resolution_clock::now();
@@ -137,7 +152,6 @@ namespace ve
                     {frameIndex, frameTime, commandBuffer, globalDescriptorSets[frameIndex], *texturePool[frameIndex], gameObjects, pScene};
 
             // updating Camera
-			pScene.OnUpdate(frameInfo.frameTime, aspect, false);
 
             // updating buffers TODO move to scene update
             GlobalUbo ubo{};
@@ -156,6 +170,8 @@ namespace ve
             pImguiLayer.OnUpdate(frameInfo);
             pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
             pRenderer.endFrame();
+
+			pScene.OnUpdate(frameInfo.frameTime, aspect, false);
         }
 
         vkDeviceWaitIdle(pDevice.device());
@@ -163,14 +179,16 @@ namespace ve
 
     void App::loadGameObjects()
     {
-		auto background = pScene.createEntity("Background");
-	    pScene.addComponent<TransformComponent>( background,
-		    glm::vec3(0.f, 0.f, 0.f),
-		    glm::vec3(.0f, .0f, 0.0f),
-		    glm::vec3(0.1f, 0.1f, 0.1f),
-		    0.0f);
-		pScene.addComponent<MeshComponent>(background, model_path + "background.obj");
-		pScene.addComponent<Texture>(background, texture_path + "pngegg.png");
-		pScene.addComponent<Player>(background);
+		// auto background = pScene.createEntity("Background");
+	    // pScene.addComponent<TransformComponent>( background,
+		//     glm::vec3(0.f, 0.f, 0.f),
+		//     glm::vec3(.0f, .0f, 0.0f),
+		//     glm::vec3(0.1f, 0.1f, 0.1f),
+		//     0.0f);
+		// pScene.addComponent<MeshComponent>(background, model_path + "background.obj");
+		// pScene.addComponent<Texture>(background, texture_path + "pngegg.png");
+        // pScene.addComponent<Player>(background);
+        pScene.LoadScene("scene.json");
+
 	}
 } // namespace ve

@@ -45,8 +45,6 @@ namespace ve
         veModel(const veModel &) = delete;
         veModel &operator=(const veModel &) = delete;
 
-//        static std::shared_ptr<veModel> createModelFromFile(const std::string& filepath);
-
 		bool loaded = false;
 
         void bind(VkCommandBuffer commandBuffer);
@@ -62,6 +60,11 @@ namespace ve
             }
 			return models[filepath];
 		}
+
+        static void ReleaseModels()
+        {
+            models.clear();
+        }
 
 		using ModelMap = std::unordered_map<std::string, std::shared_ptr<veModel>>;
 

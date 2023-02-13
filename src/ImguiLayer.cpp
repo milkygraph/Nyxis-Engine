@@ -1,5 +1,5 @@
 #include "ImguiLayer.hpp"
-
+#include <string>
 namespace ve
 {
     void ShowExampleAppDockSpace() {
@@ -135,27 +135,27 @@ namespace ve
 
     void ImguiLayer::AddEntityLoader(Scene &scene)
     {
-        functions.push_back([&scene]() {
+        functions.push_back([&]() {
             ImGui::Begin(
                     "Object"); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 
             static std::unordered_map<std::string, Entity> entity_names;
 
-            static bool firstFrame = true;
-
             auto view = scene.getComponentView<TagComponent>();
             static std::string selectedEntity;
-            if (firstFrame) {
+
+            if (update) {
+                entity_names.clear();
                 for (auto entity: view) {
                     auto tag = view.get<TagComponent>(entity);
                     entity_names[tag.Tag] = entity;
                 }
                 if (!entity_names.empty())
                     selectedEntity = entity_names.begin()->first;
-                firstFrame = false;
+                update = false;
             }
 
-// select entity from list of entities, when there are no entities in the list, create a new one
+            // select entity from list of entities, when there are no entities in the list, create a new one
             if (entity_names.empty()) {
             } else {
                 if (ImGui::BeginCombo("Objects",
@@ -172,7 +172,7 @@ namespace ve
                     ImGui::EndCombo();
                 }
 
-                auto &transform = scene.getComponent<TransformComponent>(entity_names[selectedEntity]);
+                auto &transform = scene.getComponent<TransformComponent>(entity_names[selectedEntity]); // TODO! Fix load scene bug
                 ImGui::DragFloat3("Position", &transform.translation.x, 0.1f);
                 ImGui::DragFloat3("Rotation", &transform.rotation.x,0.1f, -180.0f, 180.0f);
                 ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f);

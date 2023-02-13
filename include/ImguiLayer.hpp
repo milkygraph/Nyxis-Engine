@@ -18,6 +18,7 @@ namespace ve
         void OnUpdate(FrameInfo &frameInfo);
         void AddFunction(std::function<void()> func);
         void AddEntityLoader(Scene& scene);
+        bool update = true;
 
     private:
         std::vector<std::function<void()>> functions;

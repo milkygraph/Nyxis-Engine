@@ -4,7 +4,7 @@
 
 namespace ve
 {
-	Texture::Texture(const std::string& filepath)
+	Texture::Texture(const std::string& filepath) : filepath{filepath}
 	{
 		uint8_t* pixels = nullptr;
 
