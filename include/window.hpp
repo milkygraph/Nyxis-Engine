@@ -7,14 +7,13 @@
 
 namespace ve
 {
-    class veWindow
-    {
+    class Window {
     public:
-	    veWindow(int width, int height, const std::string &name);
-        ~veWindow();
+      Window(int width, int height, const std::string &name);
+        ~Window();
 
-        veWindow(const veWindow &) = delete;
-        veWindow &operator=(const veWindow &) = delete;
+        Window(const Window &) = delete;
+        Window &operator=(const Window &) = delete;
 
         VkExtent2D getExtent() { return {static_cast<uint32_t>(pData.pWidth), static_cast<uint32_t>(pData.pHeight)}; }
         bool shouldClose() { return glfwWindowShouldClose(pData.window); }
@@ -23,13 +22,13 @@ namespace ve
         void resetWindowResizedFlag() { pData.framebufferResized = false; };
 
         static GLFWwindow* getGLFWwindow() { return pInstance->pData.window; }
-		static veWindow& get(int width, int height, const std::string& name)
+		static Window & get(int width, int height, const std::string& name)
 		{
-			pInstance = new veWindow(width, height, name);
+			pInstance = new Window(width, height, name);
 			return *pInstance;
 		}
 
-		static veWindow& get() { return *pInstance; }
+		static Window & get() { return *pInstance; }
 
 
 		using EventCallbackFn = std::function<void(Event&)>;
@@ -48,7 +47,7 @@ namespace ve
 	    EventCallbackFn callback;
 
 	private:
-		static veWindow* pInstance;
+		static Window * pInstance;
         void initveWindow();
         static void frameBufferResizedCallback(GLFWwindow *window, int width, int height);
 

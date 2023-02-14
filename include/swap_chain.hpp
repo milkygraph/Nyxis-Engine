@@ -64,7 +64,7 @@ namespace ve
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
 
-        veDevice &device = veDevice::get();
+        Device &device = Device::get();
         VkExtent2D windowExtent;
 
         VkSwapchainKHR swapChain;

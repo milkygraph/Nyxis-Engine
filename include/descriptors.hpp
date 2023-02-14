@@ -23,7 +23,7 @@ namespace ve
             std::unique_ptr<veDescriptorSetLayout> build() const;
 
         private:
-            veDevice &device = veDevice::get();
+          Device &device = Device::get();
             std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings{};
         };
 
@@ -36,7 +36,7 @@ namespace ve
         VkDescriptorSetLayout getDescriptorSetLayout() const { return descriptorSetLayout; }
 
     private:
-        veDevice &device = veDevice::get();
+      Device &device = Device::get();
         VkDescriptorSetLayout descriptorSetLayout;
         std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
 
@@ -58,7 +58,7 @@ namespace ve
             std::unique_ptr<veDescriptorPool> build() const;
 
         private:
-            veDevice &device = veDevice::get();
+          Device &device = Device::get();
             std::vector<VkDescriptorPoolSize> poolSizes{};
             uint32_t maxSets = 1000;
             VkDescriptorPoolCreateFlags poolFlags = 0;
@@ -80,7 +80,7 @@ namespace ve
         void resetPool();
 
     private:
-        veDevice &device = veDevice::get();
+      Device &device = Device::get();
         VkDescriptorPool descriptorPool;
 
         friend class veDescriptorWriter;

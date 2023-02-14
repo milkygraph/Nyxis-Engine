@@ -16,21 +16,18 @@
 
 namespace ve
 {
-    class veRenderer
+    class Renderer
     {
     public:
-        veRenderer(Scene &scene);
-        ~veRenderer();
+        Renderer(Scene &scene);
+        ~Renderer();
 
         // copy constructor and destructors
 
-        veRenderer(const veRenderer &) = delete;
-        veRenderer &operator=(const veRenderer &) = delete;
+        Renderer(const Renderer &) = delete;
+        Renderer &operator=(const Renderer &) = delete;
 
-        VkRenderPass getSwapChainRenderPass() const
-        {
-            return pSwapChain->getRenderPass();
-        }
+        VkRenderPass getSwapChainRenderPass() const { return pSwapChain->getRenderPass(); }
         float getAspectRatio() const { return pSwapChain->extentAspectRatio(); }
         bool isFrameInProgress() const { return isFrameStarted; }
 
@@ -46,21 +43,21 @@ namespace ve
             return currentImageIndex;
         }
 
-         
-
         VkCommandBuffer beginFrame();
         void endFrame();
         void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
         void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
+        void SetScene(Scene& scene);
+        void RenderScene();
 
     private:
         void createCommandBuffers();
         void freeCommandBuffers();
         void recreateSwapChain();
 
-        veWindow &window = veWindow::get();
-        veDevice &device = veDevice::get();
-        Scene& scene;
+        Window &window = Window::get();
+        Device &device = Device::get();
+        Scene *scene = nullptr;
         std::unique_ptr<veSwapChain> pSwapChain;
         std::vector<VkCommandBuffer> commandBuffers;
 
@@ -68,5 +65,5 @@ namespace ve
         int currentFrameIndex{0};
         bool isFrameStarted{false};
 
-    }; // class veRenderer
+    }; // class Renderer
 } // namespace ve

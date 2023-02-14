@@ -49,7 +49,7 @@ namespace ve
         void createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule);
         void createGraphicsPipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);
 
-        veDevice &device = veDevice::get();
+        Device &device = Device::get();
         VkPipeline graphicsPipeline;
         VkShaderModule vertShaderModule;
         VkShaderModule fragShaderModule;

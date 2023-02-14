@@ -1,12 +1,8 @@
 #include "app.hpp"
 #include "components.hpp"
 #include "descriptors.hpp"
-#include "gameObject.hpp"
 #include "model.hpp"
-#include "renderer.hpp"
 #include "swap_chain.hpp"
-#include "Camera.hpp"
-#include "CameraController.hpp"
 #include "frameInfo.hpp"
 #include "simpleRenderSystem.hpp"
 #include "pointLightSystem.hpp"
@@ -72,7 +68,7 @@ namespace ve
 
 		uboBuffers.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
 		for (auto &uboBuffer: uboBuffers) {
-			uboBuffer = std::make_unique<veBuffer>(
+			uboBuffer = std::make_unique<Buffer>(
 				sizeof(GlobalUbo),
 				1,
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -179,16 +175,16 @@ namespace ve
 
     void App::loadGameObjects()
     {
-		// auto background = pScene.createEntity("Background");
-	    // pScene.addComponent<TransformComponent>( background,
-		//     glm::vec3(0.f, 0.f, 0.f),
-		//     glm::vec3(.0f, .0f, 0.0f),
-		//     glm::vec3(0.1f, 0.1f, 0.1f),
-		//     0.0f);
-		// pScene.addComponent<MeshComponent>(background, model_path + "background.obj");
-		// pScene.addComponent<Texture>(background, texture_path + "pngegg.png");
-        // pScene.addComponent<Player>(background);
-        pScene.LoadScene("scene.json");
+		 auto background = pScene.createEntity("Background");
+	     pScene.addComponent<TransformComponent>( background,
+		     glm::vec3(0.f, 0.f, 0.f),
+		     glm::vec3(.0f, .0f, 0.0f),
+		     glm::vec3(0.1f, 0.1f, 0.1f),
+		     0.0f);
+		 pScene.addComponent<MeshComponent>(background, model_path + "background.obj");
+		 pScene.addComponent<Texture>(background, texture_path + "pngegg.png");
+         pScene.addComponent<Player>(background);
+//        pScene.LoadScene("scene.json");
 
 	}
 } // namespace ve

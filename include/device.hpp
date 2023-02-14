@@ -21,8 +21,7 @@ namespace ve
         bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }
     };
 
-    class veDevice
-    {
+    class Device {
     public:
 #ifdef NDEBUG
         const bool enableValidationLayers = false;
@@ -30,21 +29,21 @@ namespace ve
         const bool enableValidationLayers = true;
 #endif
 
-		static veDevice& get()
+		static Device & get()
 		{
 			if(pInstance == nullptr)
-				pInstance = new veDevice();
+				pInstance = new Device();
 			return *pInstance;
 		}
 
-        veDevice();
-        ~veDevice();
+                Device();
+        ~Device();
         // Not copyable or movable
-        veDevice(const veDevice &) = delete;
-        veDevice &operator=(const veDevice &) = delete;
+        Device(const Device &) = delete;
+        Device &operator=(const Device &) = delete;
 
-        veDevice(veDevice &&) = delete;
-        veDevice &operator=(veDevice &&) = delete;
+        Device(Device &&) = delete;
+        Device &operator=(Device &&) = delete;
 
         VkCommandPool getCommandPool() { return commandPool; }
         VkDevice device() { return device_; }
@@ -82,7 +81,7 @@ namespace ve
 		void createImGuiInitInfo(ImGui_ImplVulkan_InitInfo &init_info);
 
     private:
-		static veDevice* pInstance;
+		static Device * pInstance;
         void createInstance();
         void setupDebugMessenger();
         void createSurface();
@@ -104,7 +103,7 @@ namespace ve
 
 		std::mutex deviceGuard;
 
-        veWindow &pWindow = veWindow::get();
+                Window &pWindow = Window::get();
         VkCommandPool commandPool;
         VkDevice device_;
         VkSurfaceKHR surface_;

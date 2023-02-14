@@ -40,8 +40,8 @@ namespace ve
 
         void run();
 		void Setup();
-		static veWindow& getWindow() { return pInstance->pWindow; }
-	    static veDevice& getDevice() { return pInstance->pDevice; }
+		static Window & getWindow() { return pInstance->pWindow; }
+	    static Device & getDevice() { return pInstance->pDevice; }
 		static GLFWwindow* getGLFWwindow() { return pInstance->pWindow.getGLFWwindow(); }
 		static Scene& getScene() { return pInstance->pScene; }
     private:
@@ -52,9 +52,9 @@ namespace ve
 
         bool newObject = false;
 
-        veWindow& pWindow = veWindow::get(WIDTH, HEIGHT, "Vulkan Engine");
-        veDevice& pDevice = veDevice::get();
-        veRenderer pRenderer{pScene};
+        Window & pWindow = Window::get(WIDTH, HEIGHT, "Vulkan Engine");
+        Device & pDevice = Device::get();
+        Renderer pRenderer{ pScene};
         ImguiLayer pImguiLayer{};
 
 
@@ -66,7 +66,7 @@ namespace ve
 		std::vector<std::unique_ptr<veDescriptorPool>> texturePool{};
 
 
-	    std::vector<std::unique_ptr<veBuffer>> uboBuffers;
+	    std::vector<std::unique_ptr<Buffer>> uboBuffers;
 
 
         veGameObject::Map gameObjects;

@@ -77,11 +77,11 @@ namespace ve
         bool hasIndexBuffer = false;
 
 		Builder* builder = nullptr;
-		veDevice &device = veDevice::get();
-        std::unique_ptr<veBuffer> vertexBuffer;
+                Device &device = Device::get();
+        std::unique_ptr<Buffer> vertexBuffer;
         uint32_t vertexCount;
 
-        std::unique_ptr<veBuffer> indexBuffer;
+        std::unique_ptr<Buffer> indexBuffer;
         uint32_t indexCount;
         static ModelMap models;
 	};

@@ -7,8 +7,8 @@
 
 namespace ve
 {
-	veWindow* veWindow::pInstance = nullptr;
-    veWindow::veWindow(int width, int height, const std::string &name) : pTitle(name)
+Window *Window::pInstance = nullptr;
+Window::Window(int width, int height, const std::string &name) : pTitle(name)
     {
 		pData.pWidth = width;
 		pData.pHeight = height;
@@ -57,13 +57,13 @@ namespace ve
 
     }
 
-    veWindow::~veWindow()
+    Window::~Window()
     {
         glfwDestroyWindow(pData.window);
         glfwTerminate();
     }
 
-    void veWindow::initveWindow()
+    void Window::initveWindow()
     {
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -75,7 +75,7 @@ namespace ve
         glfwSetFramebufferSizeCallback(pData.window, frameBufferResizedCallback);
     }
 
-    void veWindow::CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface)
+    void Window::CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface)
     {
         if (glfwCreateWindowSurface(instance, pData.window, nullptr, surface) != VK_SUCCESS)
         {
@@ -83,7 +83,7 @@ namespace ve
         }
     }
 
-    void veWindow::frameBufferResizedCallback(GLFWwindow *window, int width, int height)
+    void Window::frameBufferResizedCallback(GLFWwindow *window, int width, int height)
     {
         GLFWData* data = reinterpret_cast<GLFWData*>(glfwGetWindowUserPointer(window));
         data->framebufferResized = true;

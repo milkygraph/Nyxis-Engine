@@ -95,6 +95,6 @@ namespace ve
 		Entity m_CameraEntity = entt::null;
         uint32_t m_EntityCount = 0;
         std::atomic_int m_loadingEntity = 0;
-        veDevice &device = veDevice::get();
+        Device &device = Device::get();
     };
 } // namespace ve

@@ -10,26 +10,26 @@ namespace ve
 
 	bool Input::isKeyPressedImpl(int key)
 	{
-		auto state = glfwGetKey(veWindow::getGLFWwindow(), key);
+		auto state = glfwGetKey(Window::getGLFWwindow(), key);
 		return state == GLFW_PRESS || state == GLFW_REPEAT;
 	}
 	
 	bool Input::isMouseButtonPressedImpl(int button)
 	{
-		auto state = glfwGetMouseButton(veWindow::getGLFWwindow(), button);
+		auto state = glfwGetMouseButton(Window::getGLFWwindow(), button);
 		return state == GLFW_PRESS;
 	}
 	
 	glm::vec2 Input::getMousePositionImpl()
 	{
 		double xpos, ypos;
-		glfwGetCursorPos(veWindow::getGLFWwindow(), &xpos, &ypos);
+		glfwGetCursorPos(Window::getGLFWwindow(), &xpos, &ypos);
 		return { xpos, ypos };
 	}
 
 	void Input::setCursorModeImpl(int mode)
 	{
-		glfwSetInputMode(veWindow::getGLFWwindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL + mode);
+		glfwSetInputMode(Window::getGLFWwindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL + mode);
 		CursorMode = mode;
 	}
 

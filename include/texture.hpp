@@ -30,7 +30,7 @@ namespace ve{
 			};
 		}
 	private:
-		veDevice& device = veDevice::get();
+          Device & device = Device::get();
 		std::string filepath;
 		int texWidth = 0;
 		int texHeight = 0;

@@ -5,19 +5,19 @@
 namespace ve
 {
 
-    class veBuffer
+    class Buffer
     {
     public:
-        veBuffer(
+        Buffer(
             VkDeviceSize instanceSize,
             uint32_t instanceCount,
             VkBufferUsageFlags usageFlags,
             VkMemoryPropertyFlags memoryPropertyFlags,
             VkDeviceSize minOffsetAlignment = 1);
-        ~veBuffer();
+        ~Buffer();
 
-        veBuffer(const veBuffer &) = delete;
-        veBuffer &operator=(const veBuffer &) = delete;
+        Buffer(const Buffer &) = delete;
+        Buffer &operator=(const Buffer &) = delete;
 
         VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
         void unmap();
@@ -44,7 +44,7 @@ namespace ve
     private:
         static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
 
-        veDevice &device = veDevice::get();
+        Device &device = Device::get();
         void *mapped = nullptr;
         VkBuffer buffer = VK_NULL_HANDLE;
         VkDeviceMemory memory = VK_NULL_HANDLE;

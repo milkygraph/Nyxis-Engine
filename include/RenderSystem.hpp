@@ -19,7 +19,7 @@ namespace ve
 		virtual void CreatePipeline(VkRenderPass renderPass);
 		virtual void CreateDescriptorSetLayout();
 
-		veDevice& pDevice = veDevice::get();
+                Device & pDevice = Device::get();
 		std::unique_ptr<vePipeline> pPipeline;
 		VkPipelineLayout pipelineLayout;
 

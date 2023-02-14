@@ -60,15 +60,15 @@ namespace ve
         // add these buffer to fist copy to a temporary buffer and then a more efficient
         // gpu buffer for optimal performance
         uint32_t vertexSize = sizeof(vertices[0]);
-        veBuffer stagingBuffer{vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT};
+        Buffer stagingBuffer{vertexSize, vertexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT};
 
         stagingBuffer.map();
         stagingBuffer.writeToBuffer((void*) vertices.data());
 
-        vertexBuffer = std::make_unique<veBuffer>(vertexSize, vertexCount,
-                            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        vertexBuffer = std::make_unique<Buffer>(vertexSize, vertexCount,
+                                                VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         std::mutex mutex;
 		std::unique_lock<std::mutex> lock(mutex);
         device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
@@ -85,16 +85,16 @@ namespace ve
 
         uint32_t indexSize = sizeof(indices[0]);
 
-        veBuffer stagingBuffer{indexSize, indexCount,
-                            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT};
+        Buffer stagingBuffer{indexSize, indexCount,
+                             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT};
         
         stagingBuffer.map();
         stagingBuffer.writeToBuffer((void*) indices.data());
 
-        indexBuffer = std::make_unique<veBuffer>(indexSize, indexCount,
-                            VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 
-                            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        indexBuffer = std::make_unique<Buffer>(indexSize, indexCount,
+                                               VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
         device.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
     }

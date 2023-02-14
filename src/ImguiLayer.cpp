@@ -109,9 +109,9 @@ namespace ve
     }
 
     void ImguiLayer::init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer) {
-        ImGui_ImplGlfw_InitForVulkan(veWindow::getGLFWwindow(), true);
+        ImGui_ImplGlfw_InitForVulkan(Window::getGLFWwindow(), true);
         ImGui_ImplVulkan_InitInfo init_info = {};
-        veDevice::get().createImGuiInitInfo(init_info);
+        Device::get().createImGuiInitInfo(init_info);
         init_info.DescriptorPool = imguiPool->getDescriptorPool();
         ImGui_ImplVulkan_Init(&init_info, RenderPass);
         ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);

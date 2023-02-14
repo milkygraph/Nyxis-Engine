@@ -21,7 +21,7 @@ namespace ve
 		void CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout);
 		void CreatePipeline(VkRenderPass renderPass);
 
-		veDevice &pDevice = veDevice::get();
+                Device &pDevice = Device::get();
 		std::unique_ptr<vePipeline> pPipeline;
 		VkPipelineLayout pipelineLayout;
 		std::unique_ptr<veDescriptorSetLayout> TextureSetLayout;

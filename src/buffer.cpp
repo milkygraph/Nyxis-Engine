@@ -23,7 +23,7 @@ namespace ve
      *
      * @return VkResult of the buffer mapping call
      */
-    VkDeviceSize veBuffer::getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment)
+    VkDeviceSize Buffer::getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment)
     {
         if (minOffsetAlignment > 0)
         {
@@ -32,7 +32,7 @@ namespace ve
         return instanceSize;
     }
 
-    veBuffer::veBuffer(
+    Buffer::Buffer(
         VkDeviceSize instanceSize,
         uint32_t instanceCount,
         VkBufferUsageFlags usageFlags,
@@ -48,7 +48,7 @@ namespace ve
         device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, memory);
     }
 
-    veBuffer::~veBuffer()
+    Buffer::~Buffer()
     {
         unmap();
         vkDestroyBuffer(device.device(), buffer, nullptr);
@@ -64,7 +64,7 @@ namespace ve
      *
      * @return VkResult of the buffer mapping call
      */
-    VkResult veBuffer::map(VkDeviceSize size, VkDeviceSize offset)
+    VkResult Buffer::map(VkDeviceSize size, VkDeviceSize offset)
     {
         assert(buffer && memory && "Called map on buffer before create");
         return vkMapMemory(device.device(), memory, offset, size, 0, &mapped);
@@ -75,7 +75,7 @@ namespace ve
      *
      * @note Does not return a result as vkUnmapMemory can't fail
      */
-    void veBuffer::unmap()
+    void Buffer::unmap()
     {
         if (mapped)
         {
@@ -93,7 +93,7 @@ namespace ve
      * @param offset (Optional) Byte offset from beginning of mapped region
      *
      */
-    void veBuffer::writeToBuffer(void *data, VkDeviceSize size, VkDeviceSize offset)
+    void Buffer::writeToBuffer(void *data, VkDeviceSize size, VkDeviceSize offset)
     {
         assert(mapped && "Cannot copy to unmapped buffer");
 
@@ -120,7 +120,7 @@ namespace ve
      *
      * @return VkResult of the flush call
      */
-    VkResult veBuffer::flush(VkDeviceSize size, VkDeviceSize offset)
+    VkResult Buffer::flush(VkDeviceSize size, VkDeviceSize offset)
     {
         VkMappedMemoryRange mappedRange = {};
         mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -141,7 +141,7 @@ namespace ve
      *
      * @return VkResult of the invalidate call
      */
-    VkResult veBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
+    VkResult Buffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
     {
         VkMappedMemoryRange mappedRange = {};
         mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -159,7 +159,7 @@ namespace ve
      *
      * @return VkDescriptorBufferInfo of specified offset and range
      */
-    VkDescriptorBufferInfo veBuffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset)
+    VkDescriptorBufferInfo Buffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset)
     {
         return VkDescriptorBufferInfo{
             buffer,
@@ -175,7 +175,7 @@ namespace ve
      * @param index Used in offset calculation
      *
      */
-    void veBuffer::writeToIndex(void *data, int index)
+    void Buffer::writeToIndex(void *data, int index)
     {
         writeToBuffer(data, instanceSize, index * alignmentSize);
     }
@@ -186,7 +186,7 @@ namespace ve
      * @param index Used in offset calculation
      *
      */
-    VkResult veBuffer::flushIndex(int index) { return flush(alignmentSize, index * alignmentSize); }
+    VkResult Buffer::flushIndex(int index) { return flush(alignmentSize, index * alignmentSize); }
 
     /**
      * Create a buffer info descriptor
@@ -195,7 +195,7 @@ namespace ve
      *
      * @return VkDescriptorBufferInfo for instance at index
      */
-    VkDescriptorBufferInfo veBuffer::descriptorInfoForIndex(int index)
+    VkDescriptorBufferInfo Buffer::descriptorInfoForIndex(int index)
     {
         return descriptorInfo(alignmentSize, index * alignmentSize);
     }
@@ -209,7 +209,7 @@ namespace ve
      *
      * @return VkResult of the invalidate call
      */
-    VkResult veBuffer::invalidateIndex(int index)
+    VkResult Buffer::invalidateIndex(int index)
     {
         return invalidate(alignmentSize, index * alignmentSize);
     }

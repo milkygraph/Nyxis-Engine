@@ -10,19 +10,19 @@
 
 namespace ve
 {
-    veRenderer::veRenderer(Scene& scene)
-        : scene{scene}
+    Renderer::Renderer(Scene& scene)
     {
+        this->scene = &scene;
         recreateSwapChain();
         createCommandBuffers();
     }
 
-    veRenderer::~veRenderer()
+    Renderer::~Renderer()
     {
         freeCommandBuffers();
     }
 
-    void veRenderer::recreateSwapChain()
+    void Renderer::recreateSwapChain()
     {
 	    auto extent = window.getExtent();
         while (extent.width == 0 || extent.height == 0)
@@ -47,7 +47,7 @@ namespace ve
         }
     }
 
-    void veRenderer::createCommandBuffers()
+    void Renderer::createCommandBuffers()
     {
         commandBuffers.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
 
@@ -63,13 +63,13 @@ namespace ve
         }
     }
 
-    void veRenderer::freeCommandBuffers()
+    void Renderer::freeCommandBuffers()
     {
 	    vkFreeCommandBuffers(device.device(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
         commandBuffers.clear();
     }
 
-    VkCommandBuffer veRenderer::beginFrame()
+    VkCommandBuffer Renderer::beginFrame()
     {
         assert(!isFrameStarted && "Can't call beginFrame while already in progress");
 
@@ -97,7 +97,7 @@ namespace ve
         
         return commandBuffer;
     }
-    void veRenderer::endFrame()
+    void Renderer::endFrame()
     {
         assert(isFrameStarted && "Can't end frame while not in progress ");
         
@@ -119,7 +119,7 @@ namespace ve
         isFrameStarted = false;
 	    currentFrameIndex = (currentFrameIndex + 1) % veSwapChain::MAX_FRAMES_IN_FLIGHT;
     }
-    void veRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer)
+    void Renderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer)
     {
         assert(isFrameStarted && "Can't call beginSwapChainRenderPass while in progress");
         assert(commandBuffer == getCurrentCommandBuffer() && "Can't begin render pass on command buffer from another frame");
@@ -153,12 +153,26 @@ namespace ve
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
     }
-    void veRenderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer)
+    void Renderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer)
     {
         assert(isFrameStarted && "Can't call beginSwapChainRenderPass while in progress");
         assert(commandBuffer == getCurrentCommandBuffer() && "Can't end render pass on command buffer from another frame");
 
         vkCmdEndRenderPass(commandBuffer);
     }
-
+    void Renderer::SetScene(Scene &scene)
+    {
+        VE_ASSERT(!isFrameStarted, "Can't set scene while frame is in progress");
+        // set renderer scene to new scene
+        this->scene = &scene;
+    }
+    void Renderer::RenderScene()
+    {
+        auto commandBuffer = beginFrame();
+        if (commandBuffer == nullptr)
+            return;
+        beginSwapChainRenderPass(commandBuffer);
+        endSwapChainRenderPass(commandBuffer);
+        endFrame();
+    }
 } // namespace ve
