@@ -9,6 +9,7 @@
 #include "TextureRenderSystem.hpp"
 #include "path.hpp"
 #include "Log.hpp"
+#include "AssimpModel.hpp"
 
 #include "vepch.hpp"
 
@@ -151,18 +152,16 @@ namespace ve
 
             // updating buffers TODO move to scene update
             GlobalUbo ubo{};
-            ubo.projection = pScene.GetCamera()->getProjectionMatrix();
-            ubo.view = pScene.GetCamera()->getViewMatrix();
-            ubo.inverseViewMatrix = pScene.GetCamera()->getInverseViewMatrix();
-            pls.update(frameInfo, ubo);
+			ubo.UpdateVPM(pScene.GetCamera());
+            pls.Update(frameInfo, ubo);
             uboBuffers[frameIndex]->writeToBuffer(&ubo);
             uboBuffers[frameIndex]->flush();
 
             // rendering TODO move to scene update
             pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
 	        trs.Render(frameInfo);
-            srs.render(frameInfo);
-            pls.render(frameInfo);
+            srs.Render(frameInfo);
+            pls.Render(frameInfo);
             pImguiLayer.OnUpdate(frameInfo);
             pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
             pRenderer.endFrame();
@@ -184,7 +183,8 @@ namespace ve
 		 pScene.addComponent<MeshComponent>(background, model_path + "background.obj");
 		 pScene.addComponent<Texture>(background, texture_path + "pngegg.png");
          pScene.addComponent<Player>(background);
-//        pScene.LoadScene("scene.json");
+
+		 auto AssimpModel = AssimpModel::LoadFromFile(model_path + "cube.obj");
 
 	}
 } // namespace ve

@@ -29,7 +29,7 @@ namespace ve
 
         SimpleRenderSystem(const SimpleRenderSystem &) = delete;
         SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
-        void render(FrameInfo &frameInfo);
+        void Render(FrameInfo &frameInfo);
 
     private:
         void createPipelineLayout(VkDescriptorSetLayout globalDescriptorSetLayout);

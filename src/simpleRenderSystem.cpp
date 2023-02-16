@@ -67,7 +67,7 @@ namespace ve
             pipelineConfig);
     }
 
-    void SimpleRenderSystem::render(FrameInfo &frameInfo)
+    void SimpleRenderSystem::Render(FrameInfo &frameInfo)
     {
         pPipeline->bind(frameInfo.commandBuffer);
 

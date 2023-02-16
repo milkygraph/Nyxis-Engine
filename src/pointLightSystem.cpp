@@ -100,7 +100,7 @@ namespace ve
         }
     }
 
-    void PointLightSystem::update(FrameInfo &frameInfo, GlobalUbo &ubo)
+    void PointLightSystem::Update(FrameInfo &frameInfo, GlobalUbo &ubo)
     {
         auto rotateLight = glm::rotate(glm::mat4(1.f), 0.5f * frameInfo.frameTime, {0.f, -1.f, 0.f});
         int lightIndex = 0;
