@@ -25,7 +25,7 @@ namespace ve
         float roughness{ 0.0f };
         float mass{ 1.0f };
         float friction{ 0.5f };
-        float restitution{ 0.5f };
+        float restitution{ 0.8f };
         bool isStatic{ false };
         bool isKinematic{ false };
         bool isTrigger{ false };
@@ -201,16 +201,7 @@ namespace ve
 
     struct Gravity
     {
-        float gravity{ 0.098f };
-
-		void ToJson(nlohmann::json& j) const
-		{
-			j["Gravity"] = { {"gravity", gravity} };
-		}
-
-		void FromJson(const nlohmann::json& j)
-		{
-			gravity = j["Gravity"]["gravity"];
-		}
+        Gravity() = default;
+        bool flag = true;
     };
 }

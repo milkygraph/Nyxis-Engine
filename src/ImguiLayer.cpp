@@ -177,10 +177,10 @@ namespace ve
                 ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f);
                 ImGui::DragFloat3("Rotation", &rigidBody.rotation.x,0.1f, -180.0f, 180.0f);
                 ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f);
-                
-                ImGui::Text("Velocity");
+
 				ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);
-                
+                ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0.0f, 1.0f);
+
                 ImGui::DragFloat("Roughness", &rigidBody.roughness, 0.1f);
                 // check if entity has a collider component
                 if(scene.m_Registry.all_of<Collider>(entity_names[selectedEntity]))

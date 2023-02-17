@@ -137,10 +137,9 @@ namespace ve
             ImGui::Begin("Physics");
 		    ImGui::Checkbox("Enable Physics", &PhysicsEnabled);
             ImGui::DragFloat2("BoxEdges", &physicsEngine.edges.x);
+            ImGui::DragFloat("Gravity", &physicsEngine.gravity, 0.1, -1.0f, 1.0f);
 			ImGui::End();
-
         });
-
 
         while (!pWindow.shouldClose()) {
             glfwPollEvents();
@@ -197,14 +196,18 @@ namespace ve
         pScene.addComponent<Gravity>(circle1);
         pScene.addComponent<Player>(circle1);
 
-        auto circle2 = pScene.createEntity("Circle2");
-        auto& rigidBody2 = pScene.addComponent<RigidBody>(circle2);
-        rigidBody2.translation = glm::vec3(0.5f, -1.0f, 1.0f);
-        rigidBody2.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-        rigidBody2.scale = glm::vec3(.02f, .02f, .02f);
+        for(auto i = 0; i < 20; i++)
+        {
+            auto circle = pScene.createEntity("Circle" + std::to_string(i));
+            auto& rigidBody = pScene.addComponent<RigidBody>(circle);
+            rigidBody.translation = glm::vec3(-1.0f + i * 0.1f, -1.0f, 1.0f);
+            rigidBody.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+            rigidBody.scale = glm::vec3(.02f, .02f, .02f);
+            rigidBody.restitution = 0.5f;
 
-        pScene.addComponent<MeshComponent>(circle2, "../models/sphere.obj");
-        pScene.addComponent<Collider>(circle2, ColliderType::Sphere, glm::vec3{ 0.2, 0.2, 0.2 }, 0.05);
-        pScene.addComponent<Gravity>(circle2); 
+            pScene.addComponent<MeshComponent>(circle, "../models/sphere.obj");
+            pScene.addComponent<Collider>(circle, ColliderType::Sphere, glm::vec3{ 0.2, 0.2, 0.2 }, 0.05);
+            pScene.addComponent<Gravity>(circle);
+        }
     }
 } // namespace ve
