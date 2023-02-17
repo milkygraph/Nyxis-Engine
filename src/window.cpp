@@ -16,6 +16,7 @@ Window::Window(int width, int height, const std::string &name) : pTitle(name)
         initveWindow();
 
 	    glfwSetWindowUserPointer(pData.window, &pData);
+        glfwSetWindowAspectRatio(pData.window, 16, 9);
 
 	    glfwSetErrorCallback([](int error, const char* description)
 	    {
