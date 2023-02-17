@@ -136,7 +136,9 @@ namespace ve
         pImguiLayer.AddFunction([&]() {
             ImGui::Begin("Physics");
 		    ImGui::Checkbox("Enable Physics", &PhysicsEnabled);
+            ImGui::DragFloat2("BoxEdges", &physicsEngine.edges.x);
 			ImGui::End();
+
         });
 
 
