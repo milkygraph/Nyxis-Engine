@@ -39,7 +39,7 @@ namespace ve
 			0,
 			nullptr);
 
-		frameInfo.scene.m_Registry.view<TransformComponent, MeshComponent, Texture>().each([&](auto entity, auto& transform, auto& mesh, auto& texture)
+		frameInfo.scene.m_Registry.view<RigidBody, MeshComponent, Texture>().each([&](auto entity, auto& rigidBody, auto& mesh, auto& texture)
 		{
 		  auto& model = *mesh.model;
 			  if(model.loaded)
@@ -61,9 +61,9 @@ namespace ve
 					  nullptr);
 
 				  TexturePushConstantData push{};
-				  push.modelMatrix = transform.mat4 ();
-				  push.normalMatrix = transform.normalMatrix ();
-				  push.roughness = transform.roughness;
+				  push.modelMatrix = rigidBody.mat4 ();
+				  push.normalMatrix = rigidBody.normalMatrix ();
+				  push.roughness = rigidBody.roughness;
 
 				  vkCmdPushConstants (
 					  frameInfo.commandBuffer,

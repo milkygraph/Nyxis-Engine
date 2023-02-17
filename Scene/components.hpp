@@ -13,6 +13,27 @@
 
 namespace ve
 {
+    struct RigidBody
+    {
+        glm::vec3 translation{ 0.0f };
+        glm::vec3 rotation{ 0.0f };
+        glm::vec3 scale{ 1.0f };
+
+        glm::vec3 velocity{ 0.0f };
+        glm::vec3 acceleration{ 0.0f };
+
+        float roughness{ 0.0f };
+        float mass{ 1.0f };
+        float friction{ 0.5f };
+        float restitution{ 0.5f };
+        bool isStatic{ false };
+        bool isKinematic{ false };
+        bool isTrigger{ false };
+
+        glm::mat4 mat4();
+        glm::mat3 normalMatrix();
+    };
+
     // tag compoent
     struct TagComponent
     {
@@ -130,7 +151,7 @@ namespace ve
     {
         float moveSpeed{ 1.f };
 
-        void OnUpdate(float dt, TransformComponent& transform)
+        void OnUpdate(float dt, RigidBody& rigidBody)
         {
             // 2d movement
             glm::vec3 moveDir{ 0.f };
@@ -145,7 +166,7 @@ namespace ve
 
             if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon())
             {
-                transform.translation += moveSpeed * dt * glm::normalize(moveDir);
+                rigidBody.velocity += moveSpeed * dt * glm::normalize(moveDir);
             }
         }
 
@@ -160,33 +181,36 @@ namespace ve
         }
     };
 
-    struct SquareCollider
+    enum class ColliderType
     {
-        glm::vec2 size;
-        glm::vec2 offset;
-
-        void ToJson(nlohmann::json& j) const
-        {
-            j = nlohmann::json
-                {
-                    {"size", {size.x, size.y}},
-                    {"offset", {offset.x, offset.y}}
-                };
-        }
+		Sphere,
+		Box,
+		Capsule,
+		Mesh
     };
 
-    struct CircleCollider
+    struct Collider
     {
+        Collider(ColliderType type, glm::vec3 size, float radius) 
+            : type(type), size(size), radius(radius) {}
+        ColliderType type;
+        
+		glm::vec3 size{ 1.0f };
         float radius;
-        glm::vec2 offset;
+    };
 
-        void ToJson(nlohmann::json& j) const
-        {
-            j = nlohmann::json
-                {
-                    {"radius", radius},
-                    {"offset", {offset.x, offset.y}}
-                };
-        }
+    struct Gravity
+    {
+        float gravity{ 0.098f };
+
+		void ToJson(nlohmann::json& j) const
+		{
+			j["Gravity"] = { {"gravity", gravity} };
+		}
+
+		void FromJson(const nlohmann::json& j)
+		{
+			gravity = j["Gravity"]["gravity"];
+		}
     };
 }

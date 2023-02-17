@@ -15,6 +15,7 @@ namespace ve
 		{
 			glm::vec3 position;
 			glm::vec3 normal;
+			glm::vec2 texCoord;
 		};
 
 		struct Material
@@ -31,14 +32,22 @@ namespace ve
 		};
 
 	public:
-		AssimpModel(std::vector<Mesh> meshes);
+		AssimpModel(std::vector<Mesh> meshes, std::vector<Material> materials);
 		~AssimpModel();
 
 		static VE_REF(AssimpModel) LoadFromFile(const std::string &path);
 
+		void CreateBuffers();
+		
 	private:
+
+		Device& device = Device::get();
+		
 		std::vector<Mesh> meshes;
-	    VE_REF(Buffer) vertexBuffer;
-		VE_REF(Buffer) indexBuffer;
+		std::vector<Material> materials;
+
+	    std::vector<VE_REF(Buffer)> vertexBuffers;
+		std::vector<VE_REF(Buffer)> indexBuffers;
+		std::vector<VE_REF(Buffer)> materialBuffers;
 	};
 }

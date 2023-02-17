@@ -133,6 +133,12 @@ namespace ve
             ImGui::End();
         });
 
+        pImguiLayer.AddFunction([&]() {
+            ImGui::Begin("Physics");
+		    ImGui::Checkbox("Enable Physics", &PhysicsEnabled);
+			ImGui::End();
+        });
+
 
         while (!pWindow.shouldClose()) {
             glfwPollEvents();
@@ -159,10 +165,14 @@ namespace ve
 
             // rendering TODO move to scene update
             pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
-	        trs.Render(frameInfo);
+	        
+            trs.Render(frameInfo);
             srs.Render(frameInfo);
             pls.Render(frameInfo);
             pImguiLayer.OnUpdate(frameInfo);
+            if(PhysicsEnabled)
+                physicsEngine.OnUpdate(pScene, frameInfo.frameTime);
+            
             pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
             pRenderer.endFrame();
 
@@ -174,17 +184,25 @@ namespace ve
 
     void App::loadGameObjects()
     {
-		 auto background = pScene.createEntity("Background");
-	     pScene.addComponent<TransformComponent>( background,
-		     glm::vec3(0.f, 0.f, 0.f),
-		     glm::vec3(.0f, .0f, 0.0f),
-		     glm::vec3(0.1f, 0.1f, 0.1f),
-		     0.0f);
-		 pScene.addComponent<MeshComponent>(background, model_path + "background.obj");
-		 pScene.addComponent<Texture>(background, texture_path + "pngegg.png");
-         pScene.addComponent<Player>(background);
+        auto circle1 = pScene.createEntity("Circle1");
+        auto& rigidBody1 = pScene.addComponent<RigidBody>(circle1);
+		rigidBody1.translation = glm::vec3(0.0f, -1.0f, 1.0f);
+		rigidBody1.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+        rigidBody1.scale = glm::vec3(.02f, .02f, .02f);
 
-		 auto AssimpModel = AssimpModel::LoadFromFile(model_path + "cube.obj");
+        pScene.addComponent<MeshComponent>(circle1, "../models/sphere.obj");
+        pScene.addComponent<Collider>(circle1, ColliderType::Sphere, glm::vec3{ 0.2, 0.2, 0.2 }, 0.05);
+        pScene.addComponent<Gravity>(circle1);
+        pScene.addComponent<Player>(circle1);
 
-	}
+        auto circle2 = pScene.createEntity("Circle2");
+        auto& rigidBody2 = pScene.addComponent<RigidBody>(circle2);
+        rigidBody2.translation = glm::vec3(0.5f, -1.0f, 1.0f);
+        rigidBody2.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+        rigidBody2.scale = glm::vec3(.02f, .02f, .02f);
+
+        pScene.addComponent<MeshComponent>(circle2, "../models/sphere.obj");
+        pScene.addComponent<Collider>(circle2, ColliderType::Sphere, glm::vec3{ 0.2, 0.2, 0.2 }, 0.05);
+        pScene.addComponent<Gravity>(circle2); 
+    }
 } // namespace ve

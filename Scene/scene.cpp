@@ -58,27 +58,27 @@ namespace ve
     }
     void Scene::OnUpdate(float dt, float aspect, bool projection)
     {
+        if (SaveSceneFlag)
+        {
+            SaveSceneFlag = false;
+            vkDeviceWaitIdle(device.device());
+            SaveScene();
+        }
+        if (LoadSceneFlag)
+        {
+            LoadSceneFlag = false;
+            vkDeviceWaitIdle(device.device());
+            LoadScene(SceneName);
+        }
+
         if (projection)
             m_Camera->setPerspectiveProjection(glm::radians(60.0f), aspect, 0.1f, 1000.0f);
         else
             m_Camera->setOrthographicProjection(-aspect, aspect, -1.0f, 1.0f, 0.1f, 1000.0f);
 
         m_Camera->OnUpdate(dt);
-        getComponentView<Player, TransformComponent>().each([&](auto entity, auto &player, auto &transform)
-                                                            { player.OnUpdate(dt, transform); });
-
-        if(SaveSceneFlag)
-        {
-            SaveSceneFlag = false;
-            vkDeviceWaitIdle(device.device());
-            SaveScene();
-        }
-        if(LoadSceneFlag)
-        {
-            LoadSceneFlag = false;
-            vkDeviceWaitIdle(device.device());
-            LoadScene(SceneName);
-        }
+        getComponentView<Player, RigidBody>().each([&](auto entity, auto &player, auto &rigidBody)
+                                                            { player.OnUpdate(dt, rigidBody); });
     }
 
     /**

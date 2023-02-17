@@ -172,11 +172,22 @@ namespace ve
                     ImGui::EndCombo();
                 }
 
-                auto &transform = scene.getComponent<TransformComponent>(entity_names[selectedEntity]); // TODO! Fix load scene bug
-                ImGui::DragFloat3("Position", &transform.translation.x, 0.1f);
-                ImGui::DragFloat3("Rotation", &transform.rotation.x,0.1f, -180.0f, 180.0f);
-                ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f);
-                ImGui::DragFloat("Roughness", &transform.roughness, 0.1f);
+                auto &rigidBody = scene.getComponent<RigidBody>(entity_names[selectedEntity]); // TODO! Fix load scene bug
+				ImGui::Text("Transform");
+                ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f);
+                ImGui::DragFloat3("Rotation", &rigidBody.rotation.x,0.1f, -180.0f, 180.0f);
+                ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f);
+                
+                ImGui::Text("Velocity");
+				ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);
+                
+                ImGui::DragFloat("Roughness", &rigidBody.roughness, 0.1f);
+                // check if entity has a collider component
+                if(scene.m_Registry.all_of<Collider>(entity_names[selectedEntity]))
+                {
+					auto& collider = scene.getComponent<Collider>(entity_names[selectedEntity]);
+					ImGui::DragFloat("Collider Radius", &collider.radius, 0.05f);
+                }
             }
             static auto modelNames = getModelNames();
 

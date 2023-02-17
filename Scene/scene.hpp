@@ -26,7 +26,8 @@ namespace ve
 		{
 			m_CameraEntity = createEntity("Camera");
 			auto& transform = addComponent<TransformComponent>(m_CameraEntity, glm::vec3{ 0, 0, -14 });
-			m_Camera = new Camera(transform);
+            auto& rigidBody = addComponent<RigidBody>(m_CameraEntity);
+			m_Camera = new Camera(rigidBody);
             m_Camera->getCameraController().setCameraType(CameraType::Orthographic);
 		}
         ~Scene();

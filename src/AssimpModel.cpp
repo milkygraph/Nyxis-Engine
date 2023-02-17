@@ -8,7 +8,11 @@
 #include <assimp/material.h>
 namespace ve
 {
-	AssimpModel::AssimpModel(std::vector<Mesh> meshes)  : meshes(meshes) {}
+	AssimpModel::AssimpModel(std::vector<Mesh> meshes, std::vector<Material> materials)  
+		: meshes(meshes), materials(materials)
+	{
+		CreateBuffers();
+	}
 
 	AssimpModel::~AssimpModel()
 	{
@@ -27,7 +31,10 @@ namespace ve
 
 		// Load all the meshes in the model
 		std::vector<Mesh> meshes;
+		std::vector<Material> materials;
 		meshes.reserve(scene->mNumMeshes);
+		materials.reserve(scene->mNumMaterials);
+		
 		for (unsigned int meshID = 0; meshID < scene->mNumMeshes; meshID++)
 		{
 			aiMesh* mesh = scene->mMeshes[meshID];
@@ -51,6 +58,8 @@ namespace ve
 				glm::vec4(diffuseColor.r, diffuseColor.g, diffuseColor.b, diffuseColor.a),
 				glm::vec4(ambientColor.r, ambientColor.g, ambientColor.b, ambientColor.a),
 			};
+
+			materials.push_back(meshMaterial);
 
 			for(uint32_t vertID = 0u; vertID < mesh->mNumVertices; vertID++)
 			{
@@ -78,6 +87,54 @@ namespace ve
 		// Release imported data
 		importer.FreeScene();
 
-		return VE_MAKE_REF(AssimpModel, meshes);
+		return VE_MAKE_REF(AssimpModel, meshes, materials);
+	}
+	void AssimpModel::CreateBuffers()
+	{
+		vertexBuffers.reserve(meshes.size());
+		indexBuffers.reserve(meshes.size());
+		for (uint32_t i = 0; i < meshes.size(); i++) 
+		{
+			// Create vertex buffer
+			{
+				VE_ASSERT(meshes[i].vertices.size() > 0, ("Mesh {} has no vertices!", i));
+				VkDeviceSize bufferSize = sizeof(meshes[i].vertices[0]) * meshes[i].vertices.size();
+
+				uint32_t vertexSize = sizeof(meshes[i].vertices[0]);
+				Buffer stagingBuffer{ vertexSize, static_cast<uint32_t>(meshes[i].vertices.size()), VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+									VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT };
+
+				stagingBuffer.map();
+				stagingBuffer.writeToBuffer((void*)meshes[i].vertices.data());
+
+				auto vertexBuffer = VE_MAKE_REF(Buffer, vertexSize, static_cast<uint32_t>(meshes[i].vertices.size()), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+				device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
+
+				vertexBuffers.push_back(vertexBuffer);
+			}
+
+			// Create index buffer
+			{
+				VE_ASSERT(meshes[i].indices.size() > 0, ("Mesh {} has no indices!", i));
+				VkDeviceSize bufferSize = sizeof(meshes[i].indices[0]) * meshes[i].indices.size();
+
+				uint32_t indexSize = sizeof(meshes[i].indices[0]);
+				Buffer stagingBuffer{ indexSize, static_cast<uint32_t>(meshes[i].indices.size()), VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+									VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT };
+
+				stagingBuffer.map();
+				stagingBuffer.writeToBuffer((void*)meshes[i].indices.data());
+
+				auto indexBuffer = VE_MAKE_REF(Buffer, indexSize, static_cast<uint32_t>(meshes[i].indices.size()), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+				device.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
+
+				indexBuffers.push_back(indexBuffer);
+			}
+		}
+	
 	}
 }

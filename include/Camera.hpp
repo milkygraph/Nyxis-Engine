@@ -11,7 +11,7 @@ namespace ve
     class Camera
     {
     public:
-		Camera(TransformComponent& transformComponent) : cameraTransform(transformComponent) {}
+		Camera(RigidBody& rigidBody) : cameraRigidBody(rigidBody) {}
 
 		void OnUpdate(float dt);
         void setOrthographicProjection(float left, float right, float top, float bottom, float near, float far);
@@ -26,7 +26,7 @@ namespace ve
 
         CameraController& getCameraController() { return cameraController; }
     private:
-		TransformComponent& cameraTransform;
+		RigidBody& cameraRigidBody;
 		CameraController cameraController;
         glm::mat4 projectionMatrix{1.0f};
         glm::mat4 viewMatrix{1.0f};

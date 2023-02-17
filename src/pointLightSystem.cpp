@@ -71,7 +71,7 @@ namespace ve
             pipelineConfig);
     }
 
-    void PointLightSystem::render(FrameInfo &frameInfo)
+    void PointLightSystem::Render(FrameInfo &frameInfo)
     {
         pipeline->bind(frameInfo.commandBuffer);
 

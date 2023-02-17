@@ -32,3 +32,5 @@ CMakePresets.json
 *.sln
 *.vcxproj*
 /cpp.hint
+/Vulkan_Engine.aps
+/Vulkan_Engine.rc

@@ -11,6 +11,7 @@
 #include "input.hpp"
 #include "Log.hpp"
 #include "ImguiLayer.hpp"
+#include "PhysicsEngine.hpp"
 
 #include "vepch.hpp"
 
@@ -56,6 +57,7 @@ namespace ve
         Device & pDevice = Device::get();
         Renderer pRenderer{ pScene};
         ImguiLayer pImguiLayer{};
+		bool PhysicsEnabled = false;
 
 
         std::unique_ptr<veDescriptorPool> globalPool{};
@@ -72,6 +74,7 @@ namespace ve
         veGameObject::Map gameObjects;
 
         Scene pScene{};
+        PhysicsEngine physicsEngine{};
         LayerStack pLayerStack{};
 
 	protected:

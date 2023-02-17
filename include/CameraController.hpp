@@ -19,8 +19,8 @@ namespace ve
     class CameraController
     {
     public:
-	    void processMouseMovement(float dt, TransformComponent& transform);
-        void moveInPlaneXZ(float dt, TransformComponent& transform);
+	    void processMouseMovement(float dt, RigidBody& rigidBody);
+        void moveInPlaneXZ(float dt, RigidBody& rigidBody);
         void setCameraType(CameraType type) { cameraType = type; }
 		float moveSpeed{10.f};
     private:
