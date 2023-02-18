@@ -130,9 +130,9 @@ namespace ve
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         ShowExampleAppDockSpace();
-
-        AddEntityLoader();
+        
         AddSceneHierarchy();
+        AddEntityLoader();
         AddMenuBar();
 
         for (auto &function : functions) {
@@ -173,22 +173,24 @@ namespace ve
 
     void ImguiLayer::AddEntityLoader()
     {
-        ImGui::Begin("Object"); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+        ImGui::Begin("Component"); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
         {
-            auto &rigidBody = m_ActiveScene.getComponent<RigidBody>(m_SelectedEntity); // TODO! Fix load scene bug
-            ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f);
-            ImGui::DragFloat3("Rotation", &rigidBody.rotation.x,0.1f, -180.0f, 180.0f);
-            ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f);
+            if (m_ShowEntityLoader) {
+                auto& rigidBody = m_ActiveScene.getComponent<RigidBody>(m_SelectedEntity); // TODO! Fix load scene bug
+                ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f);
+                ImGui::DragFloat3("Rotation", &rigidBody.rotation.x, 0.1f, -180.0f, 180.0f);
+                ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f);
 
-            ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);
-            ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0.0f, 1.0f);
+                ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);
+                ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0.0f, 1.0f);
 
-            ImGui::DragFloat("Roughness", &rigidBody.roughness, 0.1f);
-            // check if entity has a collider component
-            if(m_ActiveScene.m_Registry.all_of<Collider>(m_SelectedEntity))
-            {
-                auto& collider = m_ActiveScene.getComponent<Collider>(m_SelectedEntity);
-                ImGui::DragFloat("Collider Radius", &collider.radius, 0.05f);
+                ImGui::DragFloat("Roughness", &rigidBody.roughness, 0.1f);
+                // check if entity has a collider component
+                if (m_ActiveScene.m_Registry.all_of<Collider>(m_SelectedEntity))
+                {
+                    auto& collider = m_ActiveScene.getComponent<Collider>(m_SelectedEntity);
+                    ImGui::DragFloat("Collider Radius", &collider.radius, 0.05f);
+                }
             }
         }
         ImGui::End();
@@ -218,6 +220,7 @@ namespace ve
         if(expanded)
         {
             ImGui::TreePop();
+            m_ShowEntityLoader = true;
         }
     }
 }

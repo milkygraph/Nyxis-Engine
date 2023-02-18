@@ -24,6 +24,7 @@ namespace ve
 
         Scene& m_ActiveScene;
         Entity m_SelectedEntity;
+		bool m_ShowEntityLoader = false;
         std::vector<std::function<void()>> functions;
         std::unique_ptr<veDescriptorPool> imguiPool{};
     };
