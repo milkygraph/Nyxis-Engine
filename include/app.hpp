@@ -56,7 +56,7 @@ namespace ve
         Window & pWindow = Window::get(WIDTH, HEIGHT, "Vulkan Engine");
         Device & pDevice = Device::get();
         Renderer pRenderer{ pScene};
-        ImguiLayer pImguiLayer{};
+        ImguiLayer pImguiLayer{ pScene };
 		bool PhysicsEnabled = false;
 
 

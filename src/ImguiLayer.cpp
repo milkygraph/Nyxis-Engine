@@ -58,7 +58,8 @@ namespace ve
         return modelNames;
     }
 
-    ImguiLayer::ImguiLayer() {
+    ImguiLayer::ImguiLayer(Scene& scene) : m_ActiveScene(scene)
+    {
         imguiPool = veDescriptorPool::Builder()
                 .addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000)
                 .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
@@ -82,6 +83,9 @@ namespace ve
         IO->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable  Docking
         IO->ConfigDockingWithShift = true;
         ImGui::StyleColorsDark();
+
+        // setting font
+        IO->Fonts->AddFontFromFileTTF("../assets/fonts/OpenSans-Regular.ttf", 18.0f);
 
         // setup style
         ImVec4 *colors = ImGui::GetStyle().Colors;
@@ -117,7 +121,7 @@ namespace ve
         ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
     }
 
-    void ImguiLayer::AddFunction(std::function<void()> function) {
+    void ImguiLayer::AddFunction(const std::function<void()>& function) {
         functions.push_back(function);
     }
 
@@ -126,6 +130,11 @@ namespace ve
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         ShowExampleAppDockSpace();
+
+        AddEntityLoader();
+        AddSceneHierarchy();
+        AddMenuBar();
+
         for (auto &function : functions) {
             function();
         }
@@ -133,88 +142,82 @@ namespace ve
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
     }
 
-    void ImguiLayer::AddEntityLoader(Scene &scene)
+    void ImguiLayer::AddMenuBar()
     {
-        functions.push_back([&]() {
-            ImGui::Begin(
-                    "Object"); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-
-            static std::unordered_map<std::string, Entity> entity_names;
-
-            auto view = scene.getComponentView<TagComponent>();
-            static std::string selectedEntity;
-
-            if (update) {
-                entity_names.clear();
-                for (auto entity: view) {
-                    auto tag = view.get<TagComponent>(entity);
-                    entity_names[tag.Tag] = entity;
-                }
-                if (!entity_names.empty())
-                    selectedEntity = entity_names.begin()->first;
-                update = false;
+        ImGui::BeginMainMenuBar();
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("New")) {}
+            if (ImGui::MenuItem("Open", "Ctrl+O"))
+            {
+                m_ActiveScene.LoadSceneFlag = true;
             }
-
-            // select entity from list of entities, when there are no entities in the list, create a new one
-            if (entity_names.empty()) {
-            } else {
-                if (ImGui::BeginCombo("Objects",
-                                      selectedEntity.c_str())) { // The second parameter is the label previewed before opening the combo.
-                    for (auto &kv: entity_names) {
-                        bool is_selected = (selectedEntity
-                                            ==
-                                            kv.first); // You can store your selection however you want, outside or inside your objects
-                        if (ImGui::Selectable(kv.first.c_str(), is_selected))
-                            selectedEntity = kv.first;
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus(); // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
-                    }
-                    ImGui::EndCombo();
-                }
-
-                auto &rigidBody = scene.getComponent<RigidBody>(entity_names[selectedEntity]); // TODO! Fix load scene bug
-				ImGui::Text("Transform");
-                ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f);
-                ImGui::DragFloat3("Rotation", &rigidBody.rotation.x,0.1f, -180.0f, 180.0f);
-                ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f);
-
-				ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);
-                ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0.0f, 1.0f);
-
-                ImGui::DragFloat("Roughness", &rigidBody.roughness, 0.1f);
-                // check if entity has a collider component
-                if(scene.m_Registry.all_of<Collider>(entity_names[selectedEntity]))
-                {
-					auto& collider = scene.getComponent<Collider>(entity_names[selectedEntity]);
-					ImGui::DragFloat("Collider Radius", &collider.radius, 0.05f);
-                }
+            if (ImGui::MenuItem("Save", "Ctrl+S"))
+            {
+                m_ActiveScene.SaveSceneFlag = true;
             }
-            static auto modelNames = getModelNames();
+            ImGui::Separator();
+            ImGui::EndMenu();
+        }
+        if(ImGui::BeginMenu("Edit"))
+        {
+            if(ImGui::MenuItem("Undo", "CTRL+Z")) {}
+            if(ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+            ImGui::Separator();
+            if(ImGui::MenuItem("Cut", "CTRL+X")) {}
+            if(ImGui::MenuItem("Copy", "CTRL+C")) {}
+            if(ImGui::MenuItem("Paste", "CTRL+V")) {}
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
 
-            static auto &selectedModel = modelNames[0];
-            if (ImGui::BeginCombo("Models",
-                                  selectedModel.c_str())) { // The second parameter is the label previewed before opening the combo.
-                for (auto &model: modelNames) {
-                    bool is_selected = (selectedModel
-                                        ==
-                                        model); // You can store your selection however you want, outside or inside your objects
-                    if (ImGui::Selectable(model.c_str(), is_selected))
-                        selectedModel = model;
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus(); // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
-                }
-                ImGui::EndCombo();
+    void ImguiLayer::AddEntityLoader()
+    {
+        ImGui::Begin("Object"); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+        {
+            auto &rigidBody = m_ActiveScene.getComponent<RigidBody>(m_SelectedEntity); // TODO! Fix load scene bug
+            ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f);
+            ImGui::DragFloat3("Rotation", &rigidBody.rotation.x,0.1f, -180.0f, 180.0f);
+            ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f);
+
+            ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);
+            ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0.0f, 1.0f);
+
+            ImGui::DragFloat("Roughness", &rigidBody.roughness, 0.1f);
+            // check if entity has a collider component
+            if(m_ActiveScene.m_Registry.all_of<Collider>(m_SelectedEntity))
+            {
+                auto& collider = m_ActiveScene.getComponent<Collider>(m_SelectedEntity);
+                ImGui::DragFloat("Collider Radius", &collider.radius, 0.05f);
             }
+        }
+        ImGui::End();
+    }
 
-            if (ImGui::Button("Add Object")) {
-                auto [name, entity] = scene.addEntity(selectedModel);
-                if (entity_names.find(name) != entity_names.end())
-                    name = name + std::to_string(scene.getEntityCount());
-                entity_names[name] = entity;
-                selectedEntity = name;
-            }
-
+    void ImguiLayer::AddSceneHierarchy()
+    {
+            ImGui::Begin("Scene Hierarchy");
+            ImGui::Text("Scene Hierarchy");
+            m_ActiveScene.m_Registry.each([&](auto entityID)
+            {
+                DrawEntityNode(entityID);
+            });
             ImGui::End();
-        });
+    }
+
+    void ImguiLayer::DrawEntityNode(Entity entity)
+    {
+        auto& tag = m_ActiveScene.getComponent<TagComponent>(entity).Tag;
+
+        ImGuiTreeNodeFlags flags = ((m_SelectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+        bool expanded = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, "%s", tag.c_str());
+        if(ImGui::IsItemClicked())
+        {
+            m_SelectedEntity = entity;
+        }
+        if(expanded)
+        {
+            ImGui::TreePop();
+        }
     }
 }

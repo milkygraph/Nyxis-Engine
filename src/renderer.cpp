@@ -1,6 +1,4 @@
 #include "renderer.hpp"
-
-#include "app.hpp"
 #include "model.hpp"
 
 #include <iostream>

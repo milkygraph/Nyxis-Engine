@@ -96,6 +96,8 @@ namespace ve
 	}
 
     void App::run() {
+
+        // create systems
         SimpleRenderSystem srs{pRenderer.getSwapChainRenderPass(),
                                globalSetLayout->getDescriptorSetLayout()}; // srs - simpleRenderSystem
 		PointLightSystem pls{ pRenderer.getSwapChainRenderPass(),
@@ -103,43 +105,25 @@ namespace ve
 		TextureRenderSystem trs{ pRenderer.getSwapChainRenderPass(),
 		                         globalSetLayout->getDescriptorSetLayout() }; // trs - textureRenderSystem
 
+        // add functions to imgui layer
+        {
+            pImguiLayer.AddFunction([&]() {
+                ImGui::Begin("Statistics");
+                ImGui::Text("Entity Count: %d", pScene.getEntityCount());
+                ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+                ImGui::End();
+            });
+
+            pImguiLayer.AddFunction([&]() {
+                ImGui::Begin("Physics");
+                ImGui::Checkbox("Enable Physics", &PhysicsEnabled);
+                ImGui::DragFloat2("BoxEdges", &physicsEngine.edges.x);
+                ImGui::DragFloat("Gravity", &physicsEngine.gravity, 0.1, -1.0f, 1.0f);
+                ImGui::End();
+            });
+        }
+
         auto currentTime = std::chrono::high_resolution_clock::now();
-
-        pImguiLayer.AddFunction([&]() {
-            ImGui::Begin("Statistics");
-            ImGui::Text("Entity Count: %d", pScene.getEntityCount());
-            ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-            ImGui::End();
-        });
-
-        pImguiLayer.AddFunction([&CameraController = pScene.GetCamera()->getCameraController()]() {
-            ImGui::Begin("Camera");
-            ImGui::DragFloat("Move Speed", &(CameraController.moveSpeed), 0.1f);
-            ImGui::End();
-        });
-
-        pImguiLayer.AddEntityLoader(pScene);
-
-        pImguiLayer.AddFunction([&]() {
-            ImGui::Begin("Scene");
-            if (ImGui::Button("Save Scene")) {
-                pScene.SaveSceneFlag = true;
-            }
-            if(ImGui::Button("Load Scene")) {
-                vkDeviceWaitIdle(pDevice.device());
-                pScene.LoadSceneFlag = true;
-                pImguiLayer.update = true;
-            }
-            ImGui::End();
-        });
-
-        pImguiLayer.AddFunction([&]() {
-            ImGui::Begin("Physics");
-		    ImGui::Checkbox("Enable Physics", &PhysicsEnabled);
-            ImGui::DragFloat2("BoxEdges", &physicsEngine.edges.x);
-            ImGui::DragFloat("Gravity", &physicsEngine.gravity, 0.1, -1.0f, 1.0f);
-			ImGui::End();
-        });
 
         while (!pWindow.shouldClose()) {
             glfwPollEvents();
@@ -196,7 +180,7 @@ namespace ve
         pScene.addComponent<Gravity>(circle1);
         pScene.addComponent<Player>(circle1);
 
-        for(auto i = 0; i < 20; i++)
+        for(auto i = 0; i < 2; i++)
         {
             auto circle = pScene.createEntity("Circle" + std::to_string(i));
             auto& rigidBody = pScene.addComponent<RigidBody>(circle);
