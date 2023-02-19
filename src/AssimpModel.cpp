@@ -6,7 +6,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/material.h>
-namespace ve
+namespace Nyxis
 {
 	AssimpModel::AssimpModel(std::vector<Mesh> meshes, std::vector<Material> materials)  
 		: meshes(meshes), materials(materials)

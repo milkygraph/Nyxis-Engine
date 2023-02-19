@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <array>
 
-namespace ve
+namespace Nyxis
 {
     struct SimplePushConstantData
     {
@@ -98,4 +98,4 @@ namespace ve
 			}
 		});
     }
-} // namespace ve
+} // namespace Nyxis

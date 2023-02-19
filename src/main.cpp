@@ -6,7 +6,7 @@
 
 int main()
 {
-    ve::App* app = ve::App::getInstance();
+    Nyxis::App* app = Nyxis::App::getInstance();
     try
     {
         app->run();

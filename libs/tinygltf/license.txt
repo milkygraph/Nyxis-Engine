@@ -1,0 +1,11 @@
+Model Information:
+* title:	Greif
+* source:	https://sketchfab.com/3d-models/greif-87945b7cc58341adb84f5e850975c5cb
+* author:	noe-3d.at (https://sketchfab.com/www.noe-3d.at)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Greif" (https://sketchfab.com/3d-models/greif-87945b7cc58341adb84f5e850975c5cb) by noe-3d.at (https://sketchfab.com/www.noe-3d.at) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

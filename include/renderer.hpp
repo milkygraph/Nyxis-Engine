@@ -14,7 +14,7 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
     class Renderer
     {
@@ -66,4 +66,4 @@ namespace ve
         bool isFrameStarted{false};
 
     }; // class Renderer
-} // namespace ve
+} // namespace Nyxis

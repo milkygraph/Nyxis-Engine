@@ -14,7 +14,7 @@
 #define LOAD_STATE_STARTED 1
 #define LOAD_STATE_FINISHED 2
 
-namespace ve
+namespace Nyxis
 {
     using Entity = entt::entity;
     using Registry = entt::registry;
@@ -98,4 +98,4 @@ namespace ve
         std::atomic_int m_loadingEntity = 0;
         Device &device = Device::get();
     };
-} // namespace ve
+} // namespace Nyxis

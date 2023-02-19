@@ -1,7 +1,7 @@
 #pragma once
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	class Log
 	{
@@ -19,8 +19,8 @@ namespace ve
 	};
 }
 
-#define LOG_TRACE(...) ::ve::Log::GetLogger()->trace(__VA_ARGS__)
-#define LOG_INFO(...) ::ve::Log::GetLogger()->info(__VA_ARGS__)
-#define LOG_WARN(...) ::ve::Log::GetLogger()->warn(__VA_ARGS__)
-#define LOG_ERROR(...) ::ve::Log::GetLogger()->error(__VA_ARGS__)
-#define LOG_CRITICAL(...) ::ve::Log::GetLogger()->critical(__VA_ARGS__)
+#define LOG_TRACE(...) ::Nyxis::Log::GetLogger()->trace(__VA_ARGS__)
+#define LOG_INFO(...) ::Nyxis::Log::GetLogger()->info(__VA_ARGS__)
+#define LOG_WARN(...) ::Nyxis::Log::GetLogger()->warn(__VA_ARGS__)
+#define LOG_ERROR(...) ::Nyxis::Log::GetLogger()->error(__VA_ARGS__)
+#define LOG_CRITICAL(...) ::Nyxis::Log::GetLogger()->critical(__VA_ARGS__)

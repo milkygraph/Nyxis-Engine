@@ -1,7 +1,7 @@
 #pragma once
 #include "scene.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	class PhysicsEngine
 	{

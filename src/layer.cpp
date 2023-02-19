@@ -1,7 +1,7 @@
 #include "layer.hpp"
 #include "layer.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	LayerStack::~LayerStack()
 	{

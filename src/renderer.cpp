@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <array>
 
-namespace ve
+namespace Nyxis
 {
     Renderer::Renderer(Scene& scene)
     {
@@ -173,4 +173,4 @@ namespace ve
         endSwapChainRenderPass(commandBuffer);
         endFrame();
     }
-} // namespace ve
+} // namespace Nyxis

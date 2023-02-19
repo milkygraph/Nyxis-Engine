@@ -6,7 +6,7 @@
 #include "RenderSystem.hpp"
 #include "frameInfo.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	class TextureRenderSystem
 	{

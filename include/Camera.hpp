@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include "CameraController.hpp"
 
-namespace ve
+namespace Nyxis
 
 {
     class Camera

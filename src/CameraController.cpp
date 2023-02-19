@@ -1,6 +1,6 @@
 #include "CameraController.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	void CameraController::processMouseMovement(float dt, RigidBody& rigidBody)
 	{

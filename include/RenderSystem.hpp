@@ -3,7 +3,7 @@
 
 #include "pipeline.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	class RenderSystem
 	{

@@ -4,7 +4,7 @@
 #include <cassert>
 #include <stdexcept>
 
-namespace ve
+namespace Nyxis
 {
 
   // *************** Descriptor Set Layout Builder *********************
@@ -215,4 +215,4 @@ namespace ve
     vkUpdateDescriptorSets(pool.device.device(), writes.size(), writes.data(), 0, nullptr);
   }
 
-} // namespace ve
+} // namespace Nyxis

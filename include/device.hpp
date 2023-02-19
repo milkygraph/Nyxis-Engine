@@ -3,7 +3,7 @@
 
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
     struct SwapChainSupportDetails
     {
@@ -116,4 +116,4 @@ namespace ve
         const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
         #endif
   };
-} // namespace ve
+} // namespace Nyxis

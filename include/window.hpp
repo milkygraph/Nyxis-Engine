@@ -5,7 +5,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
     class Window {
     public:

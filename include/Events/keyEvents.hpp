@@ -3,7 +3,7 @@
 #include "Events/event.hpp"
 #include <sstream>
 
-namespace ve
+namespace Nyxis
 {
 
 	class KeyEvent : public Event

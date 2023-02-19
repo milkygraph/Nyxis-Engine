@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <sstream>
 
-namespace ve
+namespace Nyxis
 {
 
 Device *Device::pInstance = nullptr;

@@ -8,7 +8,7 @@
 #include <cassert>
 #include <vulkan/vulkan_core.h>
 
-namespace ve
+namespace Nyxis
 {
     vePipeline::vePipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config)
     {

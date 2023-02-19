@@ -2,7 +2,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stbimage/stb_image.h"
 
-namespace ve
+namespace Nyxis
 {
 	Texture::Texture(const std::string& filepath) : filepath{filepath}
 	{

@@ -11,7 +11,7 @@
 #include <cassert>
 #include <cstring>
 
-namespace ve
+namespace Nyxis
 {
 
     /**
@@ -214,4 +214,4 @@ namespace ve
         return invalidate(alignmentSize, index * alignmentSize);
     }
 
-} // namespace ve
+} // namespace Nyxis

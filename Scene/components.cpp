@@ -1,6 +1,6 @@
 #include "components.hpp"
 
-namespace ve
+namespace Nyxis
 {
     glm::mat4 TransformComponent::mat4()
     {

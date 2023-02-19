@@ -5,7 +5,7 @@
 #include "descriptors.hpp"
 #include "scene.hpp"
 
-namespace ve
+namespace Nyxis
 {
     class ImguiLayer
     {

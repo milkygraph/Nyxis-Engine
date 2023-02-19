@@ -2,7 +2,7 @@
 
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	class veImGui
 	{

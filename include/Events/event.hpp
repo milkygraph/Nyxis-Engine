@@ -3,7 +3,7 @@
 #include "ve.hpp"
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	enum class EventType
 	{

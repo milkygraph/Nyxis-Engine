@@ -7,7 +7,7 @@
 #include <vulkan/vulkan_core.h>
 #include <json/json.hpp>
 
-namespace ve{
+namespace Nyxis{
 
 	class Texture
 	{

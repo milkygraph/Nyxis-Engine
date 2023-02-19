@@ -9,7 +9,7 @@
 // std
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
     class PointLightSystem
     {
@@ -33,4 +33,4 @@ namespace ve
         std::unique_ptr<vePipeline> pipeline;
         VkPipelineLayout pipelineLayout;
     };
-} // namespace ve
+} // namespace Nyxis

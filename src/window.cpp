@@ -5,7 +5,7 @@
 
 #include <stdexcept>
 
-namespace ve
+namespace Nyxis
 {
 Window *Window::pInstance = nullptr;
 Window::Window(int width, int height, const std::string &name) : pTitle(name)
@@ -92,4 +92,4 @@ Window::Window(int width, int height, const std::string &name) : pTitle(name)
         data->pHeight = height;
     }
 
-} // namespace ve
+} // namespace Nyxis

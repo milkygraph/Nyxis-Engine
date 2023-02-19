@@ -4,7 +4,7 @@
 
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
 
     class veDescriptorSetLayout
@@ -103,4 +103,4 @@ namespace ve
         std::vector<VkWriteDescriptorSet> writes;
     };
 
-} // namespace ve
+} // namespace Nyxis

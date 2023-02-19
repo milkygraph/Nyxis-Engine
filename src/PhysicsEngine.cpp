@@ -1,7 +1,7 @@
 #include "PhysicsEngine.hpp"
 #include "components.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	void PhysicsEngine::OnUpdate(Scene& scene, float deltaTime)
 	{

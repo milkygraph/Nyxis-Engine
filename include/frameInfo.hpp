@@ -8,7 +8,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_core.h>
 
-namespace ve
+namespace Nyxis
 {
 
 #define MAX_LIGHTS 10

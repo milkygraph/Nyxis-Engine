@@ -1,6 +1,6 @@
 #include "ImguiLayer.hpp"
 #include <string>
-namespace ve
+namespace Nyxis
 {
     void ShowExampleAppDockSpace() {
         // this is a copy of the imgui demo code
@@ -143,7 +143,7 @@ namespace ve
     
     std::vector<std::string> getModelNames() {
         std::vector<std::string> modelNames;
-        for (const auto &entry: std::filesystem::directory_iterator(ve::model_path)) {
+        for (const auto &entry: std::filesystem::directory_iterator(Nyxis::model_path)) {
             modelNames.push_back(entry.path().filename().string());
         }
         return modelNames;

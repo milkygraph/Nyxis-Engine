@@ -5,7 +5,7 @@
 #include "ve.hpp"
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	class AssimpModel {
 
@@ -25,6 +25,14 @@ namespace ve
 		    Color ambient;
 		};
 
+		struct Texture
+		{
+			VkSampler sampler;
+			VkImageView imageView;
+			VkImage image;
+			VkDeviceMemory memory;
+		};
+		
 		struct Mesh
 		{
             std::vector<Vertex> vertices;
@@ -45,6 +53,7 @@ namespace ve
 		
 		std::vector<Mesh> meshes;
 		std::vector<Material> materials;
+		std::vector<Texture> textures;
 
 	    std::vector<VE_REF(Buffer)> vertexBuffers;
 		std::vector<VE_REF(Buffer)> indexBuffers;

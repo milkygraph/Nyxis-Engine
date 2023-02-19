@@ -15,7 +15,7 @@
 
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
 
     class App
@@ -81,4 +81,4 @@ namespace ve
 	    App();
 	    std::vector<std::future<void>>futures;
     }; // class App
-} // namespace ve
+} // namespace Nyxis

@@ -11,7 +11,7 @@
 #include <cassert>
 #include <stdexcept>
 
-namespace ve
+namespace Nyxis
 {
     struct PointLightPushConstants
     {
@@ -119,4 +119,4 @@ namespace ve
         }
         ubo.pointLightCount = lightIndex;
     }
-} // namespace ve
+} // namespace Nyxis

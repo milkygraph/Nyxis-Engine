@@ -2,7 +2,7 @@
 #include "device.hpp"
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
     struct PipelineConfigInfo
     {
@@ -55,4 +55,4 @@ namespace ve
         VkShaderModule fragShaderModule;
     };
 
-} // namespace ve
+} // namespace Nyxis

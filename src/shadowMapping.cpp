@@ -1,6 +1,6 @@
 // #include "ShadowMapping.hpp"
 
-// namespace ve
+// namespace Nyxis
 // {
 // }
 

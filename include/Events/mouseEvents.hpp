@@ -3,7 +3,7 @@
 #include "ve.hpp"
 #include "Events/event.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	class MouseMovedEvent : public Event
 	{

@@ -3,7 +3,7 @@
 #include <cassert>
 #include <limits>
 
-namespace ve
+namespace Nyxis
 {
 	void Camera::OnUpdate(float dt)
 	{
@@ -116,4 +116,4 @@ namespace ve
 		inverseViewMatrix[3][2] = position.z;
 	}
 
-}  // namespace ve
+}  // namespace Nyxis

@@ -5,7 +5,7 @@
 
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	enum CursorMode : int
 	{

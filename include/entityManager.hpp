@@ -2,7 +2,7 @@
 
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
     using Entity = std::uint32_t;
     using ComponentType = std::uint32_t;

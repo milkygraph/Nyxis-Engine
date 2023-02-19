@@ -16,13 +16,13 @@
 
 std::vector<std::string> getModelNames() {
     std::vector<std::string> modelNames;
-    for (const auto &entry: std::filesystem::directory_iterator(ve::model_path)) {
+    for (const auto &entry: std::filesystem::directory_iterator(Nyxis::model_path)) {
         modelNames.push_back(entry.path().filename().string());
     }
     return modelNames;
 }
 
-namespace ve
+namespace Nyxis
 {
     App *App::pInstance = nullptr;
 
@@ -178,20 +178,21 @@ namespace ve
         pScene.addComponent<MeshComponent>(circle1, "../models/sphere.obj");
         pScene.addComponent<Collider>(circle1, ColliderType::Sphere, glm::vec3{ 0.2, 0.2, 0.2 }, 0.05);
         pScene.addComponent<Gravity>(circle1);
+		pScene.addComponent<Texture>(circle1, "../textures/pavement.jpg");
         pScene.addComponent<Player>(circle1);
 
-        for(auto i = 0; i < 2; i++)
-        {
-            auto circle = pScene.createEntity("Circle" + std::to_string(i));
-            auto& rigidBody = pScene.addComponent<RigidBody>(circle);
-            rigidBody.translation = glm::vec3(-1.0f + i * 0.1f, -1.0f, 1.0f);
-            rigidBody.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-            rigidBody.scale = glm::vec3(.02f, .02f, .02f);
-            rigidBody.restitution = 0.5f;
+        //for(auto i = 0; i < 10; i++)
+        //{
+        //    auto circle = pScene.createEntity("Circle" + std::to_string(i));
+        //    auto& rigidBody = pScene.addComponent<RigidBody>(circle);
+        //    rigidBody.translation = glm::vec3(-1.0f + i * 0.1f, -1.0f, 1.0f);
+        //    rigidBody.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+        //    rigidBody.scale = glm::vec3(.01f, .01f, .01f);
+        //    rigidBody.restitution = 0.5f;
 
-            pScene.addComponent<MeshComponent>(circle, "../models/sphere.obj");
-            pScene.addComponent<Collider>(circle, ColliderType::Sphere, glm::vec3{ 0.2, 0.2, 0.2 }, 0.05);
-            pScene.addComponent<Gravity>(circle);
-        }
+        //    pScene.addComponent<MeshComponent>(circle, "../models/sphere.obj");
+        //    pScene.addComponent<Collider>(circle, ColliderType::Sphere, glm::vec3{ 0.2, 0.2, 0.2 }, 0.02);
+        //    pScene.addComponent<Gravity>(circle);
+        //}
     }
-} // namespace ve
+} // namespace Nyxis

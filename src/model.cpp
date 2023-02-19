@@ -16,18 +16,18 @@
 namespace std
 {
     template <>
-    struct hash<ve::veModel::Vertex>
+    struct hash<Nyxis::veModel::Vertex>
     {
-        size_t operator()(ve::veModel::Vertex const &vertex) const
+        size_t operator()(Nyxis::veModel::Vertex const &vertex) const
         {
             size_t seed = 0;
-            ve::hashCombine(seed, vertex.position, vertex.color, vertex.normal);
+            Nyxis::hashCombine(seed, vertex.position, vertex.color, vertex.normal);
             return seed;
         }
     };
 }
 
-namespace ve
+namespace Nyxis
 {
 	std::unordered_map<std::string, std::shared_ptr<veModel>> veModel::models;
     veModel::veModel(const std::string& filepath)

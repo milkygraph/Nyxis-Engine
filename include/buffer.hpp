@@ -2,7 +2,7 @@
 
 #include "device.hpp"
 
-namespace ve
+namespace Nyxis
 {
 
     class Buffer
@@ -57,4 +57,4 @@ namespace ve
         VkMemoryPropertyFlags memoryPropertyFlags;
     };
 
-} // namespace ve
+} // namespace Nyxis

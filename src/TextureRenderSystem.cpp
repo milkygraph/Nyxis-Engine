@@ -1,7 +1,7 @@
 #include "TextureRenderSystem.hpp"
 #include "frameInfo.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	struct TexturePushConstantData {
 		glm::mat4 modelMatrix{1.f};

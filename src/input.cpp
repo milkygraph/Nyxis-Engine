@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 #include "window.hpp"
 
-namespace ve
+namespace Nyxis
 {
     Input* Input::pInstance = new Input();
 	int Input::CursorMode = 0;

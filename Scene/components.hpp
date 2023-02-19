@@ -11,7 +11,7 @@
 #include <vulkan/vulkan.hpp>
 #include "json/json.hpp"
 
-namespace ve
+namespace Nyxis
 {
     struct RigidBody
     {

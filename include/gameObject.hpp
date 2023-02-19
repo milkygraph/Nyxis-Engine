@@ -6,7 +6,7 @@
 #include "vepch.hpp"
 
 // Deprecated
-namespace ve
+namespace Nyxis
 {
     struct PointLightComponent
     {

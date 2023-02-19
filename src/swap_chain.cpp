@@ -8,7 +8,7 @@
 #include <set>
 #include <stdexcept>
 
-namespace ve
+namespace Nyxis
 {
 
     veSwapChain::veSwapChain(VkExtent2D extent)

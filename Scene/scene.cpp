@@ -4,7 +4,7 @@
 
 #include "json/json.hpp"
 
-namespace ve
+namespace Nyxis
 {
     Scene::~Scene()
     {
@@ -194,4 +194,4 @@ namespace ve
         LoadModels();
         LOG_INFO("Scene {} loaded", SceneName);
     }
-} // namespace ve
+} // namespace Nyxis

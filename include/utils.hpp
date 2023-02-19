@@ -2,7 +2,7 @@
 
 #include <cstddef>
 #include <functional>
-namespace ve
+namespace Nyxis
 {
     template <typename T, typename... Rest>
     void hashCombine(std::size_t &seed, const T &v, const Rest &...rest)

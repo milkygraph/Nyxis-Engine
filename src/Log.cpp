@@ -2,7 +2,7 @@
 
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-namespace ve
+namespace Nyxis
 {
 	std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
 

@@ -1,6 +1,6 @@
 #include "gameObject.hpp"
 
-namespace ve
+namespace Nyxis
 {
     veGameObject veGameObject::makePointLight(float intensity, float radius, glm::vec3 color)
     {

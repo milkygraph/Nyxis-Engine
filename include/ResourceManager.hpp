@@ -5,7 +5,7 @@
 #include "ve.hpp"
 #include "model.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	class ResourceManager
 	{

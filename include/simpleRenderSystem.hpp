@@ -17,7 +17,7 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
     class SimpleRenderSystem
     {
@@ -40,4 +40,4 @@ namespace ve
         std::unique_ptr<vePipeline> pPipeline;
         VkPipelineLayout pipelineLayout;
     }; // class SimpleRenderSystem
-} // namespace ve
+} // namespace Nyxis

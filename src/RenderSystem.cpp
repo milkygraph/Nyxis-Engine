@@ -1,6 +1,6 @@
 #include "RenderSystem.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	RenderSystem::RenderSystem(std::string& VertexShaderPath, std::string& FragmentShaderPath, VkRenderPass RenderPass)
 		: VertexShaderPath(VertexShaderPath), FragmentShaderPath(FragmentShaderPath)

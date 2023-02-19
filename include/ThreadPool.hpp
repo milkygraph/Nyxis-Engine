@@ -3,7 +3,7 @@
 
 #include "vepch.hpp"
 
-namespace ve
+namespace Nyxis
 {
 	class ThreadPool
 	{
@@ -71,4 +71,4 @@ namespace ve
 		std::condition_variable pCondition;
 		bool pStop;
 	};
-} // namespace ve
+} // namespace Nyxis
