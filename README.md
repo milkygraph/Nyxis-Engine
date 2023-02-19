@@ -1,4 +1,4 @@
-# Vulkan_Engine
+# Nyxis Engine
 
 ## Building Instructions
 
