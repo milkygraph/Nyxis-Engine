@@ -1,5 +1,5 @@
 #include "device.hpp"
-#include "ve.hpp"
+#include "Nyxis.hpp"
 #include "Log.hpp"
 // std headers
 #include <cstring>

@@ -1,4 +1,4 @@
-#include "ve.hpp"
+#include "Nyxis.hpp"
 #include "input.hpp"
 #include <GLFW/glfw3.h>
 #include "window.hpp"

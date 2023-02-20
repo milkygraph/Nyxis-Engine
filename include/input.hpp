@@ -1,9 +1,9 @@
 #pragma once
 
-#include "ve.hpp"
+#include "Nyxis.hpp"
 #include "Events/event.hpp"
 
-#include "vepch.hpp"
+#include "Nyxispch.hpp"
 
 namespace Nyxis
 {

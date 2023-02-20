@@ -2,8 +2,8 @@
 
 #include "buffer.hpp"
 
-#include "ve.hpp"
-#include "vepch.hpp"
+#include "Nyxis.hpp"
+#include "Nyxispch.hpp"
 
 namespace Nyxis
 {
@@ -43,7 +43,7 @@ namespace Nyxis
 		AssimpModel(std::vector<Mesh> meshes, std::vector<Material> materials);
 		~AssimpModel();
 
-		static VE_REF(AssimpModel) LoadFromFile(const std::string &path);
+		static REF(AssimpModel) LoadFromFile(const std::string &path);
 
 		void CreateBuffers();
 		
@@ -55,8 +55,8 @@ namespace Nyxis
 		std::vector<Material> materials;
 		std::vector<Texture> textures;
 
-	    std::vector<VE_REF(Buffer)> vertexBuffers;
-		std::vector<VE_REF(Buffer)> indexBuffers;
-		std::vector<VE_REF(Buffer)> materialBuffers;
+	    std::vector<REF(Buffer)> vertexBuffers;
+		std::vector<REF(Buffer)> indexBuffers;
+		std::vector<REF(Buffer)> materialBuffers;
 	};
 }

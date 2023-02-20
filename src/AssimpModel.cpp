@@ -1,6 +1,6 @@
 #include "AssimpModel.hpp"
 #include "Log.hpp"
-#include "ve.hpp"
+#include "Nyxis.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -18,7 +18,7 @@ namespace Nyxis
 	{
 	}
 
-	VE_REF(AssimpModel) AssimpModel::LoadFromFile(const std::string& path)
+	REF(AssimpModel) AssimpModel::LoadFromFile(const std::string& path)
 	{
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(path, aiProcessPreset_TargetRealtime_MaxQuality);
@@ -77,7 +77,7 @@ namespace Nyxis
 			indices.reserve(mesh->mNumFaces * 3); // 3 indices per face
 			for(uint32_t faceID = 0u; faceID < mesh->mNumFaces; faceID++)
 			{
-				VE_ASSERT(mesh->mFaces[faceID].mNumIndices == 3, ("FaceID {} of mesh does not have 3 indices!", faceID));
+				NYXIS_ASSERT(mesh->mFaces[faceID].mNumIndices == 3, ("FaceID {} of mesh does not have 3 indices!", faceID));
 
 				indices.push_back(mesh->mFaces[faceID].mIndices[0]);
 				indices.push_back(mesh->mFaces[faceID].mIndices[1]);
@@ -87,7 +87,7 @@ namespace Nyxis
 		// Release imported data
 		importer.FreeScene();
 
-		return VE_MAKE_REF(AssimpModel, meshes, materials);
+		return MAKE_REF(AssimpModel, meshes, materials);
 	}
 	void AssimpModel::CreateBuffers()
 	{
@@ -97,7 +97,7 @@ namespace Nyxis
 		{
 			// Create vertex buffer
 			{
-				VE_ASSERT(meshes[i].vertices.size() > 0, ("Mesh {} has no vertices!", i));
+				NYXIS_ASSERT(meshes[i].vertices.size() > 0, ("Mesh {} has no vertices!", i));
 				VkDeviceSize bufferSize = sizeof(meshes[i].vertices[0]) * meshes[i].vertices.size();
 
 				uint32_t vertexSize = sizeof(meshes[i].vertices[0]);
@@ -107,7 +107,7 @@ namespace Nyxis
 				stagingBuffer.map();
 				stagingBuffer.writeToBuffer((void*)meshes[i].vertices.data());
 
-				auto vertexBuffer = VE_MAKE_REF(Buffer, vertexSize, static_cast<uint32_t>(meshes[i].vertices.size()), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				auto vertexBuffer = MAKE_REF(Buffer, vertexSize, static_cast<uint32_t>(meshes[i].vertices.size()), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 				device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
@@ -117,7 +117,7 @@ namespace Nyxis
 
 			// Create index buffer
 			{
-				VE_ASSERT(meshes[i].indices.size() > 0, ("Mesh {} has no indices!", i));
+				NYXIS_ASSERT(meshes[i].indices.size() > 0, ("Mesh {} has no indices!", i));
 				VkDeviceSize bufferSize = sizeof(meshes[i].indices[0]) * meshes[i].indices.size();
 
 				uint32_t indexSize = sizeof(meshes[i].indices[0]);
@@ -127,7 +127,7 @@ namespace Nyxis
 				stagingBuffer.map();
 				stagingBuffer.writeToBuffer((void*)meshes[i].indices.data());
 
-				auto indexBuffer = VE_MAKE_REF(Buffer, indexSize, static_cast<uint32_t>(meshes[i].indices.size()), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+				auto indexBuffer = MAKE_REF(Buffer, indexSize, static_cast<uint32_t>(meshes[i].indices.size()), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 				device.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);

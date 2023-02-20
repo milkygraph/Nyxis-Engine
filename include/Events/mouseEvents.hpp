@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ve.hpp"
+#include "Nyxis.hpp"
 #include "Events/event.hpp"
 
 namespace Nyxis

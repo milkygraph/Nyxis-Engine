@@ -11,7 +11,7 @@
 #include "Log.hpp"
 #include "AssimpModel.hpp"
 
-#include "vepch.hpp"
+#include "Nyxispch.hpp"
 
 
 std::vector<std::string> getModelNames() {

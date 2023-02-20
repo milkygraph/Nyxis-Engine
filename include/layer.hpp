@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ve.hpp"
-#include "vepch.hpp"
+#include "Nyxis.hpp"
+#include "Nyxispch.hpp"
 
 namespace Nyxis
 {

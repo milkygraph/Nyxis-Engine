@@ -160,7 +160,7 @@ namespace Nyxis
     }
     void Renderer::SetScene(Scene &scene)
     {
-        VE_ASSERT(!isFrameStarted, "Can't set scene while frame is in progress");
+        NYXIS_ASSERT(!isFrameStarted, "Can't set scene while frame is in progress");
         // set renderer scene to new scene
         this->scene = &scene;
     }

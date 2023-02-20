@@ -6,7 +6,7 @@
 #include "Events/keyEvents.hpp"
 #include "path.hpp"
 
-#include "ve.hpp"
+#include "Nyxis.hpp"
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.hpp>
 #include "json/json.hpp"
