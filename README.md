@@ -4,7 +4,7 @@
 
 Clone repository using 
 ```
-    git clone https://github.com/itu-itis21-bandaliyev21/Vulkan_Engine.git --recurse
+    git clone https://github.com/itu-itis21-bandaliyev21/Nyxis-Engine.git --recursive
 ```
 
 ## Unix
