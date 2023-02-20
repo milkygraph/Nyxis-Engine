@@ -53,7 +53,7 @@ namespace Nyxis
 
         bool newObject = false;
 
-        Window & pWindow = Window::get(WIDTH, HEIGHT, "Vulkan Engine");
+        Window & pWindow = Window::get(WIDTH, HEIGHT, "Nyxis");
         Device & pDevice = Device::get();
         Renderer pRenderer{ pScene};
         ImguiLayer pImguiLayer{ pScene };

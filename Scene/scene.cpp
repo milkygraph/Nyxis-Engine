@@ -21,8 +21,7 @@ namespace Nyxis
 
     void Scene::destroyEntity(Entity entity)
     {
-        m_Registry.destroy(entity);
-        m_EntityCount--;
+        m_DeletionQueue.emplace(entity);
     }
     /**
      * @note - It makes sense to use this function only for imgui interface which will have its own class in the future
@@ -79,6 +78,19 @@ namespace Nyxis
         m_Camera->OnUpdate(dt);
         getComponentView<Player, RigidBody>().each([&](auto entity, auto &player, auto &rigidBody)
                                                             { player.OnUpdate(dt, rigidBody); });
+
+        if(!m_DeletionQueue.empty())
+        {
+            vkDeviceWaitIdle(device.device());
+            for(int i = 0; i < m_DeletionQueue.size(); i++)
+            {
+                auto entity = m_DeletionQueue.front();
+                m_DeletionQueue.pop();
+                m_Registry.destroy(entity);
+                m_EntityCount--;
+            }
+
+        }
     }
 
     /**

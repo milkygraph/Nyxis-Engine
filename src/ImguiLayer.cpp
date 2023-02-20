@@ -227,7 +227,7 @@ namespace Nyxis
 		ImGui::ShowDemoWindow();
         
         AddSceneHierarchy();
-        AddEntityLoader();
+        AddComponentView();
         AddMenuBar();
 
         for (auto &function : functions) {
@@ -266,25 +266,63 @@ namespace Nyxis
         ImGui::EndMainMenuBar();
     }
 
-    void ImguiLayer::AddEntityLoader()
+    void ImguiLayer::AddComponentView()
     {
         ImGui::Begin("Component"); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
         {
             if (m_ShowEntityLoader) {
-                auto& rigidBody = m_ActiveScene.getComponent<RigidBody>(m_SelectedEntity); // TODO! Fix load scene bug
-                ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f);
-                ImGui::DragFloat3("Rotation", &rigidBody.rotation.x, 0.1f, -180.0f, 180.0f);
-                ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f);
-
-                ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);
-                ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0.0f, 1.0f);
-
-                ImGui::DragFloat("Roughness", &rigidBody.roughness, 0.1f);
-                // check if entity has a collider component
-                if (m_ActiveScene.m_Registry.all_of<Collider>(m_SelectedEntity))
+                if(m_ActiveScene.m_Registry.valid(m_SelectedEntity))
                 {
-                    auto& collider = m_ActiveScene.getComponent<Collider>(m_SelectedEntity);
-                    ImGui::DragFloat("Collider Radius", &collider.radius, 0.05f);
+                    if(m_ActiveScene.m_Registry.all_of<TagComponent>(m_SelectedEntity))
+                    {
+                        auto &tag = m_ActiveScene.getComponent<TagComponent>(m_SelectedEntity);
+                        char buffer[256];
+                        memset(buffer, 0, sizeof(buffer));
+                        strcpy(buffer, tag.Tag.c_str());
+                        if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
+                            tag.Tag = std::string(buffer);
+                        }
+                    }
+
+                    if(m_ActiveScene.m_Registry.all_of<RigidBody>(m_SelectedEntity))
+                    {
+                        auto &rigidBody = m_ActiveScene.getComponent<RigidBody>(
+                                m_SelectedEntity); // TODO! Fix load scene bug
+                        ImGui::Text("Rigid Body");
+                        ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f);
+                        ImGui::DragFloat3("Rotation", &rigidBody.rotation.x, 0.1f, -180.0f, 180.0f);
+                        ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f);
+
+                        ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);
+                        ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0.0f, 1.0f);
+
+                        ImGui::DragFloat("Roughness", &rigidBody.roughness, 0.1f);
+                        // check if entity has a collider component
+                        if (m_ActiveScene.m_Registry.all_of<Collider>(m_SelectedEntity)) {
+                            auto &collider = m_ActiveScene.getComponent<Collider>(m_SelectedEntity);
+
+                            ImGui::Text("Collider");
+                            auto preview = Nyxis::collider_name[collider.type];
+
+                            if (ImGui::BeginCombo("Collider Type", preview.c_str(), ImGuiComboFlags_NoArrowButton))
+                            {
+                                if (ImGui::Selectable("Box"))
+                                    collider.type = ColliderType::Box;
+
+                                if (ImGui::Selectable("Sphere"))
+                                    collider.type = ColliderType::Sphere;
+
+                                ImGui::EndCombo();
+                            }
+
+                            if(collider.type == ColliderType::Box)
+                                ImGui::DragFloat3("Collider Size", &collider.size.x, 0.05f);
+
+                            else if(collider.type == ColliderType::Sphere)
+                                ImGui::DragFloat("Collider Radius", &collider.radius, 0.05f);
+
+                        }
+                    }
                 }
             }
         }
@@ -293,13 +331,22 @@ namespace Nyxis
 
     void ImguiLayer::AddSceneHierarchy()
     {
-            ImGui::Begin("Scene Hierarchy");
-            ImGui::Text("Scene Hierarchy");
-            m_ActiveScene.m_Registry.each([&](auto entityID)
+        ImGui::Begin("Scene Hierarchy");
+        if(ImGui::BeginPopupContextWindow())
+        {
+            if(ImGui::MenuItem("Create Empty Entity"))
             {
-                DrawEntityNode(entityID);
-            });
-            ImGui::End();
+                auto entity = m_ActiveScene.createEntity("Empty Entity");
+            }
+            ImGui::EndPopup();
+        }
+
+        m_ActiveScene.m_Registry.each([&](auto entityID)
+        {
+            DrawEntityNode(entityID);
+        });
+
+        ImGui::End();
     }
 
     void ImguiLayer::DrawEntityNode(Entity entity)
@@ -312,6 +359,58 @@ namespace Nyxis
         {
             m_SelectedEntity = entity;
         }
+        // right click context menu
+        if(ImGui::BeginPopupContextItem())
+        {
+            if(ImGui::MenuItem("Delete Entity"))
+            {
+                m_ActiveScene.destroyEntity(entity);
+            }
+            // add component tree with all components that can be added to entity
+            if(ImGui::BeginMenu("Add Component"))
+            {
+                if(ImGui::MenuItem("RigidBody"))
+                    if(!m_ActiveScene.m_Registry.all_of<RigidBody>(entity))
+                        m_ActiveScene.addComponent<RigidBody>(entity);
+
+                if(ImGui::MenuItem("Mesh"))
+                    if(!m_ActiveScene.m_Registry.all_of<MeshComponent>(entity))
+                        m_ActiveScene.addComponent<MeshComponent>(entity, "../models/sphere.obj");
+
+                if(ImGui::MenuItem("Collider"))
+                    if(!m_ActiveScene.m_Registry.all_of<Collider>(entity))
+                        m_ActiveScene.addComponent<Collider>(entity, ColliderType::Sphere, glm::vec3{ 0.2, 0.2, 0.2 }, 0.05);
+
+                if(ImGui::MenuItem("Gravity"))
+                    if(!m_ActiveScene.m_Registry.all_of<Gravity>(entity))
+                        m_ActiveScene.addComponent<Gravity>(entity);
+
+                ImGui::EndMenu();
+            }
+            if(ImGui::BeginMenu("Remove Component"))
+            {
+                if(m_ActiveScene.m_Registry.all_of<RigidBody>(entity))
+                    if(ImGui::MenuItem("RigidBody"))
+                        m_ActiveScene.m_Registry.remove<RigidBody>(entity);
+
+                if(m_ActiveScene.m_Registry.all_of<MeshComponent>(entity))
+                    if(ImGui::MenuItem("Mesh"))
+                        m_ActiveScene.m_Registry.remove<MeshComponent>(entity);
+
+                if(m_ActiveScene.m_Registry.all_of<Collider>(entity))
+                    if(ImGui::MenuItem("Collider"))
+                        m_ActiveScene.m_Registry.remove<Collider>(entity);
+
+                if(m_ActiveScene.m_Registry.all_of<Gravity>(entity))
+                    if(ImGui::MenuItem("Gravity"))
+                        m_ActiveScene.m_Registry.remove<Gravity>(entity);
+
+                ImGui::EndMenu();
+            }
+
+            ImGui::EndPopup();
+        }
+
         if(expanded)
         {
             ImGui::TreePop();

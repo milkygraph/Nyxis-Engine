@@ -16,7 +16,7 @@ namespace Nyxis
         void init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer);
         void OnUpdate(FrameInfo &frameInfo);
         void AddFunction(const std::function<void()>& function);
-        void AddEntityLoader();
+        void AddComponentView();
         void AddSceneHierarchy();
         void AddMenuBar();
     private:

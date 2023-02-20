@@ -199,6 +199,11 @@ namespace Nyxis
         float radius;
     };
 
+    static std::unordered_map<ColliderType, std::string> collider_name{{ ColliderType::Sphere, "Sphere" },
+                     { ColliderType::Box, "Box" },
+                     { ColliderType::Capsule, "Capsule" },
+                     { ColliderType::Mesh, "Mesh" }};
+
     struct Gravity
     {
         Gravity() = default;

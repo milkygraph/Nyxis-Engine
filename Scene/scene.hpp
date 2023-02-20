@@ -76,6 +76,12 @@ namespace Nyxis
 			return m_Registry.view<Comps...>();
         }
 
+        template <typename T>
+        void RemoveComponent(Entity entity)
+        {
+            m_Registry.remove<T>(entity);
+        }
+
         void ClearScene();
         void SaveScene(const std::string &filename = "scene.json");
         void LoadScene(const std::string &filename);
@@ -97,5 +103,7 @@ namespace Nyxis
         uint32_t m_EntityCount = 0;
         std::atomic_int m_loadingEntity = 0;
         Device &device = Device::get();
+
+        std::queue<Entity> m_DeletionQueue;
     };
 } // namespace Nyxis
