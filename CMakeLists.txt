@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(Vulkan_Engine)
-set(PROJECT Vulkan_Engine)
+project(Nyxis_Engine)
+set(PROJECT Nyxis_Engine)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 find_package(Vulkan REQUIRED)
@@ -38,3 +38,6 @@ target_link_libraries(${PROJECT} PRIVATE spdlog)
 
 # precompile headers
 #set_source_files_properties(${SOURCES} PROPERTIES COMPILE_FLAGS "-include vepch.hpp")
+
+set_property(TARGET ${PROJECT} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT})
