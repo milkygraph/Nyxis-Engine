@@ -88,7 +88,7 @@ namespace Nyxis
 
         style.Colors[ImGuiCol_Text] = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
         style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.4980392158031464f, 0.4980392158031464f, 0.4980392158031464f, 1.0f);
-        style.Colors[ImGuiCol_WindowBg] = ImVec4(0.05882352963089943f, 0.05882352963089943f, 0.05882352963089943f, 0.9399999976158142f);
+        style.Colors[ImGuiCol_WindowBg] = ImVec4(0.05882352963089943f, 0.05882352963089943f, 0.05882352963089943f, 1.0f);
         style.Colors[ImGuiCol_ChildBg] = ImVec4(1.0f, 1.0f, 1.0f, 0.0f);
         style.Colors[ImGuiCol_PopupBg] = ImVec4(0.0784313753247261f, 0.0784313753247261f, 0.0784313753247261f, 0.9399999976158142f);
         style.Colors[ImGuiCol_Border] = ImVec4(0.4274509847164154f, 0.4274509847164154f, 0.4980392158031464f, 0.5f);
@@ -172,30 +172,11 @@ namespace Nyxis
         IO->WantCaptureMouse = true;
         IO->WantCaptureKeyboard = true;
         IO->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable  Docking
-        IO->ConfigDockingWithShift = true;
-        //ImGui::StyleColorsDark();
+        IO->ConfigDockingWithShift = false;
 
         // setting font
         IO->Fonts->AddFontFromFileTTF("../assets/fonts/OpenSans-Regular.ttf", 18.0f);
 
-         //setup style
-        //ImVec4 *colors = ImGui::GetStyle().Colors;
-        //colors[ImGuiCol_WindowBg] = ImVec4(0.00f, 0.00f, 0.02f, 1.00f);
-        //colors[ImGuiCol_FrameBg] = ImVec4(0.28f, 0.42f, 0.62f, 0.54f);
-        //colors[ImGuiCol_PopupBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.94f);
-        //colors[ImGuiCol_TitleBgActive] = ImVec4(0.12f, 0.22f, 0.36f, 1.00f);
-        //colors[ImGuiCol_FrameBgHovered] = ImVec4(0.09f, 0.11f, 0.14f, 0.40f);
-        //colors[ImGuiCol_TitleBg] = ImVec4(0.06f, 0.06f, 0.09f, 1.00f);
-
-        //ImGui::GetStyle().WindowBorderSize = 0.0f;
-        //ImGui::GetStyle().FrameBorderSize = 0.0f;
-        //ImGui::GetStyle().PopupBorderSize = 0.0f;
-        //ImGui::GetStyle().ChildBorderSize = 0.0f;
-        //ImGui::GetStyle().FrameRounding = 5;
-        //ImGui::GetStyle().WindowRounding = 5;
-        //ImGui::GetStyle().PopupRounding = 5;
-        //ImGui::GetStyle().ChildRounding = 5;
-        
 		SetupImGuiStyle();
     }
 
@@ -289,9 +270,11 @@ namespace Nyxis
                         auto &rigidBody = m_ActiveScene.getComponent<RigidBody>(
                                 m_SelectedEntity); // TODO! Fix load scene bug
                         ImGui::Text("Rigid Body");
-                        ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f);
-                        ImGui::DragFloat3("Rotation", &rigidBody.rotation.x, 0.1f, -180.0f, 180.0f);
-                        ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f);
+						ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f, 0, 0, "%.1f");
+                        auto rotation = glm::degrees(rigidBody.rotation);
+						ImGui::DragFloat3("Rotation", &rotation.x, 0.1f, 0, 0, "%.1f");
+                        rigidBody.rotation = glm::radians(rotation);
+						ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f, 0, 0, "%.2f");
 
                         ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);
                         ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0.0f, 1.0f);
@@ -335,9 +318,11 @@ namespace Nyxis
         if(ImGui::BeginPopupContextWindow())
         {
             if(ImGui::MenuItem("Create Empty Entity"))
-            {
-                auto entity = m_ActiveScene.createEntity("Empty Entity");
-            }
+                m_SelectedEntity = m_ActiveScene.createEntity("Empty Entity");
+            
+            if(ImGui::MenuItem("Clear Scene"))
+				m_ActiveScene.ClearScene();
+            
             ImGui::EndPopup();
         }
 
@@ -387,6 +372,7 @@ namespace Nyxis
 
                 ImGui::EndMenu();
             }
+
             if(ImGui::BeginMenu("Remove Component"))
             {
                 if(m_ActiveScene.m_Registry.all_of<RigidBody>(entity))

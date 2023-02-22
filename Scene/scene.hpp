@@ -22,14 +22,7 @@ namespace Nyxis
     class Scene
     {
     public:
-        Scene()
-		{
-			m_CameraEntity = createEntity("Camera");
-			auto& transform = addComponent<TransformComponent>(m_CameraEntity, glm::vec3{ 0, 0, -14 });
-            auto& rigidBody = addComponent<RigidBody>(m_CameraEntity);
-			m_Camera = new Camera(rigidBody);
-            m_Camera->getCameraController().setCameraType(CameraType::Orthographic);
-		}
+        Scene();
         ~Scene();
 
         Entity createEntity(const std::string &name);

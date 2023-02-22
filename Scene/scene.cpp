@@ -6,6 +6,15 @@
 
 namespace Nyxis
 {
+    Scene::Scene()
+    {
+        m_CameraEntity = createEntity("Camera");
+        auto& transform = addComponent<TransformComponent>(m_CameraEntity, glm::vec3{ 0, 0, -14 });
+        auto& rigidBody = addComponent<RigidBody>(m_CameraEntity);
+        m_Camera = new Camera(rigidBody);
+        m_Camera->getCameraController().setCameraType(CameraType::Orthographic);
+    }
+
     Scene::~Scene()
     {
         m_Registry.clear();
@@ -98,8 +107,9 @@ namespace Nyxis
      */
     void Scene::ClearScene()
     {
-        m_Registry.clear();
-        m_EntityCount = 0;
+		m_Registry.each([&](auto entity)
+			{ m_DeletionQueue.emplace(entity); });
+		veModel::ReleaseModels();
     }
 
     void Scene::SaveScene(const std::string &filename)

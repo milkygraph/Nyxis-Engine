@@ -181,6 +181,15 @@ namespace Nyxis
 		pScene.addComponent<Texture>(circle1, "../textures/pavement.jpg");
         pScene.addComponent<Player>(circle1);
 
+		auto floor = pScene.createEntity("Floor");
+		auto& rigidBody2 = pScene.addComponent<RigidBody>(floor);
+		rigidBody2.translation = glm::vec3(0.0f, 1.0f, 1.0f);
+        rigidBody2.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+		rigidBody2.scale = glm::vec3(1.0f, 1.0f, 1.0f);
+        
+		pScene.addComponent<MeshComponent>(floor, "../models/floor.obj");
+		pScene.addComponent<Gravity>(floor);
+        pScene.addComponent<Texture>(floor, "../textures/pavement.jpg");
         //for(auto i = 0; i < 10; i++)
         //{
         //    auto circle = pScene.createEntity("Circle" + std::to_string(i));
