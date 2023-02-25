@@ -11,13 +11,24 @@ namespace Nyxis
 
 	TextureRenderSystem::TextureRenderSystem(VkRenderPass RenderPass, VkDescriptorSetLayout globalDescriptorSetLayout)
 	{
+		m_TexturePool.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+		auto framePoolBuilder = veDescriptorPool::Builder()
+			.setMaxSets(1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
+			.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
+		for (auto& pool : m_TexturePool) 
+		{
+			pool = framePoolBuilder.build();
+		}
+
 		CreatePipelineLayout(globalDescriptorSetLayout);
 		CreatePipeline(RenderPass);
 	}
 
 	TextureRenderSystem::~TextureRenderSystem()
 	{
-		vkDestroyPipelineLayout(pDevice.device(), pipelineLayout, nullptr);
+		vkDestroyPipelineLayout(pDevice.device(), m_PipelineLayout, nullptr);
 	}
 
 	void TextureRenderSystem::OnUpdate()
@@ -27,12 +38,14 @@ namespace Nyxis
 
 	void TextureRenderSystem::Render(FrameInfo& frameInfo)
 	{
+		m_TexturePool[frameInfo.frameIndex]->resetPool();
+
 		pPipeline->bind(frameInfo.commandBuffer);
 
 		vkCmdBindDescriptorSets(
 			frameInfo.commandBuffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipelineLayout,
+			m_PipelineLayout,
 			0,
 			1,
 			&frameInfo.globalDescriptorSet,
@@ -46,14 +59,14 @@ namespace Nyxis
 			  {
 				  auto imageInfo = texture.GetDescriptorImageInfo();
 				  VkDescriptorSet descriptorSet;
-				  veDescriptorWriter(*TextureSetLayout, frameInfo.TexturePool)
+				  veDescriptorWriter(*m_TextureSetLayout, *m_TexturePool[frameInfo.frameIndex])
 				        .writeImage(0, &imageInfo)
 					    .build(descriptorSet);
 
 				  vkCmdBindDescriptorSets(
 					  frameInfo.commandBuffer,
 					  VK_PIPELINE_BIND_POINT_GRAPHICS,
-					  pipelineLayout,
+					  m_PipelineLayout,
 					  1,  // first set
 					  1,  // set count
 					  &descriptorSet,
@@ -67,7 +80,7 @@ namespace Nyxis
 
 				  vkCmdPushConstants (
 					  frameInfo.commandBuffer,
-					  pipelineLayout,
+					  m_PipelineLayout,
 					  VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				  0,
 				  sizeof (TexturePushConstantData),
@@ -92,14 +105,14 @@ namespace Nyxis
 		pushConstantRange.offset = 0;
 		pushConstantRange.size = sizeof(TexturePushConstantData);
 
-		TextureSetLayout =
+		m_TextureSetLayout =
 			veDescriptorSetLayout::Builder()
 				.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
 				.build();
 
 		std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
 			globalDescriptorSetLayout,
-			TextureSetLayout->getDescriptorSetLayout()};
+			m_TextureSetLayout->getDescriptorSetLayout()};
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -107,7 +120,7 @@ namespace Nyxis
 		pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-		if (vkCreatePipelineLayout(pDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) !=
+		if (vkCreatePipelineLayout(pDevice.device(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout) !=
 			VK_SUCCESS) {
 			throw std::runtime_error("failed to create pipeline layout!");
 		}
@@ -118,7 +131,7 @@ namespace Nyxis
 		PipelineConfigInfo pipelineConfig{};
 		vePipeline::defaultPipelineConfigInfo(pipelineConfig);
 		pipelineConfig.renderPass = renderPass;
-		pipelineConfig.pipelineLayout = pipelineLayout;
+		pipelineConfig.pipelineLayout = m_PipelineLayout;
 		pPipeline = std::make_unique<vePipeline>(
 			"../shaders/texture_shader.vert.spv",
 			"../shaders/texture_shader.frag.spv",

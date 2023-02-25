@@ -62,7 +62,7 @@ namespace Nyxis
 
 	    if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon())
 	    {
-		    rigidBody.velocity += moveSpeed * dt * glm::normalize(moveDir);
+		    rigidBody.translation += moveSpeed * dt * glm::normalize(moveDir);
 	    }
     }
 }

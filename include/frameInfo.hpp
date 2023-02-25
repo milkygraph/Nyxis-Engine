@@ -36,7 +36,6 @@ namespace Nyxis
         float frameTime;
         VkCommandBuffer commandBuffer;
         VkDescriptorSet globalDescriptorSet;
-		veDescriptorPool& TexturePool;
         veGameObject::Map &gameObjects;
         Scene& scene;
     };

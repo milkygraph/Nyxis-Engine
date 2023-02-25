@@ -209,4 +209,12 @@ namespace Nyxis
         Gravity() = default;
         bool flag = true;
     };
+
+    struct Particle
+    {
+		glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glm::vec4 position{ 0.0f, 0.0f, 0.0f, 0.0f };
+        glm::vec3 velocity = { 0.0f, 0.0f, 0.0f };
+		glm::vec2 size = { 0.1f, 0.1f };
+    };
 }

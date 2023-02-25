@@ -21,7 +21,8 @@ namespace Nyxis
     public:
 	    void processMouseMovement(float dt, RigidBody& rigidBody);
         void moveInPlaneXZ(float dt, RigidBody& rigidBody);
-        void setCameraType(CameraType type) { cameraType = type; }
+		void setCameraType(CameraType type) { cameraType = type; }
+		CameraType getCameraType() { return cameraType; }
 		float moveSpeed{10.f};
     private:
 		glm::vec3 ForwardDir = {0.f, 0.f, 1.f};

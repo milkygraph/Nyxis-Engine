@@ -12,7 +12,7 @@ namespace Nyxis
         auto& transform = addComponent<TransformComponent>(m_CameraEntity, glm::vec3{ 0, 0, -14 });
         auto& rigidBody = addComponent<RigidBody>(m_CameraEntity);
         m_Camera = new Camera(rigidBody);
-        m_Camera->getCameraController().setCameraType(CameraType::Orthographic);
+        m_Camera->getCameraController().setCameraType(CameraType::Perspective);
     }
 
     Scene::~Scene()
@@ -64,7 +64,7 @@ namespace Nyxis
                          { model.second->loadModel(); });
         }
     }
-    void Scene::OnUpdate(float dt, float aspect, bool projection)
+    void Scene::OnUpdate(float dt, float aspect)
     {
         if (SaveSceneFlag)
         {
@@ -79,7 +79,7 @@ namespace Nyxis
             LoadScene(SceneName);
         }
 
-        if (projection)
+        if (m_Camera->getType() == CameraType::Perspective)
             m_Camera->setPerspectiveProjection(glm::radians(60.0f), aspect, 0.1f, 1000.0f);
         else
             m_Camera->setOrthographicProjection(-aspect, aspect, -1.0f, 1.0f, 0.1f, 1000.0f);

@@ -80,7 +80,7 @@ namespace Nyxis
         void LoadScene(const std::string &filename);
         void LoadModels();
 
-		void OnUpdate(float dt, float aspect, bool projection);
+		void OnUpdate(float dt, float aspect);
 
 		Camera *GetCamera() { return m_Camera; }
 

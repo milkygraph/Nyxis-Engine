@@ -7,6 +7,7 @@
 #include "simpleRenderSystem.hpp"
 #include "pointLightSystem.hpp"
 #include "TextureRenderSystem.hpp"
+#include "RenderSystems/ParticleRenderSystem.hpp"
 #include "path.hpp"
 #include "Log.hpp"
 #include "AssimpModel.hpp"
@@ -53,19 +54,7 @@ namespace Nyxis
 		globalPool = veDescriptorPool::Builder()
 			.setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
 			.build();
-
-		texturePool.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
-		auto framePoolBuilder = veDescriptorPool::Builder()
-			.setMaxSets(1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
-			.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
-
-		for (auto & pool : texturePool) {
-			pool = framePoolBuilder.build();
-		}
 
 		uboBuffers.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
 		for (auto &uboBuffer: uboBuffers) {
@@ -79,7 +68,6 @@ namespace Nyxis
 
 		globalSetLayout = veDescriptorSetLayout::Builder()
 			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
-			.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
 			.build();
 
 		globalDescriptorSets.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -104,6 +92,14 @@ namespace Nyxis
 		                      globalSetLayout->getDescriptorSetLayout() };   // pls - pointLightSystem
 		TextureRenderSystem trs{ pRenderer.getSwapChainRenderPass(),
 		                         globalSetLayout->getDescriptorSetLayout() }; // trs - textureRenderSystem
+        ParticleRenderSystem prs{ pRenderer.getSwapChainRenderPass(),
+                                 globalSetLayout->getDescriptorSetLayout() }; // prs - particleRenderSystem
+        {
+            Particle particle;
+            particle.color = { 1.0f, 0.2f, 0.3f, 1.0f };
+            prs.AddParticle(particle);
+            prs.BuildBuffer();
+        }
 
         // add functions to imgui layer
         {
@@ -135,9 +131,8 @@ namespace Nyxis
             float aspect = pRenderer.getAspectRatio();
 
             int frameIndex = pRenderer.getFrameIndex();
-			texturePool[frameIndex]->resetPool();
             FrameInfo frameInfo
-                    {frameIndex, frameTime, commandBuffer, globalDescriptorSets[frameIndex], *texturePool[frameIndex], gameObjects, pScene};
+                    {frameIndex, frameTime, commandBuffer, globalDescriptorSets[frameIndex], gameObjects, pScene};
 
             // updating Camera
 
@@ -151,6 +146,7 @@ namespace Nyxis
             // rendering TODO move to scene update
             pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
 	        
+            prs.Render(frameInfo);
             trs.Render(frameInfo);
             srs.Render(frameInfo);
             pls.Render(frameInfo);
@@ -161,7 +157,7 @@ namespace Nyxis
             pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
             pRenderer.endFrame();
 
-			pScene.OnUpdate(frameInfo.frameTime, aspect, false);
+            pScene.OnUpdate(frameInfo.frameTime, aspect);
         }
 
         vkDeviceWaitIdle(pDevice.device());
@@ -173,9 +169,9 @@ namespace Nyxis
         auto& rigidBody1 = pScene.addComponent<RigidBody>(circle1);
 		rigidBody1.translation = glm::vec3(0.0f, -1.0f, 1.0f);
 		rigidBody1.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-        rigidBody1.scale = glm::vec3(.02f, .02f, .02f);
+        rigidBody1.scale = glm::vec3(1.0f, 1.0f, 1.0f);
 
-        pScene.addComponent<MeshComponent>(circle1, "../models/sphere.obj");
+        pScene.addComponent<MeshComponent>(circle1, "../models/circle.obj");
         pScene.addComponent<Collider>(circle1, ColliderType::Sphere, glm::vec3{ 0.2, 0.2, 0.2 }, 0.05);
         pScene.addComponent<Gravity>(circle1);
 		pScene.addComponent<Texture>(circle1, "../textures/pavement.jpg");
@@ -190,6 +186,8 @@ namespace Nyxis
 		pScene.addComponent<MeshComponent>(floor, "../models/floor.obj");
 		pScene.addComponent<Gravity>(floor);
         pScene.addComponent<Texture>(floor, "../textures/pavement.jpg");
+
+        
         //for(auto i = 0; i < 10; i++)
         //{
         //    auto circle = pScene.createEntity("Circle" + std::to_string(i));

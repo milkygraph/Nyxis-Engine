@@ -65,8 +65,6 @@ namespace Nyxis
 		std::vector<VkDescriptorSet> globalDescriptorSets;
 
 		std::unique_ptr<veDescriptorPool> imguiPool{};
-		std::vector<std::unique_ptr<veDescriptorPool>> texturePool{};
-
 
 	    std::vector<std::unique_ptr<Buffer>> uboBuffers;
 
