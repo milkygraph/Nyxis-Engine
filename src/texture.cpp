@@ -4,7 +4,7 @@
 
 namespace Nyxis
 {
-	Texture::Texture(const std::string& filepath) : filepath{filepath}
+	_Texture::_Texture(const std::string& filepath) : filepath{filepath}
 	{
 		uint8_t* pixels = nullptr;
 
@@ -55,7 +55,7 @@ namespace Nyxis
 			static_cast<uint32_t>(texWidth),
 			static_cast<uint32_t>(texHeight),
 			1);
-		device.generateMipmaps(textureImage, imageFormat, texWidth, texHeight, mipLevels);
+		//device.generateMipmaps(textureImage, imageFormat, texWidth, texHeight, mipLevels);
 
 		imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
@@ -103,7 +103,7 @@ namespace Nyxis
 		descriptorImageInfo.sampler = textureSampler;
 		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
-	Texture::~Texture()
+	_Texture::~_Texture()
 	{
 		vkDestroyImageView(device.device(), textureImageView, nullptr);
 		vkDestroyImage(device.device(), textureImage, nullptr);
@@ -111,7 +111,7 @@ namespace Nyxis
 		vkFreeMemory(device.device(), textureImageMemory, nullptr);
 	}
 
-	void Texture::ChangeImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout)
+	void _Texture::ChangeImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
 		auto commandBuffer = device.beginSingleTimeCommands();
 

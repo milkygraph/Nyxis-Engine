@@ -52,7 +52,7 @@ namespace Nyxis
 			0,
 			nullptr);
 
-		frameInfo.scene.m_Registry.view<RigidBody, MeshComponent, Texture>().each([&](auto entity, auto& rigidBody, auto& mesh, auto& texture)
+		frameInfo.scene.m_Registry.view<RigidBody, MeshComponent, _Texture>().each([&](auto entity, auto& rigidBody, auto& mesh, auto& texture)
 		{
 		  auto& model = *mesh.model;
 			  if(model.loaded)

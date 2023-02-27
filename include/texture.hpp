@@ -9,16 +9,16 @@
 
 namespace Nyxis{
 
-	class Texture
+	class _Texture
 	{
 	public:
-		explicit Texture(const std::string& filepath);
-		~Texture();
+		explicit _Texture(const std::string& filepath);
+		~_Texture();
 
-		Texture(const Texture&) = delete;
-		Texture& operator=(const Texture&) = delete;
-		Texture(Texture&&) = delete;
-		Texture& operator=(Texture&&) = delete;
+		_Texture(const _Texture&) = delete;
+		_Texture& operator=(const _Texture&) = delete;
+		_Texture(_Texture&&) = delete;
+		_Texture& operator=(_Texture&&) = delete;
 
 		void ChangeImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
 		VkDescriptorImageInfo GetDescriptorImageInfo() const { return descriptorImageInfo; }

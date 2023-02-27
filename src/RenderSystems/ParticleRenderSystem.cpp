@@ -63,7 +63,7 @@ namespace Nyxis
 		//pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		pipelineConfig.renderPass = renderPass;
 		pipelineConfig.pipelineLayout = m_PipelineLayout;
-		m_Pipeline = std::make_unique<vePipeline>(
+		m_Pipeline = std::make_shared<vePipeline>(
 			"../shaders/particle_shader.vert.spv",
 			"../shaders/particle_shader.frag.spv",
 			pipelineConfig);

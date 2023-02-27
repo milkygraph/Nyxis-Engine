@@ -12,6 +12,7 @@
 #include "Log.hpp"
 #include "ImguiLayer.hpp"
 #include "PhysicsEngine.hpp"
+#include "GLTFModel.hpp"
 
 #include "Nyxispch.hpp"
 
@@ -70,6 +71,7 @@ namespace Nyxis
 
 
         veGameObject::Map gameObjects;
+        Model model;
 
         Scene pScene{};
         PhysicsEngine physicsEngine{};

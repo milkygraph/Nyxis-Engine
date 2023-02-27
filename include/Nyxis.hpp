@@ -23,3 +23,9 @@
 
 #define UPTR(x) std::unique_ptr<x>
 #define MAKE_UPTR(x, ...) std::make_unique<x>(__VA_ARGS__)
+
+template<typename T>
+using Ref = std::shared_ptr<T>;
+
+template<typename T>
+using Scope = std::unique_ptr<T>;
