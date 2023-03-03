@@ -10,7 +10,7 @@
 #include "RenderSystems/ParticleRenderSystem.hpp"
 #include "path.hpp"
 #include "Log.hpp"
-
+#include "GLTFRenderer.hpp"
 #include "Nyxispch.hpp"
 
 
@@ -71,9 +71,9 @@ namespace Nyxis
 
 		globalDescriptorSets.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
 		for (int i = 0; i < globalDescriptorSets.size(); i++) {
-			auto bufferInfo = uboBuffers[i]->descriptorInfo();
+			auto bufferInfo = uboBuffers[i]->getDescriptorInfo();
 			veDescriptorWriter(*globalSetLayout, *globalPool)
-				.writeBuffer(0, &bufferInfo)
+				.writeBuffer(0, bufferInfo)
 				.build(globalDescriptorSets[i]);
 		}
 
@@ -93,7 +93,10 @@ namespace Nyxis
 		                         globalSetLayout->getDescriptorSetLayout() }; // trs - textureRenderSystem
         ParticleRenderSystem prs{ pRenderer.getSwapChainRenderPass(),
                                  globalSetLayout->getDescriptorSetLayout() }; // prs - particleRenderSystem
-        {
+		GLTFRenderer gltfRenderer{ pRenderer.getSwapChainRenderPass(),
+								   globalSetLayout->getDescriptorSetLayout(), pRenderer.getSwapChainExtent()}; // gltfRenderer - gltfRenderer
+
+    	{
             Particle particle;
             particle.color = { 1.0f, 0.2f, 0.3f, 1.0f };
             prs.AddParticle(particle);
@@ -118,7 +121,9 @@ namespace Nyxis
             });
         }
 
-        model.loadFromFile("../models/microphone/scene.gltf");
+        auto helmet = pScene.createEntity("Helmet");
+        auto& model = pScene.addComponent<Model>(helmet);
+		model.loadFromFile("../models/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf");
 
         auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -146,11 +151,9 @@ namespace Nyxis
 
             // rendering TODO move to scene update
             pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
-	        
-            prs.Render(frameInfo);
-            trs.Render(frameInfo);
-            srs.Render(frameInfo);
-            pls.Render(frameInfo);
+
+            gltfRenderer.Render(frameInfo);
+
             pImguiLayer.OnUpdate(frameInfo);
             if(PhysicsEnabled)
                 physicsEngine.OnUpdate(pScene, frameInfo.frameTime);
@@ -159,6 +162,8 @@ namespace Nyxis
             pRenderer.endFrame();
 
             pScene.OnUpdate(frameInfo.frameTime, aspect);
+
+			std::cout << "FPS: " << 1.0f / frameTime << std::endl;
         }
 
         vkDeviceWaitIdle(pDevice.device());

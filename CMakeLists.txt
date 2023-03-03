@@ -34,7 +34,8 @@ target_link_directories(${PROJECT} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 target_link_libraries(${PROJECT} PUBLIC Vulkan::Vulkan glfw assimp::assimp)
 
 add_subdirectory(libs/spdlog)
-target_link_libraries(${PROJECT} PRIVATE spdlog)
+add_subdirectory(libs/gli)
+target_link_libraries(${PROJECT} PRIVATE spdlog gli)
 
 # precompile headers
 #set_source_files_properties(${SOURCES} PROPERTIES COMPILE_FLAGS "-include vepch.hpp")

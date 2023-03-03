@@ -45,14 +45,14 @@ namespace Nyxis
 
 	// Texture 
 	
-	void Texture::updateDescriptor()
+	void ModelTexture::updateDescriptor()
 	{
 		descriptor.imageLayout = imageLayout;
 		descriptor.imageView = view;
 		descriptor.sampler = sampler;
 	}
 
-	void Texture::destroy()
+	void ModelTexture::destroy()
 	{
 		vkDestroyImageView(device.device(), view, nullptr);
 		vkDestroyImage(device.device(), image, nullptr);
@@ -60,7 +60,7 @@ namespace Nyxis
 		vkDestroySampler(device.device(), sampler, nullptr);
 	}
 
-	void Texture::fromglTFImage(tinygltf::Image& gltfimage, TextureSampler textureSampler)
+	void ModelTexture::fromglTFImage(tinygltf::Image& gltfimage, TextureSampler textureSampler)
 	{
 		unsigned char* buffer = nullptr;
 		VkDeviceSize bufferSize = 0;
@@ -731,7 +731,7 @@ namespace Nyxis
 			else {
 				textureSampler = textureSamplers[tex.sampler];
 			}
-			Texture texture;
+			ModelTexture texture;
 			texture.fromglTFImage(image, textureSampler);
 			textures.push_back(texture);
 		}

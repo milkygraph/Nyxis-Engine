@@ -146,11 +146,6 @@ namespace Nyxis
                                 player.ToJson(entity_json);
                             }
 
-                            if (m_Registry.all_of<_Texture>(entity))
-                            {
-                                auto &texture = m_Registry.get<_Texture>(entity);
-                                texture.ToJson(entity_json);
-                            }
                             j["entities"].push_back(entity_json);
                         });
 
@@ -200,11 +195,6 @@ namespace Nyxis
             {
                 std::string filepath = entity["MeshComponent"]["filepath"];
                 m_Registry.emplace<MeshComponent>(entity1, filepath);
-            }
-            if (entity.contains("Texture"))
-            {
-                std::string filepath = entity["Texture"]["filepath"];
-                m_Registry.emplace<_Texture>(entity1, filepath);
             }
             if (entity.contains("Player"))
             {

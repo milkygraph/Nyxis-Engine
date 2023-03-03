@@ -42,9 +42,9 @@ namespace Nyxis
 
         void bind(VkCommandBuffer commandBuffer);
         static void defaultPipelineConfigInfo(PipelineConfigInfo &config);
+        static std::vector<char> readFile(const std::string& filename);
 
     private:
-        std::vector<char> readFile(const std::string &filename);
 
         void createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule);
         void createGraphicsPipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);

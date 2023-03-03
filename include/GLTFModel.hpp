@@ -30,7 +30,7 @@ namespace Nyxis
 		VkSamplerAddressMode addressModeW;
 	};
 
-	struct Texture {
+	struct ModelTexture {
 		Device& device = Device::get();
 		VkImage image;
 		VkImageLayout imageLayout;
@@ -46,7 +46,7 @@ namespace Nyxis
 		// Load a texture from a glTF image (stored as vector of chars loaded via stb_image) and generate a full mip chaing for it
 		void fromglTFImage(tinygltf::Image& gltfimage, TextureSampler textureSampler);
 	};
-
+	
 	struct Material {
 		enum AlphaMode { ALPHAMODE_OPAQUE, ALPHAMODE_MASK, ALPHAMODE_BLEND };
 		AlphaMode alphaMode = ALPHAMODE_OPAQUE;
@@ -55,11 +55,11 @@ namespace Nyxis
 		float roughnessFactor = 1.0f;
 		glm::vec4 baseColorFactor = glm::vec4(1.0f);
 		glm::vec4 emissiveFactor = glm::vec4(1.0f);
-		Texture* baseColorTexture;
-		Texture* metallicRoughnessTexture;
-		Texture* normalTexture;
-		Texture* occlusionTexture;
-		Texture* emissiveTexture;
+		ModelTexture* baseColorTexture;
+		ModelTexture* metallicRoughnessTexture;
+		ModelTexture* normalTexture;
+		ModelTexture* occlusionTexture;
+		ModelTexture* emissiveTexture;
 		bool doubleSided = false;
 		struct TexCoordSets {
 			uint8_t baseColor = 0;
@@ -70,8 +70,8 @@ namespace Nyxis
 			uint8_t emissive = 0;
 		} texCoordSets;
 		struct Extension {
-			Texture* specularGlossinessTexture;
-			Texture* diffuseTexture;
+			ModelTexture* specularGlossinessTexture;
+			ModelTexture* diffuseTexture;
 			glm::vec4 diffuseFactor = glm::vec4(1.0f);
 			glm::vec3 specularFactor = glm::vec3(0.0f);
 		} extension;
@@ -189,9 +189,6 @@ namespace Nyxis
 			VkDeviceMemory memory;
 		} indices;
 
-		std::unique_ptr<Buffer> vertexBuffer;
-		std::unique_ptr<Buffer> indexBuffer;
-
 		glm::mat4 aabb;
 
 		std::vector<Node*> nodes;
@@ -199,7 +196,7 @@ namespace Nyxis
 
 		std::vector<Skin*> skins;
 
-		std::vector<Texture> textures;
+		std::vector<ModelTexture> textures;
 		std::vector<TextureSampler> textureSamplers;
 		std::vector<Material> materials;
 		std::vector<Animation> animations;

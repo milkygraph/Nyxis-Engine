@@ -28,6 +28,7 @@ namespace Nyxis
         Renderer &operator=(const Renderer &) = delete;
 
         VkRenderPass getSwapChainRenderPass() const { return pSwapChain->getRenderPass(); }
+		VkExtent2D getSwapChainExtent() const { return pSwapChain->getSwapChainExtent(); }
         float getAspectRatio() const { return pSwapChain->extentAspectRatio(); }
         bool isFrameInProgress() const { return isFrameStarted; }
 

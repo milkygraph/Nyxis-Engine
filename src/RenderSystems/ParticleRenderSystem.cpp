@@ -80,9 +80,9 @@ namespace Nyxis
 	
 		// write particle buffer to descriptor set
 		VkDescriptorSet descriptorSet;
-		auto bufferInfo = m_ParticleBuffer->descriptorInfo();
+		auto bufferInfo = m_ParticleBuffer->getDescriptorInfo();
 		veDescriptorWriter(*m_ParticleSetLayout, *m_ParticlePool[frameInfo.frameIndex])
-			.writeBuffer(0, &bufferInfo)
+			.writeBuffer(0, bufferInfo)
 			.build(m_ParticleSets[frameInfo.frameIndex]);
 
 		vkCmdBindDescriptorSets(

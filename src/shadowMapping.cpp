@@ -195,7 +195,7 @@
 // 		renderPassCreateInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
 // 		renderPassCreateInfo.pDependencies = dependencies.data();
 
-// 		VK_CHECK_RESULT(vkCreateRenderPass(device, &renderPassCreateInfo, nullptr, &offscreenPass.renderPass));
+// 		vkCreateRenderPass(device, &renderPassCreateInfo, nullptr, &offscreenPass.renderPass));
 // 	}
 
 // 	// Setup the offscreen framebuffer for rendering the scene from light's point-of-view to
@@ -217,15 +217,15 @@
 // 		image.tiling = VK_IMAGE_TILING_OPTIMAL;
 // 		image.format = DEPTH_FORMAT;																// Depth stencil attachment
 // 		image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;		// We will sample directly from the depth attachment for the shadow mapping
-// 		VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
+// 		vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
 
 // 		VkMemoryAllocateInfo memAlloc = vks::initializers::memoryAllocateInfo();
 // 		VkMemoryRequirements memReqs;
 // 		vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
 // 		memAlloc.allocationSize = memReqs.size;
-// 		memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-// 		VK_CHECK_RESULT(vkAllocateMemory(device, &memAlloc, nullptr, &offscreenPass.depth.mem));
-// 		VK_CHECK_RESULT(vkBindImageMemory(device, offscreenPass.depth.image, offscreenPass.depth.mem, 0));
+// 		memAlloc.memoryTypeIndex = vulkanDevice.findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+// 		vkAllocateMemory(device, &memAlloc, nullptr, &offscreenPass.depth.mem));
+// 		vkBindImageMemory(device, offscreenPass.depth.image, offscreenPass.depth.mem, 0));
 
 // 		VkImageViewCreateInfo depthStencilView = vks::initializers::imageViewCreateInfo();
 // 		depthStencilView.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -237,7 +237,7 @@
 // 		depthStencilView.subresourceRange.baseArrayLayer = 0;
 // 		depthStencilView.subresourceRange.layerCount = 1;
 // 		depthStencilView.image = offscreenPass.depth.image;
-// 		VK_CHECK_RESULT(vkCreateImageView(device, &depthStencilView, nullptr, &offscreenPass.depth.view));
+// 		vkCreateImageView(device, &depthStencilView, nullptr, &offscreenPass.depth.view));
 
 // 		// Create sampler to sample from to depth attachment
 // 		// Used to sample in the fragment shader for shadowed rendering
@@ -256,7 +256,7 @@
 // 		sampler.minLod = 0.0f;
 // 		sampler.maxLod = 1.0f;
 // 		sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-// 		VK_CHECK_RESULT(vkCreateSampler(device, &sampler, nullptr, &offscreenPass.depthSampler));
+// 		vkCreateSampler(device, &sampler, nullptr, &offscreenPass.depthSampler));
 
 // 		prepareOffscreenRenderpass();
 
@@ -269,7 +269,7 @@
 // 		fbufCreateInfo.height = offscreenPass.height;
 // 		fbufCreateInfo.layers = 1;
 
-// 		VK_CHECK_RESULT(vkCreateFramebuffer(device, &fbufCreateInfo, nullptr, &offscreenPass.frameBuffer));
+// 		vkCreateFramebuffer(device, &fbufCreateInfo, nullptr, &offscreenPass.frameBuffer));
 // 	}
 
 // 	void buildCommandBuffers()
@@ -282,7 +282,7 @@
 
 // 		for (int32_t i = 0; i < drawCmdBuffers.size(); ++i)
 // 		{
-// 			VK_CHECK_RESULT(vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
+// 			vkBeginCommandBuffer(drawCmdBuffers[i], &cmdBufInfo));
 
 // 			/*
 // 				First render pass: Generate shadow map by rendering the scene from light's POV
@@ -366,7 +366,7 @@
 // 				vkCmdEndRenderPass(drawCmdBuffers[i]);
 // 			}
 
-// 			VK_CHECK_RESULT(vkEndCommandBuffer(drawCmdBuffers[i]));
+// 			vkEndCommandBuffer(drawCmdBuffers[i]));
 // 		}
 // 	}
 
@@ -386,7 +386,7 @@
 // 			vks::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3)
 // 		};
 // 		VkDescriptorPoolCreateInfo descriptorPoolInfo = vks::initializers::descriptorPoolCreateInfo(poolSizes, 3);
-// 		VK_CHECK_RESULT(vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
+// 		vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool));
 // 	}
 
 // 	void setupDescriptorSetLayout()
@@ -399,9 +399,9 @@
 // 			vks::initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)
 // 		};
 // 		VkDescriptorSetLayoutCreateInfo descriptorLayout = vks::initializers::descriptorSetLayoutCreateInfo(setLayoutBindings);
-// 		VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &TextureSetLayout));
+// 		vkCreateDescriptorSetLayout(device, &descriptorLayout, nullptr, &TextureSetLayout));
 // 		VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = vks::initializers::pipelineLayoutCreateInfo(&TextureSetLayout, 1);
-// 		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+// 		vkCreatePipelineLayout(device, &pPipelineLayoutCreateInfo, nullptr, &pipelineLayout));
 // 	}
 
 // 	void setupDescriptorSets()
@@ -417,7 +417,7 @@
 
 // 		// Debug display
 // 		VkDescriptorSetAllocateInfo allocInfo = vks::initializers::descriptorSetAllocateInfo(descriptorPool, &TextureSetLayout, 1);
-// 		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.debug));
+// 		vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.debug));
 // 		writeDescriptorSets = {
 // 			// Binding 0 : Parameters uniform buffer
 // 			vks::initializers::writeDescriptorSet(descriptorSets.debug, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniformBuffers.scene.descriptor),
@@ -427,7 +427,7 @@
 // 		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
 
 // 		// Offscreen shadow map generation
-// 		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.offscreen));
+// 		vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.offscreen));
 // 		writeDescriptorSets = {
 // 			// Binding 0 : Vertex shader uniform buffer
 // 			vks::initializers::writeDescriptorSet(descriptorSets.offscreen, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniformBuffers.offscreen.descriptor),
@@ -435,7 +435,7 @@
 // 		vkUpdateDescriptorSets(device, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
 
 // 		// Scene rendering with shadow map applied
-// 		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.scene));
+// 		vkAllocateDescriptorSets(device, &allocInfo, &descriptorSets.scene));
 // 		writeDescriptorSets = {
 // 			// Binding 0 : Vertex shader uniform buffer
 // 			vks::initializers::writeDescriptorSet(descriptorSets.scene, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniformBuffers.scene.descriptor),
@@ -476,7 +476,7 @@
 // 		// Empty vertex input state
 // 		VkPipelineVertexInputStateCreateInfo emptyInputState = vks::initializers::pipelineVertexInputStateCreateInfo();
 // 		pipelineCI.pVertexInputState = &emptyInputState;
-// 		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCI, nullptr, &pipelines.debug));
+// 		vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCI, nullptr, &pipelines.debug));
 
 // 		// Scene rendering with shadows applied
 // 		pipelineCI.pVertexInputState  = vkglTF::Vertex::getPipelineVertexInputState({vkglTF::VertexComponent::Position, vkglTF::VertexComponent::UV, vkglTF::VertexComponent::Color, vkglTF::VertexComponent::Normal});
@@ -489,10 +489,10 @@
 // 		VkSpecializationInfo specializationInfo = vks::initializers::specializationInfo(1, &specializationMapEntry, sizeof(uint32_t), &enablePCF);
 // 		shaderStages[1].pSpecializationInfo = &specializationInfo;
 // 		// No filtering
-// 		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCI, nullptr, &pipelines.sceneShadow));
+// 		vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCI, nullptr, &pipelines.sceneShadow));
 // 		// PCF filtering
 // 		enablePCF = 1;
-// 		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCI, nullptr, &pipelines.sceneShadowPCF));
+// 		vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCI, nullptr, &pipelines.sceneShadowPCF));
 
 // 		// Offscreen pipeline (vertex shader only)
 // 		shaderStages[0] = loadShader(getShadersPath() + "shadowmapping/offscreen.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
@@ -512,29 +512,29 @@
 // 				0);
 
 // 		pipelineCI.renderPass = offscreenPass.renderPass;
-// 		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCI, nullptr, &pipelines.offscreen));
+// 		vkCreateGraphicsPipelines(device, pipelineCache, 1, &pipelineCI, nullptr, &pipelines.offscreen));
 // 	}
 
 // 	// Prepare and initialize uniform buffer containing shader uniforms
 // 	void prepareUniformBuffers()
 // 	{
 // 		// Offscreen vertex shader uniform buffer block
-// 		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+// 		vulkanDevice->createBuffer(
 // 			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 // 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 // 			&uniformBuffers.offscreen,
 // 			sizeof(uboOffscreenVS)));
 
 // 		// Scene vertex shader uniform buffer block
-// 		VK_CHECK_RESULT(vulkanDevice->createBuffer(
+// 		vulkanDevice->createBuffer(
 // 			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 // 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 // 			&uniformBuffers.scene,
 // 			sizeof(uboVSscene)));
 
 // 		// Map persistent
-// 		VK_CHECK_RESULT(uniformBuffers.offscreen.map());
-// 		VK_CHECK_RESULT(uniformBuffers.scene.map());
+// 		uniformBuffers.offscreen.map());
+// 		uniformBuffers.scene.map());
 
 // 		updateLight();
 // 		updateUniformBufferOffscreen();
@@ -582,7 +582,7 @@
 // 		submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
 
 // 		// Submit to queue
-// 		VK_CHECK_RESULT(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+// 		vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
 
 // 		VulkanExampleBase::submitFrame();
 // 	}

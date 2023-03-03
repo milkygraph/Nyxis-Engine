@@ -4,7 +4,7 @@
 #include "Nyxispch.hpp"
 #include "frameInfo.hpp"
 #include "pipeline.hpp"
-#include "descriptors.hpp"
+#include "scene.hpp"
 
 #include "GLTFModel.hpp"
 
@@ -12,6 +12,21 @@ namespace Nyxis
 {
 	class GLTFRenderer
 	{
+	public:
+		struct Textures {
+			TextureCubeMap environmentCube;
+			Texture2D empty;
+			Texture2D lutBrdf;
+			Ref<TextureCubeMap> irradianceCube = nullptr;
+			Ref<TextureCubeMap> prefilteredCube = nullptr;
+		} textures;
+
+		struct Models
+		{
+			Model scene;
+			Model skybox;
+		} models;
+
 		struct PushConstBlockMaterial {
 			glm::vec4 baseColorFactor;
 			glm::vec4 emissiveFactor;
@@ -29,11 +44,12 @@ namespace Nyxis
 			float alphaMaskCutoff;
 		} pushConstBlockMaterial;
 
-		struct DescriptorSetLayouts {
-			VkDescriptorSetLayout scene;
-			VkDescriptorSetLayout material;
-			VkDescriptorSetLayout node;
-		} descriptorSetLayouts;
+		struct UBOMatrices {
+			glm::mat4 projection;
+			glm::mat4 model;
+			glm::mat4 view;
+			glm::vec3 camPos;
+		} shaderValuesScene, shaderValuesSkybox;
 
 		struct shaderValuesParams {
 			glm::vec4 lightDir;
@@ -45,26 +61,70 @@ namespace Nyxis
 			float debugViewEquation = 0;
 		} shaderValuesParams;
 
-	public:
-		GLTFRenderer(VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+		GLTFRenderer(VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, VkExtent2D extent);
 		~GLTFRenderer();
 
 		void OnUpdate();
 		void Render(FrameInfo& frameInfo);
 
 	private:
-		void CreatePipeline(VkRenderPass renderPass);
-		void CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout);
-		void CreateDescriptorSetLayout();
-		void CreateDescriptorPool();
+		void PrepareUniformBuffers();
+		void UpdateUniformBuffers(Scene& scene);
+		void LoadEnvironment(std::string& filename);
+		void LoadScene(std::string& filename);
+		void LoadAssets();
+		void GenerateBRDFLUT();
+		void GenerateCubemaps();
+		void PreparePipelines(VkRenderPass renderPass);
+		void SetupNodeDescriptorSet(const Node* node);
 		void SetupDescriptorSets();
+		void RenderNode(Node* node, FrameInfo& frameInfo, Material::AlphaMode alphaMode);
 
 		Device& device = Device::get();
-		Scope<vePipeline> m_Pipeline;
-		VkPipelineLayout m_PipelineLayout;
+		gltf::Camera camera;
 
-		std::vector<Ref<veDescriptorPool>> m_DescriptorPools;
-		std::vector<VkDescriptorSet> m_DescriptorSets;
-		Ref<veDescriptorSetLayout> m_DescriptorSetLayout;
+		enum PBRWorkflows { PBR_WORKFLOW_METALLIC_ROUGHNESS = 0, PBR_WORKFLOW_SPECULAR_GLOSINESS = 1 };
+
+		struct Pipelines
+		{
+			VkPipeline skybox;
+			VkPipeline pbr;
+			VkPipeline pbrDoubleSided;
+			VkPipeline pbrAlphaBlend;
+		} pipelines;
+
+		VkPipeline boundPipeline = VK_NULL_HANDLE;
+		VkPipelineLayout pipelineLayout;
+		VkPipelineCache pipelineCache = VK_NULL_HANDLE;
+
+		VkDescriptorPool descriptorPool;
+
+		struct DescriptorSetLayouts
+		{
+			VkDescriptorSetLayout scene;
+			VkDescriptorSetLayout material;
+			VkDescriptorSetLayout node;
+		} descriptorSetLayouts;
+
+		struct DescriptorSets
+		{
+			VkDescriptorSet scene;
+			VkDescriptorSet skybox;
+		};
+
+		struct UniformBufferSet {
+			Ref<Buffer> scene = nullptr;
+			Ref<Buffer> skybox = nullptr;
+			Ref<Buffer> params = nullptr;
+		};
+
+		std::vector<DescriptorSets> descriptorSets;
+		std::vector<UniformBufferSet> uniformBuffers;
+
+		struct LightSource {
+			glm::vec3 color = glm::vec3(1.0f);
+			glm::vec3 rotation = glm::vec3(75.0f, 40.0f, 0.0f);
+		} lightSource;
+	
 	};
 }
