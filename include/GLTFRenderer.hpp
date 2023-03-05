@@ -66,22 +66,28 @@ namespace Nyxis
 
 		void OnUpdate();
 		void Render(FrameInfo& frameInfo);
+		void LoadEnvironment(std::string& filename);
+		void UpdateSkyboxDescriptorSets();
 
+		std::string envMapFile = "";
+		bool SceneUpdated = false;
 	private:
 		void PrepareUniformBuffers();
 		void UpdateUniformBuffers(Scene& scene);
-		void LoadEnvironment(std::string& filename);
-		void LoadScene(std::string& filename);
+		void LoadModel(std::string& filename);
+		void SetScene(const Ref<Scene> scene) { this->scene = scene; }
 		void LoadAssets();
 		void GenerateBRDFLUT();
 		void GenerateCubemaps();
 		void PreparePipelines(VkRenderPass renderPass);
+		void SetupDescriptorPool();
 		void SetupNodeDescriptorSet(const Node* node);
 		void SetupDescriptorSets();
+		void FreeDescriptorSets();
 		void RenderNode(Node* node, FrameInfo& frameInfo, Material::AlphaMode alphaMode);
 
 		Device& device = Device::get();
-		gltf::Camera camera;
+		Ref<Scene> scene;
 
 		enum PBRWorkflows { PBR_WORKFLOW_METALLIC_ROUGHNESS = 0, PBR_WORKFLOW_SPECULAR_GLOSINESS = 1 };
 

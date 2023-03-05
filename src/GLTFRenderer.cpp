@@ -5,21 +5,13 @@ namespace Nyxis
 {
 	GLTFRenderer::GLTFRenderer(VkRenderPass renderPass, VkExtent2D extent)
 	{
-		camera.setPosition({ 0.0f, 0.0f, 1.0f });
-		camera.setRotation({ 0.0f, 0.0f, 0.0f });
-		camera.setPerspective(45.0f, (float)extent.width / (float)extent.height, 0.1f, 256.0f);
-		camera.rotationSpeed = 0.25f;
-		camera.movementSpeed = 0.1f;
-		camera.setPosition({ 0.0f, 0.0f, 1.0f });
-		camera.setRotation({ 0.0f, 0.0f, 0.0f });
-
 		descriptorSets.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
 		uniformBuffers.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
 
 		LoadAssets();
 		GenerateBRDFLUT();
-		GenerateCubemaps();
 		PrepareUniformBuffers();
+		SetupDescriptorPool();
 		SetupDescriptorSets();
 		PreparePipelines(renderPass);
 	}
@@ -31,7 +23,14 @@ namespace Nyxis
 
 	void GLTFRenderer::OnUpdate()
 	{
-
+		if (SceneUpdated)
+		{
+			vkDeviceWaitIdle(device.device());
+			LoadEnvironment(envMapFile);
+			FreeDescriptorSets();
+			SetupDescriptorSets();
+			SceneUpdated = false;
+		}
 	}
 
 	void GLTFRenderer::Render(FrameInfo& frameInfo)
@@ -41,24 +40,24 @@ namespace Nyxis
 		vkCmdBindPipeline(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
 		models.skybox.draw(frameInfo.commandBuffer);
 
-		VkDeviceSize offsets[] = { 0 };
+			VkDeviceSize offsets[] = { 0 };
 
-		vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, &models.scene.vertices.buffer, offsets);
+			vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, &models.scene.vertices.buffer, offsets);
 
-		if (models.scene.indices.buffer != VK_NULL_HANDLE)
-			vkCmdBindIndexBuffer(frameInfo.commandBuffer, models.scene.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+			if (models.scene.indices.buffer != VK_NULL_HANDLE)
+				vkCmdBindIndexBuffer(frameInfo.commandBuffer, models.scene.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
 
-		boundPipeline = VK_NULL_HANDLE;
+			boundPipeline = VK_NULL_HANDLE;
 
-		for (auto node : models.scene.nodes)
-			RenderNode(node, frameInfo, Material::ALPHAMODE_OPAQUE);
-		// Alpha masked primitives
-		for (auto node : models.scene.nodes)
-			RenderNode(node, frameInfo, Material::ALPHAMODE_MASK);
-		// Transparent primitives
-		// TODO: Correct depth sorting
-		for (auto node : models.scene.nodes)
-			RenderNode(node, frameInfo, Material::ALPHAMODE_BLEND);
+			for (auto node : models.scene.nodes)
+				RenderNode(node, frameInfo, Material::ALPHAMODE_OPAQUE);
+			// Alpha masked primitives
+			for (auto node : models.scene.nodes)
+				RenderNode(node, frameInfo, Material::ALPHAMODE_MASK);
+			// Transparent primitives
+			// TODO: Correct depth sorting
+			for (auto node : models.scene.nodes)
+				RenderNode(node, frameInfo, Material::ALPHAMODE_BLEND);
 	}
 
 	void GLTFRenderer::PrepareUniformBuffers()
@@ -121,7 +120,7 @@ namespace Nyxis
 		GenerateCubemaps();
 	}
 
-	void GLTFRenderer::LoadScene(std::string& filename)
+	void GLTFRenderer::LoadModel(std::string& filename)
 	{
 		std::cout << "Loading scene from " << filename << std::endl;
 		models.scene.destroy();
@@ -140,9 +139,9 @@ namespace Nyxis
 		textures.empty.loadFromFile("../assets/textures/empty.ktx", VK_FORMAT_R8G8B8A8_UNORM);
 
 		std::string sceneFile = "../models/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf";
-		std::string envMapFile = "../assets/environments/papermill.ktx";
+		envMapFile = "../assets/environments/papermill.ktx";
 
-		LoadScene(sceneFile);
+		LoadModel(sceneFile);
 
 		models.skybox.loadFromFile("../models/Box/glTF-Embedded/Box.gltf");
 
@@ -174,7 +173,7 @@ namespace Nyxis
 		}
 	}
 
-	void GLTFRenderer::SetupDescriptorSets()
+	void GLTFRenderer::SetupDescriptorPool()
 	{
 		/*
 			Descriptor Pool
@@ -208,8 +207,12 @@ namespace Nyxis
 		descriptorPoolCI.poolSizeCount = 2;
 		descriptorPoolCI.pPoolSizes = poolSizes.data();
 		descriptorPoolCI.maxSets = (2 + materialCount + meshCount) * veSwapChain::MAX_FRAMES_IN_FLIGHT;
+		descriptorPoolCI.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 		vkCreateDescriptorPool(device.device(), &descriptorPoolCI, nullptr, &descriptorPool);
+	}
 
+	void GLTFRenderer::SetupDescriptorSets()
+	{
 		/*
 			Descriptor sets
 		*/
@@ -363,7 +366,20 @@ namespace Nyxis
 
 		}
 
-		// Skybox (fixed set)
+		UpdateSkyboxDescriptorSets();
+	}
+
+	void GLTFRenderer::FreeDescriptorSets()
+	{
+		for (auto descriptorSet : descriptorSets) {
+			vkFreeDescriptorSets(device.device(), descriptorPool, 1, &descriptorSet.scene);
+			vkFreeDescriptorSets(device.device(), descriptorPool, 1, &descriptorSet.skybox);
+		}	
+	}
+
+
+	void GLTFRenderer::UpdateSkyboxDescriptorSets()
+	{
 		for (auto i = 0; i < uniformBuffers.size(); i++) {
 			VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
 			descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -398,6 +414,7 @@ namespace Nyxis
 			vkUpdateDescriptorSets(device.device(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 		}
 	}
+
 
 	void GLTFRenderer::RenderNode(Node* node, FrameInfo& frameInfo, Material::AlphaMode alphaMode)
 	{
@@ -664,7 +681,7 @@ namespace Nyxis
 		auto tStart = std::chrono::high_resolution_clock::now();
 
 		const VkFormat format = VK_FORMAT_R16G16_SFLOAT;
-		const int32_t dim = 512;
+		const int32_t dim = 1024;
 
 		// Image
 		VkImageCreateInfo imageCI{};
@@ -933,7 +950,7 @@ namespace Nyxis
 				break;
 			case PREFILTEREDENV:
 				format = VK_FORMAT_R16G16B16A16_SFLOAT;
-				dim = 512;
+				dim = 1024;
 				break;
 			};
 
@@ -1343,11 +1360,11 @@ namespace Nyxis
 					// Pass parameters for current pass using a push constant block
 					switch (target) {
 					case IRRADIANCE:
-						pushBlockIrradiance.mvp = glm::perspective((float)(3.14159265358979323846 / 2.0), 1.0f, 0.1f, 512.0f) * matrices[f];
+						pushBlockIrradiance.mvp = glm::perspective((float)(3.14159265358979323846 / 2.0), 1.0f, 0.1f, 1024.0f) * matrices[f];
 						vkCmdPushConstants(cmdBuf, pipelinelayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushBlockIrradiance), &pushBlockIrradiance);
 						break;
 					case PREFILTEREDENV:
-						pushBlockPrefilterEnv.mvp = glm::perspective((float)(3.14159265358979323846 / 2.0), 1.0f, 0.1f, 512.0f) * matrices[f];
+						pushBlockPrefilterEnv.mvp = glm::perspective((float)(3.14159265358979323846 / 2.0), 1.0f, 0.1f, 1024.0f) * matrices[f];
 						pushBlockPrefilterEnv.roughness = (float)m / (float)(numMips - 1);
 						vkCmdPushConstants(cmdBuf, pipelinelayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushBlockPrefilterEnv), &pushBlockPrefilterEnv);
 						break;

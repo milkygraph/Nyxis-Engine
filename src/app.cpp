@@ -12,6 +12,7 @@
 #include "Log.hpp"
 #include "GLTFRenderer.hpp"
 #include "Nyxispch.hpp"
+#include "imgui/misc/cpp/imgui_stdlib.h"
 
 namespace Nyxis
 {
@@ -51,6 +52,8 @@ namespace Nyxis
         // create systems
         GLTFRenderer gltfRenderer{ pRenderer.getSwapChainRenderPass(), pRenderer.getSwapChainExtent() }; // gltfRenderer - gltfRenderer
 
+		bool reload = false;
+
         // add functions to imgui layer
         {
             pImguiLayer.AddFunction([&]() {
@@ -58,7 +61,7 @@ namespace Nyxis
                 ImGui::Text("Entity Count: %d", pScene.getEntityCount());
                 ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
                 ImGui::End();
-                });
+            });
 
             pImguiLayer.AddFunction([&]() {
                 ImGui::Begin("Physics");
@@ -66,8 +69,21 @@ namespace Nyxis
                 ImGui::DragFloat2("BoxEdges", &physicsEngine.edges.x);
                 ImGui::DragFloat("Gravity", &physicsEngine.gravity, 0.1, -1.0f, 1.0f);
                 ImGui::End();
-                });
+            });
+            pImguiLayer.AddFunction([&] {
+                ImGui::Begin("Reload");
+
+				ImGui::InputText("Path", &gltfRenderer.envMapFile, ImGuiInputTextFlags_EnterReturnsTrue);
+            	if (ImGui::Button("Reload", ImVec2(100, 50)))
+                {
+                    gltfRenderer.SceneUpdated = true;
+                }
+
+            	ImGui::End();
+            });
         }
+
+        
 
         auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -96,7 +112,7 @@ namespace Nyxis
             pRenderer.endFrame();
 
             pScene.OnUpdate(frameInfo.frameTime, aspect);
-
+            gltfRenderer.OnUpdate();
         }
 
         vkDeviceWaitIdle(pDevice.device());
