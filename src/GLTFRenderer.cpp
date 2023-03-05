@@ -3,7 +3,7 @@
 
 namespace Nyxis
 {
-	GLTFRenderer::GLTFRenderer(VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, VkExtent2D extent)
+	GLTFRenderer::GLTFRenderer(VkRenderPass renderPass, VkExtent2D extent)
 	{
 		camera.setPosition({ 0.0f, 0.0f, 1.0f });
 		camera.setRotation({ 0.0f, 0.0f, 0.0f });
@@ -57,7 +57,7 @@ namespace Nyxis
 			RenderNode(node, frameInfo, Material::ALPHAMODE_MASK);
 		// Transparent primitives
 		// TODO: Correct depth sorting
-		for (auto node : models.scene.nodes) 
+		for (auto node : models.scene.nodes)
 			RenderNode(node, frameInfo, Material::ALPHAMODE_BLEND);
 	}
 
@@ -84,7 +84,7 @@ namespace Nyxis
 
 		auto& rigidBody = scene.m_Registry.get<RigidBody>(scene.m_CameraEntity);
 
-		
+
 		shaderValuesScene.camPos = glm::vec3(
 			-rigidBody.translation.z * sin(glm::radians(rigidBody.translation.y)) * cos(glm::radians(rigidBody.translation.x)),
 			-rigidBody.translation.z * sin(glm::radians(rigidBody.translation.x)),
@@ -92,9 +92,9 @@ namespace Nyxis
 		);
 
 		// Skybox
-		shaderValuesSkybox.projection = camera.matrices.perspective;
-		shaderValuesSkybox.view = camera.matrices.view;
-		shaderValuesSkybox.model = glm::mat4(glm::mat3(camera.matrices.view));
+		shaderValuesSkybox.projection = scene.m_Camera->getProjectionMatrix();
+		shaderValuesSkybox.view = scene.m_Camera->getViewMatrix();
+		shaderValuesSkybox.model = glm::mat4(glm::mat3(shaderValuesSkybox.view));
 
 		for (auto& uniformBuffer : uniformBuffers)
 		{
@@ -518,7 +518,7 @@ namespace Nyxis
 		VkPipelineRasterizationStateCreateInfo rasterizationStateCI{};
 		rasterizationStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rasterizationStateCI.polygonMode = VK_POLYGON_MODE_FILL;
-		rasterizationStateCI.cullMode = VK_CULL_MODE_FRONT_BIT;
+		rasterizationStateCI.cullMode = VK_CULL_MODE_BACK_BIT;
 		rasterizationStateCI.frontFace = VK_FRONT_FACE_CLOCKWISE;
 		rasterizationStateCI.lineWidth = 1.0f;
 
@@ -626,7 +626,7 @@ namespace Nyxis
 			loadShader(device.device(), "../shaders/pbr/skybox.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 
-		rasterizationStateCI.cullMode = VK_CULL_MODE_FRONT_BIT;
+		rasterizationStateCI.cullMode = VK_CULL_MODE_NONE;
 		vkCreateGraphicsPipelines(device.device(), pipelineCache, 1, &pipelineCI, nullptr, &pipelines.skybox);
 		for (auto shaderStage : shaderStages) {
 			vkDestroyShaderModule(device.device(), shaderStage.module, nullptr);

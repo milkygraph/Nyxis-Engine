@@ -14,18 +14,6 @@ file (GLOB_RECURSE SOURCES src/*.cpp Scene/*.cpp libs/entt/*.cpp libs/stbimage/*
         libs/imgui/backends/imgui_impl_glfw.cpp libs/imgui/backends/imgui_impl_vulkan.cpp)
 file (GLOB_RECURSE HEADERS include/*.hpp )
 file (GLOB_RECURSE VENDOR )
-file (GLOB_RECURSE VERTEX_SHADERS shaders/*.vert)
-file (GLOB_RECURSE FRAGMENT_SHADERS shaders/*.frag)
-
-foreach(SHADER ${VERTEX_SHADERS})
-    get_filename_component(FILE_NAME ${SHADER} NAME)
-    add_custom_command(
-            OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bin/shaders/${FILE_NAME}.spv
-            COMMAND glslc -c ${FILE_NAME}
-            DEPENDS ${SHADER}
-    )
-endforeach(SHADER)
-
 
 add_executable(${PROJECT} ${SOURCES} ${HEADERS})
 
