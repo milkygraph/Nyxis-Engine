@@ -72,7 +72,7 @@ namespace Nyxis
             });
             pImguiLayer.AddFunction([&] {
                 ImGui::Begin("Reload");
-
+				
 				ImGui::InputText("Path", &gltfRenderer.envMapFile, ImGuiInputTextFlags_EnterReturnsTrue);
             	if (ImGui::Button("Reload", ImVec2(100, 50)))
                 {
