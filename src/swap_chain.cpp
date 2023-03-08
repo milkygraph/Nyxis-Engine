@@ -137,21 +137,6 @@ namespace Nyxis
 		// submitInfo.pCommandBuffers = &buffers[1];
 		// submitInfo.pSignalSemaphores = &signalSemaphore;
 
-				// create signal and wait semaphores for the first command buffer
-		VkSemaphore signalSemaphore = m_RenderFinishedSemaphores[m_CurrentFrame];
-		VkSemaphore waitSemaphores = m_ImageAvailableSemaphores[m_CurrentFrame];
-
-		// submit info for the first command buffer
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = &waitSemaphores;
-		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		submitInfo.pWaitDstStageMask = waitStages;
-		submitInfo.commandBufferCount = 2;
-		submitInfo.pCommandBuffers = buffers;
-		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = &signalSemaphore;
 		// submit the second command buffer
 		if (vkQueueSubmit(device.graphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
 		{
