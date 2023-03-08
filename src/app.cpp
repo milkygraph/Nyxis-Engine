@@ -159,7 +159,7 @@ namespace Nyxis
             {
 				pRenderer.BeginUIFrame(frameInfo);
                 pRenderer.BeginUIRenderPass(frameInfo.commandBuffer);
-				pImguiLayer.OnUpdate(frameInfo, pRenderer.pSwapChain->GetWorldImageView(frameInfo.frameIndex));
+				pImguiLayer.OnUpdate(frameInfo, pRenderer.GetWorldImageView(frameInfo.frameIndex));
                 pRenderer.EndUIRenderPass(frameInfo.commandBuffer);
                 pRenderer.EndUIFrame();
             }

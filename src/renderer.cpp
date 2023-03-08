@@ -11,7 +11,7 @@ namespace Nyxis
     Renderer::Renderer(Scene& scene)
     {
         this->scene = &scene;
-        recreateSwapChain();
+        RecreateSwapChain();
         CreateCommandBuffers();
     }
 
@@ -20,7 +20,12 @@ namespace Nyxis
         FreeCommandBuffers();
     }
 
-    void Renderer::recreateSwapChain()
+    VkImageView Renderer::GetWorldImageView(int index) const
+    {
+        return pSwapChain->GetWorldImageView(index);
+    }
+
+    void Renderer::RecreateSwapChain()
     {
 	    auto extent = window.getExtent();
         while (extent.width == 0 || extent.height == 0)
@@ -86,7 +91,7 @@ namespace Nyxis
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR)
         {
-            recreateSwapChain();
+            RecreateSwapChain();
             return VK_NULL_HANDLE;
         }
 
@@ -113,7 +118,7 @@ namespace Nyxis
 
         auto worldCommandBuffer = GetMainCommandBuffer();
 
-    	if (vkEndCommandBuffer(worldCommandBuffer) != VK_SUCCESS)
+        if (vkEndCommandBuffer(worldCommandBuffer) != VK_SUCCESS)
             throw std::runtime_error("failed to record command buffer");
 	}
 
@@ -144,7 +149,7 @@ namespace Nyxis
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.windowResized())
         {
             window.resetWindowResizedFlag();
-            recreateSwapChain();
+            RecreateSwapChain();
         }
         else if (result != VK_SUCCESS)
             throw std::runtime_error("failed to present swap chain image!");
@@ -169,11 +174,11 @@ namespace Nyxis
         renderPassInfo.renderArea.offset = { 0, 0 };
         renderPassInfo.renderArea.extent = pSwapChain->GetSwapChainExtent();
 
-        std::array<VkClearValue, 1> clearValues;
-        clearValues[0].color = { .0f, .0f, .0f, 1.0f };
+        VkClearValue clearValues;
+        clearValues = { 1.0f, .0f, .0f, 1.0f };
 
         renderPassInfo.clearValueCount = 1;
-        renderPassInfo.pClearValues = clearValues.data();
+        renderPassInfo.pClearValues = &clearValues;
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -210,7 +215,7 @@ namespace Nyxis
         renderPassInfo.renderArea.extent = pSwapChain->GetSwapChainExtent();
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {.0f, .0f, .0f, 1.0f};
+        clearValues[0].color = {.0f, .0f, 1.0f, 1.0f};
         clearValues[1].depthStencil = {1.0f, 0};
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());

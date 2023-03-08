@@ -105,7 +105,39 @@ namespace Nyxis
 
 		m_ImagesInFlight[*imageIndex] = m_InFlightFences[m_CurrentFrame];
 
-		// create signal and wait semaphores for the first command buffer
+		// // create signal and wait semaphores for the first command buffer
+		// VkSemaphore signalSemaphore = m_RenderFinishedSemaphores[m_CurrentFrame];
+		// VkSemaphore waitSemaphores = m_ImageAvailableSemaphores[m_CurrentFrame];
+		//
+		// // submit info for the first command buffer
+		// VkSubmitInfo submitInfo = {};
+		// submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		// submitInfo.waitSemaphoreCount = 1;
+		// submitInfo.pWaitSemaphores = &waitSemaphores;
+		// VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+		// submitInfo.pWaitDstStageMask = waitStages;
+		// submitInfo.commandBufferCount = 1;
+		// submitInfo.pCommandBuffers = &buffers[0];
+		// submitInfo.signalSemaphoreCount = 1;
+		// submitInfo.pSignalSemaphores = &signalSemaphore;
+		//
+		// // submit the first command buffer
+		// vkResetFences(device.device(), 1, &m_InFlightFences[m_CurrentFrame]);
+		// if (vkQueueSubmit(device.graphicsQueue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame]) != VK_SUCCESS)
+		// {
+		// 	throw std::runtime_error("failed to submit draw command buffer!");
+		// }
+		//
+		// // create signal and wait semaphores for the second command buffer
+		// waitSemaphores = signalSemaphore;
+		// signalSemaphore = m_RenderFinishedSemaphores[m_CurrentFrame];
+		//
+		// // submit info for the second command buffer
+		// submitInfo.pWaitSemaphores = &waitSemaphores;
+		// submitInfo.pCommandBuffers = &buffers[1];
+		// submitInfo.pSignalSemaphores = &signalSemaphore;
+
+				// create signal and wait semaphores for the first command buffer
 		VkSemaphore signalSemaphore = m_RenderFinishedSemaphores[m_CurrentFrame];
 		VkSemaphore waitSemaphores = m_ImageAvailableSemaphores[m_CurrentFrame];
 
@@ -116,27 +148,10 @@ namespace Nyxis
 		submitInfo.pWaitSemaphores = &waitSemaphores;
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		submitInfo.pWaitDstStageMask = waitStages;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &buffers[0];
+		submitInfo.commandBufferCount = 2;
+		submitInfo.pCommandBuffers = buffers;
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = &signalSemaphore;
-
-		// submit the first command buffer
-		vkResetFences(device.device(), 1, &m_InFlightFences[m_CurrentFrame]);
-		if (vkQueueSubmit(device.graphicsQueue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame]) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to submit draw command buffer!");
-		}
-
-		// create signal and wait semaphores for the second command buffer
-		waitSemaphores = signalSemaphore;
-		signalSemaphore = m_RenderFinishedSemaphores[m_CurrentFrame];
-
-		// submit info for the second command buffer
-		submitInfo.pWaitSemaphores = &waitSemaphores;
-		submitInfo.pCommandBuffers = &buffers[1];
-		submitInfo.pSignalSemaphores = &signalSemaphore;
-
 		// submit the second command buffer
 		if (vkQueueSubmit(device.graphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
 		{
@@ -231,14 +246,46 @@ namespace Nyxis
 		LOG_INFO("Successfully created swap chain.");
 	}
 
+	void insertImageMemoryBarrier(VkCommandBuffer cmdbuffer,
+		VkImage image,
+		VkAccessFlags srcAccessMask,
+		VkAccessFlags dstAccessMask,
+		VkImageLayout oldImageLayout,
+		VkImageLayout newImageLayout,
+		VkPipelineStageFlags srcStageMask,
+		VkPipelineStageFlags dstStageMask,
+		VkImageSubresourceRange subresourceRange)
+	{
+		VkImageMemoryBarrier imageMemoryBarrier{};
+		imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		imageMemoryBarrier.srcAccessMask = srcAccessMask;
+		imageMemoryBarrier.dstAccessMask = dstAccessMask;
+		imageMemoryBarrier.oldLayout = oldImageLayout;
+		imageMemoryBarrier.newLayout = newImageLayout;
+		imageMemoryBarrier.image = image;
+		imageMemoryBarrier.subresourceRange = subresourceRange;
+
+		vkCmdPipelineBarrier(
+			cmdbuffer,
+			srcStageMask,
+			dstStageMask,
+			0,
+			0, nullptr,
+			0, nullptr,
+			1, &imageMemoryBarrier);
+	}
+
 	void SwapChain::CreateWorldImages()
 	{
 		m_WorldImages.resize(m_SwapChainImages.size());
 		VkExtent2D swapChainExtent = GetSwapChainExtent();
 
-		auto commandBuffer = device.beginSingleTimeCommands();
 		for (size_t i = 0; i < m_WorldImages.size(); i++)
 		{
+			auto commandBuffer = device.beginSingleTimeCommands();
+
 			VkImageCreateInfo imageInfo = {};
 			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -249,6 +296,7 @@ namespace Nyxis
 			imageInfo.extent.depth = 1;
 			imageInfo.mipLevels = 1;
 			imageInfo.arrayLayers = 1;
+			imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 			imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 			imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -271,28 +319,24 @@ namespace Nyxis
 
 			if (vkBindImageMemory(device.device(), m_WorldImages[i], memory, 0) != VK_SUCCESS)
 				throw std::runtime_error("failed to bind world image memory!");
+			VkImageMemoryBarrier barrier = {};
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.image = m_WorldImages[i];
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.baseMipLevel = 0;
+			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.baseArrayLayer = 0;
+			barrier.subresourceRange.layerCount = 1;
 
-			VkImageMemoryBarrier imageMemoryBarrier{};
-			imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-			imageMemoryBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-			imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageMemoryBarrier.image = m_WorldImages[i];
-			imageMemoryBarrier.subresourceRange = VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-
-			vkCmdPipelineBarrier(
-				commandBuffer,
-				VK_PIPELINE_STAGE_TRANSFER_BIT,
-				VK_PIPELINE_STAGE_TRANSFER_BIT,
-				0,
-				0, nullptr,
-				0, nullptr,
-				1, &imageMemoryBarrier);
+			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+			device.endSingleTimeCommands(commandBuffer);
 		}
-		device.endSingleTimeCommands(commandBuffer);
 
 		LOG_INFO("Successfully created world images.");
 	}
@@ -352,14 +396,12 @@ namespace Nyxis
 		VkAttachmentDescription colorAttachment = {};
 		colorAttachment.format = GetSwapChainImageFormat();
 		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; // TODO : change to load for ui render pass
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		// TODO : change to VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL for ui render pass
 		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		// TODO : change to VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL for ui render pass
 
 		VkAttachmentReference colorAttachmentRef = {};
 		colorAttachmentRef.attachment = 0;
@@ -397,7 +439,7 @@ namespace Nyxis
 			throw std::runtime_error("failed to create main render pass!");
 		}
 
-		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
@@ -558,7 +600,7 @@ namespace Nyxis
 				vkCreateSemaphore(device.device(), &semaphoreInfo, nullptr, &m_WorldRenderFinishedSemaphores[i]) !=
 				VK_SUCCESS ||
 				vkCreateFence(device.device(), &fenceInfo, nullptr, &m_WorldInFlightFences[i]) != VK_SUCCESS
-				)
+			)
 			{
 				throw std::runtime_error("failed to create synchronization objects for a frame!");
 			}
@@ -592,15 +634,15 @@ namespace Nyxis
 		//                return availablePresentMode;
 		//            }
 		//        }
-		//
-		//        for (const auto &availablePresentMode : availablePresentModes)
-		//        {
-		//            if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
-		//            {
-		//                LOG_INFO("Present mode : Immediate");
-		//                return availablePresentMode;
-		//            }
-		//        }
+		
+		for (const auto &availablePresentMode : availablePresentModes)
+		{
+		    if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
+		    {
+		        LOG_INFO("Present mode : Immediate");
+		        return availablePresentMode;
+		    }
+		}
 
 		LOG_INFO("Present mode : V - Sync");
 		return VK_PRESENT_MODE_FIFO_KHR;

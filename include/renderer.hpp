@@ -27,7 +27,8 @@ namespace Nyxis
         Renderer(const Renderer &) = delete;
         Renderer &operator=(const Renderer &) = delete;
 
-        [[nodiscard]] VkRenderPass GetSwapChainRenderPass() const { return pSwapChain->GetMainRenderPass(); }
+        [[nodiscard]] VkImageView GetWorldImageView(int index) const;
+    	[[nodiscard]] VkRenderPass GetSwapChainRenderPass() const { return pSwapChain->GetMainRenderPass(); }
         [[nodiscard]] VkRenderPass GetUIRenderPass() const { return pSwapChain->GetUIRenderPass(); }
         [[nodiscard]] float GetAspectRatio() const { return pSwapChain->ExtentAspectRatio(); }
         [[nodiscard]] bool IsFrameInProgress() const { return m_IsFrameStarted; }
@@ -69,7 +70,7 @@ namespace Nyxis
     private:
         void CreateCommandBuffers();
         void FreeCommandBuffers();
-        void recreateSwapChain();
+        void RecreateSwapChain();
 
         Window &window = Window::get();
         Device &device = Device::get();
