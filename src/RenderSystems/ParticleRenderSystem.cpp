@@ -5,8 +5,8 @@ namespace Nyxis
 	ParticleRenderSystem::ParticleRenderSystem(VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
 	{
 		// create descriptor pool
-		m_ParticlePool.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
-		m_ParticleSets.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+		m_ParticlePool.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		m_ParticleSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
 		auto poolBuilder = veDescriptorPool::Builder()
 			.setMaxSets(1000)

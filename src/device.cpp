@@ -73,7 +73,7 @@ Device *Device::pInstance = nullptr;
 
         Device::~Device()
     {
-        vkDestroyCommandPool(device_, commandPool, nullptr);
+        vkDestroyCommandPool(device_, mainCommandPool, nullptr);
         vkDestroyDevice(device_, nullptr);
 
         if (enableValidationLayers)
@@ -231,7 +231,12 @@ Device *Device::pInstance = nullptr;
         poolInfo.flags =
             VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-        if (vkCreateCommandPool(device_, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
+        if (vkCreateCommandPool(device_, &poolInfo, nullptr, &mainCommandPool) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create command pool!");
+        }
+
+        if (vkCreateCommandPool(device_, &poolInfo, nullptr, &finalCommandPool) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create command pool!");
         }
@@ -523,7 +528,7 @@ Device *Device::pInstance = nullptr;
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = commandPool;
+        allocInfo.commandPool = mainCommandPool;
         allocInfo.commandBufferCount = 1;
 
         VkCommandBuffer commandBuffer;
@@ -549,7 +554,7 @@ Device *Device::pInstance = nullptr;
         vkQueueSubmit(graphicsQueue_, 1, &submitInfo, VK_NULL_HANDLE);
         vkQueueWaitIdle(graphicsQueue_);
 
-        vkFreeCommandBuffers(device_, commandPool, 1, &commandBuffer);
+        vkFreeCommandBuffers(device_, mainCommandPool, 1, &commandBuffer);
     }
 
     void Device::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)

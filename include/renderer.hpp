@@ -4,7 +4,7 @@
 #include "device.hpp"
 #include "swap_chain.hpp"
 #include "scene.hpp"
-
+#include "frameInfo.hpp"
 
 #include <memory>
 #include <vector>
@@ -27,43 +27,60 @@ namespace Nyxis
         Renderer(const Renderer &) = delete;
         Renderer &operator=(const Renderer &) = delete;
 
-        VkRenderPass getSwapChainRenderPass() const { return pSwapChain->getRenderPass(); }
-        float getAspectRatio() const { return pSwapChain->extentAspectRatio(); }
-        bool isFrameInProgress() const { return isFrameStarted; }
+        [[nodiscard]] VkRenderPass GetSwapChainRenderPass() const { return pSwapChain->GetMainRenderPass(); }
+        [[nodiscard]] VkRenderPass GetUIRenderPass() const { return pSwapChain->GetUIRenderPass(); }
+        [[nodiscard]] float GetAspectRatio() const { return pSwapChain->ExtentAspectRatio(); }
+        [[nodiscard]] bool IsFrameInProgress() const { return m_IsFrameStarted; }
 
-        VkCommandBuffer getCurrentCommandBuffer()
+        [[nodiscard]] VkCommandBuffer GetMainCommandBuffer() const
         {
-            assert(isFrameStarted && "Cannot get command buffer when frame not in progress");
-            return commandBuffers[currentImageIndex];
+            assert(m_IsFrameStarted && "Cannot get command buffer when frame not in progress");
+            return m_MainCommandBuffers[m_CurrentImageIndex];
         }
 
-        int getFrameIndex() const
+        [[nodiscard]] VkCommandBuffer GetUICommandBuffer() const
         {
-            assert(isFrameStarted && "Cannot get frame index when frame not in progress");
-            return currentImageIndex;
+            assert(m_IsFrameStarted && "Cannot get command buffer when frame not in progress");
+            return m_UICommandBuffers[m_CurrentImageIndex];
         }
 
-        VkCommandBuffer beginFrame();
-        void endFrame();
-        void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
-        void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
-        void SetScene(Scene& scene);
-        void RenderScene();
+        [[nodiscard]] int GetFrameIndex() const
+        {
+            // assert(m_IsFrameStarted && "Cannot get frame index when frame not in progress");
+            return m_CurrentImageIndex;
+        }
+
+        VkCommandBuffer BeginWorldFrame();
+        void EndWorldFrame();
+
+		void BeginUIFrame(FrameInfo& frameInfo);
+        void EndUIFrame();
+
+    	void BeginUIRenderPass(VkCommandBuffer commandBuffer) const;
+		void EndUIRenderPass(VkCommandBuffer commandBuffer) const;
+
+    	void BeginMainRenderPass(VkCommandBuffer commandBuffer) const;
+        void EndMainRenderPass(VkCommandBuffer commandBuffer) const;
+
+        void EndRender();
+
+        std::unique_ptr<SwapChain> pSwapChain;
 
     private:
-        void createCommandBuffers();
-        void freeCommandBuffers();
+        void CreateCommandBuffers();
+        void FreeCommandBuffers();
         void recreateSwapChain();
 
         Window &window = Window::get();
         Device &device = Device::get();
         Scene *scene = nullptr;
-        std::unique_ptr<veSwapChain> pSwapChain;
-        std::vector<VkCommandBuffer> commandBuffers;
 
-        uint32_t currentImageIndex;
-        int currentFrameIndex{0};
-        bool isFrameStarted{false};
+        std::vector<VkCommandBuffer> m_MainCommandBuffers;
+        std::vector<VkCommandBuffer> m_UICommandBuffers;
+
+        uint32_t m_CurrentImageIndex;
+        int m_CurrentFrameIndex{0};
+        bool m_IsFrameStarted{false};
 
     }; // class Renderer
 } // namespace Nyxis

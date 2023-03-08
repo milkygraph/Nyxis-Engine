@@ -6,74 +6,91 @@
 
 namespace Nyxis
 {
-
-    class veSwapChain
+    class SwapChain
     {
     public:
         static constexpr int MAX_FRAMES_IN_FLIGHT = 3;
 
-        veSwapChain(VkExtent2D windowExtent);
-        veSwapChain(VkExtent2D windowExtent, std::shared_ptr<veSwapChain> previous);
+        SwapChain(VkExtent2D windowExtent);
+        SwapChain(VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous);
 
-        ~veSwapChain();
+        ~SwapChain();
 
-        veSwapChain(const veSwapChain &) = delete;
-        veSwapChain &operator=(const veSwapChain &) = delete;
+        SwapChain(const SwapChain &) = delete;
+        SwapChain &operator=(const SwapChain &) = delete;
 
-        VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
-        VkRenderPass getRenderPass() { return renderPass; }
-        VkImageView getImageView(int index) { return swapChainImageViews[index]; }
-        size_t imageCount() { return swapChainImages.size(); }
-        VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }
-        VkExtent2D getSwapChainExtent() { return swapChainExtent; }
-        uint32_t width() { return swapChainExtent.width; }
-        uint32_t height() { return swapChainExtent.height; }
+        [[nodiscard]] VkFramebuffer GetSwapChainFrameBuffer(int index) const { return m_SwapChainFramebuffers[index]; }
+        [[nodiscard]] VkFramebuffer GetWorldFrameBuffer(int index) const { return m_WorldFramebuffers[index]; }
+        [[nodiscard]] VkRenderPass GetMainRenderPass() const { return m_MainRenderPass; }
+        [[nodiscard]] VkRenderPass GetUIRenderPass() const { return m_UIRenderPass; }
+        [[nodiscard]] VkImageView GetWorldImageView(int index) const { return m_WorldImageViews[index]; }
+        [[nodiscard]] VkImage GetWorldImage(int index) const { return m_WorldImages[index]; }
+        [[nodiscard]] size_t ImageCount() const { return m_WorldImages.size(); }
+        [[nodiscard]] VkFormat GetSwapChainImageFormat() const { return m_SwapChainImageFormat; }
+        [[nodiscard]] VkExtent2D GetSwapChainExtent() const { return m_SwapChainExtent; }
+        [[nodiscard]] uint32_t GetSwapChainWidth() const { return m_SwapChainExtent.width; }
+        [[nodiscard]] uint32_t GetSwapChainHeight() const { return m_SwapChainExtent.height; }
 
-        float extentAspectRatio()
-        {
-            return static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height);
+        [[nodiscard]] float ExtentAspectRatio() const {
+            return static_cast<float>(m_SwapChainExtent.width) / static_cast<float>(m_SwapChainExtent.height);
         }
-        VkFormat findDepthFormat();
 
-        VkResult acquireNextImage(uint32_t *imageIndex);
-        VkResult submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex);
+    	[[nodiscard]] VkFormat FindDepthFormat() const;
+
+        VkResult AcquireNextImage(uint32_t *imageIndex);
+
+		void SubmitWorldCommandBuffers(const VkCommandBuffer* commandBuffer, uint32_t* imageIndex);
+    	VkResult SubmitSwapChainCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex);
 
     private:
-        void init();
-        void createSwapChain();
-        void createImageViews();
-        void createDepthResources();
-        void createRenderPass();
-        void createFramebuffers();
-        void createSyncObjects();
+        void Init();
+        void CreateSwapChain();
+        void CreateWorldImages();
+        void CreateImageViews();
+        void CreateDepthResources();
+        void CreateRenderPass();
+        void CreateFramebuffers();
+        void CreateSyncObjects();
 
         // Helper functions
-        VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
-        VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
-        VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
+        VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
+        VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
+        VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) const;
 
-        VkFormat swapChainImageFormat;
-        VkExtent2D swapChainExtent;
+        VkFormat m_SwapChainImageFormat;
+        VkExtent2D m_SwapChainExtent;
 
-        std::vector<VkFramebuffer> swapChainFramebuffers;
-        VkRenderPass renderPass;
+        std::vector<VkFramebuffer> m_SwapChainFramebuffers;
+        std::vector<VkFramebuffer> m_WorldFramebuffers;
+        VkRenderPass m_MainRenderPass;
+        VkRenderPass m_UIRenderPass;
 
-        std::vector<VkImage> depthImages;
-        std::vector<VkDeviceMemory> depthImageMemorys;
-        std::vector<VkImageView> depthImageViews;
-        std::vector<VkImage> swapChainImages;
-        std::vector<VkImageView> swapChainImageViews;
+        std::vector<VkImage> m_DepthImages;
+        std::vector<VkDeviceMemory> m_DepthImageMemories;
+        std::vector<VkImageView> m_DepthImageViews;
+
+        std::vector<VkImage> m_WorldImages;
+		std::vector<VkImage> m_SwapChainImages;
+
+    	std::vector<VkImageView> m_WorldImageViews;
+        std::vector<VkImageView> m_SwapChainImageViews;
 
         Device &device = Device::get();
-        VkExtent2D windowExtent;
+        VkExtent2D m_WindowExtent;
 
-        VkSwapchainKHR swapChain;
-        std::shared_ptr<veSwapChain> oldSwapChain;
+        VkSwapchainKHR m_SwapChain;
+        std::shared_ptr<SwapChain> m_OldSwapChain;
 
-        std::vector<VkSemaphore> imageAvailableSemaphores;
-        std::vector<VkSemaphore> renderFinishedSemaphores;
-        std::vector<VkFence> inFlightFences;
-        std::vector<VkFence> imagesInFlight;
-        size_t currentFrame = 0;
+        std::vector<VkSemaphore> m_ImageAvailableSemaphores;
+        std::vector<VkSemaphore> m_RenderFinishedSemaphores;
+        std::vector<VkFence> m_InFlightFences;
+        std::vector<VkFence> m_ImagesInFlight;
+
+		std::vector<VkSemaphore> m_WorldImageAvailableSemaphores;
+		std::vector<VkSemaphore> m_WorldRenderFinishedSemaphores;
+		std::vector<VkFence> m_WorldInFlightFences;
+		std::vector<VkFence> m_WorldImagesInFlight;
+
+        size_t m_CurrentFrame = 0;
     };
 } // namespace lve
