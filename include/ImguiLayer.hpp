@@ -29,6 +29,6 @@ namespace Nyxis
     	std::unique_ptr<veDescriptorPool> imguiPool{};
 
 		VkSampler m_Sampler;
-        VkDescriptorSet dst = VK_NULL_HANDLE;
+		std::vector<VkDescriptorSet> dst;
     };
 }

@@ -262,6 +262,7 @@ namespace Nyxis
 		init_info.DescriptorPool = imguiPool->getDescriptorPool();
 		ImGui_ImplVulkan_Init(&init_info, RenderPass);
 		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+		dst.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 	}
 
 	void ImguiLayer::AddFunction(const std::function<void()>& function)
@@ -279,8 +280,8 @@ namespace Nyxis
 
 		{
 			ImGui::Begin("Viewport");
-			if(dst == VK_NULL_HANDLE)
-				dst = ImGui_ImplVulkan_AddTexture(m_Sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			if(dst[frameInfo.frameIndex] == VK_NULL_HANDLE)
+				dst[frameInfo.frameIndex] = ImGui_ImplVulkan_AddTexture(m_Sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 			else
 			{
 				VkDescriptorImageInfo desc_image[1] = {};
@@ -289,7 +290,7 @@ namespace Nyxis
 				desc_image[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 				VkWriteDescriptorSet write_desc[1] = {};
 				write_desc[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				write_desc[0].dstSet = dst;
+				write_desc[0].dstSet = dst[frameInfo.frameIndex];
 				write_desc[0].descriptorCount = 1;
 				write_desc[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				write_desc[0].pImageInfo = desc_image;
@@ -297,7 +298,7 @@ namespace Nyxis
 			}
 			
 			ImVec2 windowSize = ImGui::GetContentRegionAvail();
-			ImGui::Image(dst, windowSize);
+			ImGui::Image(dst[frameInfo.frameIndex], windowSize);
 			ImGui::End();
 		}
 

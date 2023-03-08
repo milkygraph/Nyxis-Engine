@@ -105,37 +105,37 @@ namespace Nyxis
 
 		m_ImagesInFlight[*imageIndex] = m_InFlightFences[m_CurrentFrame];
 
-		// // create signal and wait semaphores for the first command buffer
-		// VkSemaphore signalSemaphore = m_RenderFinishedSemaphores[m_CurrentFrame];
-		// VkSemaphore waitSemaphores = m_ImageAvailableSemaphores[m_CurrentFrame];
-		//
-		// // submit info for the first command buffer
-		// VkSubmitInfo submitInfo = {};
-		// submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		// submitInfo.waitSemaphoreCount = 1;
-		// submitInfo.pWaitSemaphores = &waitSemaphores;
-		// VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-		// submitInfo.pWaitDstStageMask = waitStages;
-		// submitInfo.commandBufferCount = 1;
-		// submitInfo.pCommandBuffers = &buffers[0];
-		// submitInfo.signalSemaphoreCount = 1;
-		// submitInfo.pSignalSemaphores = &signalSemaphore;
-		//
-		// // submit the first command buffer
-		// vkResetFences(device.device(), 1, &m_InFlightFences[m_CurrentFrame]);
-		// if (vkQueueSubmit(device.graphicsQueue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame]) != VK_SUCCESS)
-		// {
-		// 	throw std::runtime_error("failed to submit draw command buffer!");
-		// }
-		//
-		// // create signal and wait semaphores for the second command buffer
-		// waitSemaphores = signalSemaphore;
-		// signalSemaphore = m_RenderFinishedSemaphores[m_CurrentFrame];
-		//
-		// // submit info for the second command buffer
-		// submitInfo.pWaitSemaphores = &waitSemaphores;
-		// submitInfo.pCommandBuffers = &buffers[1];
-		// submitInfo.pSignalSemaphores = &signalSemaphore;
+		// create signal and wait semaphores for the first command buffer
+		VkSemaphore signalSemaphore = m_RenderFinishedSemaphores[m_CurrentFrame];
+		VkSemaphore waitSemaphores = m_ImageAvailableSemaphores[m_CurrentFrame];
+		
+		// submit info for the first command buffer
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &waitSemaphores;
+		VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+		submitInfo.pWaitDstStageMask = waitStages;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &buffers[0];
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = &signalSemaphore;
+		
+		// submit the first command buffer
+		vkResetFences(device.device(), 1, &m_InFlightFences[m_CurrentFrame]);
+		if (vkQueueSubmit(device.graphicsQueue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame]) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to submit draw command buffer!");
+		}
+		
+		// create signal and wait semaphores for the second command buffer
+		waitSemaphores = signalSemaphore;
+		signalSemaphore = m_RenderFinishedSemaphores[m_CurrentFrame];
+		
+		// submit info for the second command buffer
+		submitInfo.pWaitSemaphores = &waitSemaphores;
+		submitInfo.pCommandBuffers = &buffers[1];
+		submitInfo.pSignalSemaphores = &signalSemaphore;
 
 		// submit the second command buffer
 		if (vkQueueSubmit(device.graphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
@@ -425,7 +425,7 @@ namespace Nyxis
 		}
 
 		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 		subpass.pDepthStencilAttachment = nullptr;
