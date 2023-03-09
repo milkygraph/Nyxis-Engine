@@ -91,6 +91,8 @@ namespace Nyxis
 		std::vector<VkFence> m_WorldInFlightFences;
 		std::vector<VkFence> m_WorldImagesInFlight;
 
+		VkSemaphore m_WorldImageAvailableSemaphore;
+
         size_t m_CurrentFrame = 0;
     };
 } // namespace lve

@@ -128,43 +128,33 @@ namespace Nyxis
             currentTime = newTime;
 
             float aspect = pRenderer.GetAspectRatio();
-            auto commandBuffer = pRenderer.BeginWorldFrame();
-            int frameIndex = pRenderer.GetFrameIndex();
+            auto worldCommandBuffer = pRenderer.BeginWorldFrame();
+        	int frameIndex = pRenderer.GetFrameIndex();
 
             FrameInfo frameInfo
-                    {frameIndex, frameTime, commandBuffer, globalDescriptorSets[frameIndex], gameObjects, pScene};
+                    {frameIndex, frameTime, VK_NULL_HANDLE, globalDescriptorSets[frameIndex], gameObjects, pScene};
 
-            {
-            	// updating buffers TODO move to scene update
-                GlobalUbo ubo{};
-                ubo.UpdateVPM(pScene.GetCamera());
-                pls.Update(frameInfo, ubo);
-                uboBuffers[frameIndex]->writeToBuffer(&ubo);
-                uboBuffers[frameIndex]->flush();
+			frameInfo.commandBuffer = worldCommandBuffer;
+            // updating buffers TODO move to scene update
+            GlobalUbo ubo{};
+            ubo.UpdateVPM(pScene.GetCamera());
+            pls.Update(frameInfo, ubo);
+            uboBuffers[frameIndex]->writeToBuffer(&ubo);
+            uboBuffers[frameIndex]->flush();
 
-                // rendering TODO move to scene update
-                pRenderer.BeginMainRenderPass(frameInfo.commandBuffer);
+            pRenderer.BeginMainRenderPass(frameInfo.commandBuffer);
+            prs.Render(frameInfo);
+            trs.Render(frameInfo);
+            srs.Render(frameInfo);
+            pls.Render(frameInfo);
+            if (PhysicsEnabled)
+                physicsEngine.OnUpdate(pScene, frameInfo.frameTime);
+            pRenderer.EndMainRenderPass(worldCommandBuffer);
 
-                prs.Render(frameInfo);
-                trs.Render(frameInfo);
-                srs.Render(frameInfo);
-                pls.Render(frameInfo);
-                if (PhysicsEnabled)
-                    physicsEngine.OnUpdate(pScene, frameInfo.frameTime);
-
-                pRenderer.EndMainRenderPass(frameInfo.commandBuffer);
-                pRenderer.EndWorldFrame();
-            }
-
-            {
-				pRenderer.BeginUIFrame(frameInfo);
-                pRenderer.BeginUIRenderPass(frameInfo.commandBuffer);
-				pImguiLayer.OnUpdate(frameInfo, pRenderer.GetWorldImageView(frameInfo.frameIndex));
-                pRenderer.EndUIRenderPass(frameInfo.commandBuffer);
-                pRenderer.EndUIFrame();
-            }
-
-			pRenderer.EndRender();
+        	auto commandBuffer = pRenderer.BeginUIFrame();
+			frameInfo.commandBuffer = commandBuffer;
+			pImguiLayer.OnUpdate(frameInfo, pRenderer.GetWorldImageView(frameInfo.frameIndex));
+            pRenderer.EndUIRenderPass(commandBuffer);
 
             pScene.OnUpdate(frameInfo.frameTime, aspect);
         }

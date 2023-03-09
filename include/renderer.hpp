@@ -51,19 +51,14 @@ namespace Nyxis
             return m_CurrentImageIndex;
         }
 
-        VkCommandBuffer BeginWorldFrame();
+        VkCommandBuffer BeginWorldFrame() ;
         void EndWorldFrame();
 
-		void BeginUIFrame(FrameInfo& frameInfo);
-        void EndUIFrame();
+        VkCommandBuffer BeginUIFrame() ;
+		void EndUIRenderPass(VkCommandBuffer commandBuffer);
 
-    	void BeginUIRenderPass(VkCommandBuffer commandBuffer) const;
-		void EndUIRenderPass(VkCommandBuffer commandBuffer) const;
-
-    	void BeginMainRenderPass(VkCommandBuffer commandBuffer) const;
-        void EndMainRenderPass(VkCommandBuffer commandBuffer) const;
-
-        void EndRender();
+    	void BeginMainRenderPass(VkCommandBuffer commandBuffer);
+        void EndMainRenderPass(VkCommandBuffer commandBuffer);
 
         std::unique_ptr<SwapChain> pSwapChain;
 
