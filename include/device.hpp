@@ -21,6 +21,12 @@ namespace Nyxis
         bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }
     };
 
+    enum CommandPoolType
+    {
+        World,
+        Final
+    };
+
     class Device {
     public:
 #ifdef NDEBUG
@@ -45,7 +51,7 @@ namespace Nyxis
         Device(Device &&) = delete;
         Device &operator=(Device &&) = delete;
 
-        VkCommandPool getCommandPool() { return commandPool; }
+		VkCommandPool getCommandPool(CommandPoolType type) { return type == CommandPoolType::World ? mainCommandPool : finalCommandPool; }
         VkDevice device() { return device_; }
         VkSurfaceKHR surface() { return surface_; }
         VkQueue graphicsQueue() { return graphicsQueue_; }
@@ -104,7 +110,8 @@ namespace Nyxis
 		std::mutex deviceGuard;
 
                 Window &pWindow = Window::get();
-        VkCommandPool commandPool;
+        VkCommandPool mainCommandPool;
+        VkCommandPool finalCommandPool;
         VkDevice device_;
         VkSurfaceKHR surface_;
         VkQueue graphicsQueue_;

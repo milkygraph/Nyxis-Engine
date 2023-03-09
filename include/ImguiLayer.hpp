@@ -14,7 +14,7 @@ namespace Nyxis
         ~ImguiLayer();
 
         void init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer);
-        void OnUpdate(FrameInfo &frameInfo);
+        void OnUpdate(FrameInfo &frameInfo, VkImageView imageView);
         void AddFunction(const std::function<void()>& function);
         void AddComponentView();
         void AddSceneHierarchy();
@@ -26,6 +26,9 @@ namespace Nyxis
         Entity m_SelectedEntity;
 		bool m_ShowEntityLoader = false;
         std::vector<std::function<void()>> functions;
-        std::unique_ptr<veDescriptorPool> imguiPool{};
+    	std::unique_ptr<veDescriptorPool> imguiPool{};
+
+		VkSampler m_Sampler;
+		std::vector<VkDescriptorSet> dst;
     };
 }

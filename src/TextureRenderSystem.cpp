@@ -11,7 +11,7 @@ namespace Nyxis
 
 	TextureRenderSystem::TextureRenderSystem(VkRenderPass RenderPass, VkDescriptorSetLayout globalDescriptorSetLayout)
 	{
-		m_TexturePool.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+		m_TexturePool.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		auto framePoolBuilder = veDescriptorPool::Builder()
 			.setMaxSets(1000)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)

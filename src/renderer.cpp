@@ -1,26 +1,27 @@
-#include "renderer.hpp"
+﻿#include "renderer.hpp"
 #include "model.hpp"
-
-#include <iostream>
-#include <memory>
-#include <stdexcept>
-#include <array>
+#include "Nyxispch.hpp"
 
 namespace Nyxis
 {
     Renderer::Renderer(Scene& scene)
     {
         this->scene = &scene;
-        recreateSwapChain();
-        createCommandBuffers();
+        RecreateSwapChain();
+        CreateCommandBuffers();
     }
 
     Renderer::~Renderer()
     {
-        freeCommandBuffers();
+        FreeCommandBuffers();
     }
 
-    void Renderer::recreateSwapChain()
+    VkImageView Renderer::GetWorldImageView(int index) const
+    {
+        return pSwapChain->GetWorldImageView(index);
+    }
+
+    void Renderer::RecreateSwapChain()
     {
 	    auto extent = window.getExtent();
         while (extent.width == 0 || extent.height == 0)
@@ -32,51 +33,62 @@ namespace Nyxis
         vkDeviceWaitIdle(device.device());
         if (pSwapChain == nullptr)
         {
-            pSwapChain = std::make_unique<veSwapChain>(extent);
+            pSwapChain = std::make_unique<SwapChain>(extent);
         }
         else
         {
-            pSwapChain = std::make_unique<veSwapChain>(extent, std::move(pSwapChain));
-            if (pSwapChain->imageCount() != commandBuffers.size())
+            pSwapChain = std::make_unique<SwapChain>(extent, std::move(pSwapChain));
+            if (pSwapChain->ImageCount() != m_MainCommandBuffers.size())
             {
-                freeCommandBuffers();
-                createCommandBuffers();
+                FreeCommandBuffers();
+                CreateCommandBuffers();
             }
         }
     }
 
-    void Renderer::createCommandBuffers()
+    void Renderer::CreateCommandBuffers()
     {
-        commandBuffers.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+        m_MainCommandBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = device.getCommandPool();
-        allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+        allocInfo.commandPool = device.getCommandPool({ World });
+        allocInfo.commandBufferCount = static_cast<uint32_t>(m_MainCommandBuffers.size());
 
-        if (vkAllocateCommandBuffers(device.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+        if (vkAllocateCommandBuffers(device.device(), &allocInfo, m_MainCommandBuffers.data()) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to allocate command buffer!");
         }
+
+        m_UICommandBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+
+        allocInfo.commandPool = device.getCommandPool({ Final });
+        if (vkAllocateCommandBuffers(device.device(), &allocInfo, m_UICommandBuffers.data()) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to allocate command buffer!");
+        }
+		LOG_INFO("Succesfully created main command buffers.");
     }
 
-    void Renderer::freeCommandBuffers()
+    void Renderer::FreeCommandBuffers()
     {
-	    vkFreeCommandBuffers(device.device(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-        commandBuffers.clear();
+	    vkFreeCommandBuffers(device.device(), device.getCommandPool( {World} ), static_cast<uint32_t>(m_MainCommandBuffers.size()), m_MainCommandBuffers.data());
+		vkFreeCommandBuffers(device.device(), device.getCommandPool( {Final} ), static_cast<uint32_t>(m_UICommandBuffers.size()), m_UICommandBuffers.data());
+    	m_MainCommandBuffers.clear();
+		m_UICommandBuffers.clear();
     }
 
-    VkCommandBuffer Renderer::beginFrame()
+    VkCommandBuffer Renderer::BeginWorldFrame()
     {
-        assert(!isFrameStarted && "Can't call beginFrame while already in progress");
+        assert(!m_IsFrameStarted && "Can't call BeginWorldFrame while already in progress");
 
-        auto result = pSwapChain->acquireNextImage(&currentImageIndex);
+        auto result = pSwapChain->AcquireNextImage(&m_CurrentImageIndex);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR)
         {
-            recreateSwapChain();
-            return nullptr;
+            RecreateSwapChain();
+            return VK_NULL_HANDLE;
         }
 
         if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
@@ -84,51 +96,101 @@ namespace Nyxis
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        isFrameStarted = true;
-        auto commandBuffer = getCurrentCommandBuffer();
+        m_IsFrameStarted = true;
+        auto commandBuffer = GetMainCommandBuffer();
 
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
         if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
             throw std::runtime_error("failed to begin recording command buffer!");
-        
-        return commandBuffer;
-    }
-    void Renderer::endFrame()
-    {
-        assert(isFrameStarted && "Can't end frame while not in progress ");
-        
-        auto commandBuffer = getCurrentCommandBuffer();
 
-        if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+		return commandBuffer;
+    }
+
+    void Renderer::EndWorldFrame()
+	{
+	}
+
+	VkCommandBuffer Renderer::BeginUIFrame()
+	{
+		auto commandBuffer = GetUICommandBuffer();
+
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+		if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+			throw std::runtime_error("failed to begin recording command buffer!");
+
+        assert(m_IsFrameStarted && "Can't call BeginSwapChainRenderPass while in progress");
+        assert(commandBuffer == GetUICommandBuffer() && "Can't begin render pass on command buffer from another frame");
+
+        VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass = pSwapChain->GetUIRenderPass();
+        renderPassInfo.framebuffer = pSwapChain->GetSwapChainFrameBuffer(m_CurrentImageIndex);
+
+        renderPassInfo.renderArea.offset = { 0, 0 };
+        renderPassInfo.renderArea.extent = pSwapChain->GetSwapChainExtent();
+
+        VkClearValue clearValues;
+        clearValues = { .3f, .3f, .3f, 1.0f };
+
+        renderPassInfo.clearValueCount = 1;
+        renderPassInfo.pClearValues = &clearValues;
+
+        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        VkViewport viewport{};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = static_cast<float>(pSwapChain->GetSwapChainExtent().width);
+        viewport.height = static_cast<float>(pSwapChain->GetSwapChainExtent().height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        VkRect2D scissor{ {0, 0}, pSwapChain->GetSwapChainExtent() };
+        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+		return commandBuffer;
+	}
+
+    void Renderer::EndUIRenderPass(VkCommandBuffer commandBuffer)
+    {
+        assert(m_IsFrameStarted && "Can't call EndUIRenderPass while in progress");
+        assert(commandBuffer == GetUICommandBuffer() && "Can't end render pass on command buffer from another frame");
+    	vkCmdEndRenderPass(commandBuffer);
+
+        VkCommandBuffer commandBuffers[] = { GetUICommandBuffer() };
+
+        if (vkEndCommandBuffer(commandBuffers[0]) != VK_SUCCESS)
             throw std::runtime_error("failed to record command buffer");
 
-        auto result = pSwapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
+        auto result = pSwapChain->SubmitSwapChainCommandBuffers(commandBuffers, &m_CurrentImageIndex);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.windowResized())
         {
             window.resetWindowResizedFlag();
-            recreateSwapChain();
+            RecreateSwapChain();
         }
         else if (result != VK_SUCCESS)
             throw std::runtime_error("failed to present swap chain image!");
 
-        isFrameStarted = false;
-	    currentFrameIndex = (currentFrameIndex + 1) % veSwapChain::MAX_FRAMES_IN_FLIGHT;
+        m_IsFrameStarted = false;
     }
-    void Renderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer)
+
+    void Renderer::BeginMainRenderPass(VkCommandBuffer commandBuffer)
     {
-        assert(isFrameStarted && "Can't call beginSwapChainRenderPass while in progress");
-        assert(commandBuffer == getCurrentCommandBuffer() && "Can't begin render pass on command buffer from another frame");
+        assert(m_IsFrameStarted && "Can't call BeginMainRenderPass while in progress");
+        assert(commandBuffer == GetMainCommandBuffer() && "Can't begin render pass on command buffer from another frame");
         
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = pSwapChain->getRenderPass();
-        renderPassInfo.framebuffer = pSwapChain->getFrameBuffer(currentImageIndex);
+        renderPassInfo.renderPass = pSwapChain->GetMainRenderPass();
+        renderPassInfo.framebuffer = pSwapChain->GetWorldFrameBuffer(m_CurrentImageIndex);
 
         renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent = pSwapChain->getSwapChainExtent();
+        renderPassInfo.renderArea.extent = pSwapChain->GetSwapChainExtent();
 
         std::array<VkClearValue, 2> clearValues{};
         clearValues[0].color = {.0f, .0f, .0f, 1.0f};
@@ -139,38 +201,31 @@ namespace Nyxis
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        VkViewport viewport{};
+    	VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-        viewport.width = static_cast<float>(pSwapChain->getSwapChainExtent().width);
-        viewport.height = static_cast<float>(pSwapChain->getSwapChainExtent().height);
+        viewport.width = static_cast<float>(pSwapChain->GetSwapChainExtent().width);
+        viewport.height = static_cast<float>(pSwapChain->GetSwapChainExtent().height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
-        VkRect2D scissor{{0, 0}, pSwapChain->getSwapChainExtent()};
+        VkRect2D scissor{{0, 0}, pSwapChain->GetSwapChainExtent()};
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
     }
-    void Renderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer)
+
+    void Renderer::EndMainRenderPass(VkCommandBuffer commandBuffer)
     {
-        assert(isFrameStarted && "Can't call beginSwapChainRenderPass while in progress");
-        assert(commandBuffer == getCurrentCommandBuffer() && "Can't end render pass on command buffer from another frame");
+        assert(m_IsFrameStarted && "Can't call EndMainRenderPass while in progress");
+        assert(commandBuffer == GetMainCommandBuffer() && "Can't end render pass on command buffer from another frame");
 
         vkCmdEndRenderPass(commandBuffer);
-    }
-    void Renderer::SetScene(Scene &scene)
-    {
-        NYXIS_ASSERT(!isFrameStarted, "Can't set scene while frame is in progress");
-        // set renderer scene to new scene
-        this->scene = &scene;
-    }
-    void Renderer::RenderScene()
-    {
-        auto commandBuffer = beginFrame();
-        if (commandBuffer == nullptr)
-            return;
-        beginSwapChainRenderPass(commandBuffer);
-        endSwapChainRenderPass(commandBuffer);
-        endFrame();
-    }
+
+    	assert(m_IsFrameStarted && "Can't end frame while not in progress ");
+
+        auto worldCommandBuffer = GetMainCommandBuffer();
+
+        if (vkEndCommandBuffer(worldCommandBuffer) != VK_SUCCESS)
+            throw std::runtime_error("failed to record command buffer");
+        pSwapChain->SubmitWorldCommandBuffers(&worldCommandBuffer, &m_CurrentImageIndex);
+	}
 } // namespace Nyxis

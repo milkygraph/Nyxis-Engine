@@ -52,11 +52,11 @@ namespace Nyxis
 	void App::Setup()
 	{
 		globalPool = veDescriptorPool::Builder()
-			.setMaxSets(veSwapChain::MAX_FRAMES_IN_FLIGHT)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, veSwapChain::MAX_FRAMES_IN_FLIGHT)
+			.setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
 			.build();
 
-		uboBuffers.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+		uboBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		for (auto &uboBuffer: uboBuffers) {
 			uboBuffer = std::make_unique<Buffer>(
 				sizeof(GlobalUbo),
@@ -70,7 +70,7 @@ namespace Nyxis
 			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
 			.build();
 
-		globalDescriptorSets.resize(veSwapChain::MAX_FRAMES_IN_FLIGHT);
+		globalDescriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		for (int i = 0; i < globalDescriptorSets.size(); i++) {
 			auto bufferInfo = uboBuffers[i]->descriptorInfo();
 			veDescriptorWriter(*globalSetLayout, *globalPool)
@@ -79,20 +79,20 @@ namespace Nyxis
 		}
 
 		auto commandBuffer = pDevice.beginSingleTimeCommands();
-		pImguiLayer.init(pRenderer.getSwapChainRenderPass(), commandBuffer);
+		pImguiLayer.init(pRenderer.GetUIRenderPass(), commandBuffer);
 		pDevice.endSingleTimeCommands(commandBuffer);
 	}
 
     void App::run() {
 
         // create systems
-        SimpleRenderSystem srs{pRenderer.getSwapChainRenderPass(),
+        SimpleRenderSystem srs{pRenderer.GetSwapChainRenderPass(),
                                globalSetLayout->getDescriptorSetLayout()}; // srs - simpleRenderSystem
-		PointLightSystem pls{ pRenderer.getSwapChainRenderPass(),
+		PointLightSystem pls{ pRenderer.GetSwapChainRenderPass(),
 		                      globalSetLayout->getDescriptorSetLayout() };   // pls - pointLightSystem
-		TextureRenderSystem trs{ pRenderer.getSwapChainRenderPass(),
+		TextureRenderSystem trs{ pRenderer.GetSwapChainRenderPass(),
 		                         globalSetLayout->getDescriptorSetLayout() }; // trs - textureRenderSystem
-        ParticleRenderSystem prs{ pRenderer.getSwapChainRenderPass(),
+        ParticleRenderSystem prs{ pRenderer.GetSwapChainRenderPass(),
                                  globalSetLayout->getDescriptorSetLayout() }; // prs - particleRenderSystem
         {
             Particle particle;
@@ -120,42 +120,41 @@ namespace Nyxis
         }
 
         auto currentTime = std::chrono::high_resolution_clock::now();
-
+        
         while (!pWindow.shouldClose()) {
             glfwPollEvents();
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
-            auto commandBuffer = pRenderer.beginFrame();
 
-            float aspect = pRenderer.getAspectRatio();
+            float aspect = pRenderer.GetAspectRatio();
+            auto worldCommandBuffer = pRenderer.BeginWorldFrame();
+        	int frameIndex = pRenderer.GetFrameIndex();
 
-            int frameIndex = pRenderer.getFrameIndex();
             FrameInfo frameInfo
-                    {frameIndex, frameTime, commandBuffer, globalDescriptorSets[frameIndex], gameObjects, pScene};
+                    {frameIndex, frameTime, VK_NULL_HANDLE, globalDescriptorSets[frameIndex], gameObjects, pScene};
 
-            // updating Camera
-
+			frameInfo.commandBuffer = worldCommandBuffer;
             // updating buffers TODO move to scene update
             GlobalUbo ubo{};
-			ubo.UpdateVPM(pScene.GetCamera());
+            ubo.UpdateVPM(pScene.GetCamera());
             pls.Update(frameInfo, ubo);
             uboBuffers[frameIndex]->writeToBuffer(&ubo);
             uboBuffers[frameIndex]->flush();
 
-            // rendering TODO move to scene update
-            pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
-	        
+            pRenderer.BeginMainRenderPass(frameInfo.commandBuffer);
             prs.Render(frameInfo);
             trs.Render(frameInfo);
             srs.Render(frameInfo);
             pls.Render(frameInfo);
-            pImguiLayer.OnUpdate(frameInfo);
-            if(PhysicsEnabled)
+            if (PhysicsEnabled)
                 physicsEngine.OnUpdate(pScene, frameInfo.frameTime);
-            
-            pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
-            pRenderer.endFrame();
+            pRenderer.EndMainRenderPass(worldCommandBuffer);
+
+        	auto commandBuffer = pRenderer.BeginUIFrame();
+			frameInfo.commandBuffer = commandBuffer;
+			pImguiLayer.OnUpdate(frameInfo, pRenderer.GetWorldImageView(frameInfo.frameIndex));
+            pRenderer.EndUIRenderPass(commandBuffer);
 
             pScene.OnUpdate(frameInfo.frameTime, aspect);
         }
