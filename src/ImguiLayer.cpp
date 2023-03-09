@@ -278,29 +278,32 @@ namespace Nyxis
 		ShowExampleAppDockSpace();
 		ImGui::ShowDemoWindow();
 
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+		ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
+			ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse |
+			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+		if(dst[frameInfo.frameIndex] == VK_NULL_HANDLE)
+			dst[frameInfo.frameIndex] = ImGui_ImplVulkan_AddTexture(m_Sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		else
 		{
-			ImGui::Begin("Viewport");
-			if(dst[frameInfo.frameIndex] == VK_NULL_HANDLE)
-				dst[frameInfo.frameIndex] = ImGui_ImplVulkan_AddTexture(m_Sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-			else
-			{
-				VkDescriptorImageInfo desc_image[1] = {};
-				desc_image[0].sampler = m_Sampler;
-				desc_image[0].imageView = imageView;
-				desc_image[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				VkWriteDescriptorSet write_desc[1] = {};
-				write_desc[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				write_desc[0].dstSet = dst[frameInfo.frameIndex];
-				write_desc[0].descriptorCount = 1;
-				write_desc[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				write_desc[0].pImageInfo = desc_image;
-				vkUpdateDescriptorSets(Device::get().device(), 1, write_desc, 0, nullptr);
-			}
-			
-			ImVec2 windowSize = ImGui::GetContentRegionAvail();
-			ImGui::Image(dst[frameInfo.frameIndex], windowSize);
-			ImGui::End();
+			VkDescriptorImageInfo desc_image[1] = {};
+			desc_image[0].sampler = m_Sampler;
+			desc_image[0].imageView = imageView;
+			desc_image[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			VkWriteDescriptorSet write_desc[1] = {};
+			write_desc[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			write_desc[0].dstSet = dst[frameInfo.frameIndex];
+			write_desc[0].descriptorCount = 1;
+			write_desc[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			write_desc[0].pImageInfo = desc_image;
+			vkUpdateDescriptorSets(Device::get().device(), 1, write_desc, 0, nullptr);
 		}
+		
+		ImVec2 windowSize = ImGui::GetContentRegionAvail();
+		ImGui::Image(dst[frameInfo.frameIndex], windowSize);
+		ImGui::End();
+		ImGui::PopStyleVar();
 
 		AddSceneHierarchy();
 		AddComponentView();
@@ -310,6 +313,7 @@ namespace Nyxis
 		{
 			function();
 		}
+
 		ImGui::Render();
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
 	}
