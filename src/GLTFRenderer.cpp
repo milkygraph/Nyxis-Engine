@@ -40,24 +40,35 @@ namespace Nyxis
 		vkCmdBindPipeline(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
 		models.skybox.draw(frameInfo.commandBuffer);
 
-			VkDeviceSize offsets[] = { 0 };
+		VkDeviceSize offsets[] = { 0 };
 
-			vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, &models.scene.vertices.buffer, offsets);
+		vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, &models.scene.vertices.buffer, offsets);
 
-			if (models.scene.indices.buffer != VK_NULL_HANDLE)
-				vkCmdBindIndexBuffer(frameInfo.commandBuffer, models.scene.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+		if (models.scene.indices.buffer != VK_NULL_HANDLE)
+			vkCmdBindIndexBuffer(frameInfo.commandBuffer, models.scene.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
 
-			boundPipeline = VK_NULL_HANDLE;
+		boundPipeline = VK_NULL_HANDLE;
 
-			for (auto node : models.scene.nodes)
-				RenderNode(node, frameInfo, Material::ALPHAMODE_OPAQUE);
-			// Alpha masked primitives
-			for (auto node : models.scene.nodes)
-				RenderNode(node, frameInfo, Material::ALPHAMODE_MASK);
-			// Transparent primitives
-			// TODO: Correct depth sorting
-			for (auto node : models.scene.nodes)
-				RenderNode(node, frameInfo, Material::ALPHAMODE_BLEND);
+		for (auto node : models.scene.nodes)
+			RenderNode(node, frameInfo, Material::ALPHAMODE_OPAQUE);
+		// Alpha masked primitives
+		for (auto node : models.scene.nodes)
+			RenderNode(node, frameInfo, Material::ALPHAMODE_MASK);
+		// Transparent primitives
+		// TODO: Correct depth sorting
+		for (auto node : models.scene.nodes)
+			RenderNode(node, frameInfo, Material::ALPHAMODE_BLEND);
+	}
+
+	void GLTFRenderer::UpdateAnimation(float frameTime)
+	{
+		if ((animate) && (models.scene.animations.size() > 0)) {
+			animationTimer += frameTime;
+			if (animationTimer > models.scene.animations[animationIndex].end) {
+				animationTimer -= models.scene.animations[animationIndex].end;
+			}
+			models.scene.updateAnimation(animationIndex, animationTimer);
+		}
 	}
 
 	void GLTFRenderer::PrepareUniformBuffers()
@@ -105,7 +116,6 @@ namespace Nyxis
 			uniformBuffer.scene->flush();
 			uniformBuffer.skybox->flush();
 		}
-
 	}
 
 	void GLTFRenderer::LoadEnvironment(std::string& filename)
@@ -122,12 +132,14 @@ namespace Nyxis
 
 	void GLTFRenderer::LoadModel(std::string& filename)
 	{
-		std::cout << "Loading scene from " << filename << std::endl;
+		std::cout << "Loading model from " << filename << std::endl;
 		models.scene.destroy();
+		animationIndex = 0;
+		animationTimer = 0.0f;
 		auto tStart = std::chrono::high_resolution_clock::now();
 		models.scene.loadFromFile(filename);
 		auto tFileLoad = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
-		std::cout << "Loading took " << tFileLoad << " ms" << std::endl;
+		LOG_INFO("Loading took {} ms", tFileLoad);
 	}
 
 
@@ -138,7 +150,7 @@ namespace Nyxis
 
 		textures.empty.loadFromFile("../assets/textures/empty.ktx", VK_FORMAT_R8G8B8A8_UNORM);
 
-		std::string sceneFile = "../models/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf";
+		std::string sceneFile = "../models/roboto/scene.gltf";
 		envMapFile = "../assets/environments/papermill.ktx";
 
 		LoadModel(sceneFile);
@@ -363,7 +375,6 @@ namespace Nyxis
 					SetupNodeDescriptorSet(node);
 				}
 			}
-
 		}
 
 		UpdateSkyboxDescriptorSets();

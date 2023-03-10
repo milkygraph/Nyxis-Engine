@@ -34,10 +34,12 @@ namespace Nyxis
     App::~App() = default;
 
     void App::OnEvent(Event& e) {
-        std::string event_name = e.toString();
+#ifdef LOGGING
 #if LOGGING_LEVEL == 0
+        std::string event_name = e.toString();
         LOG_INFO(event_name);
 #endif // LOGGING_LEVEL
+#endif // LOGGING
     }
 
     void App::Setup()
@@ -51,8 +53,6 @@ namespace Nyxis
 
         // create systems
         GLTFRenderer gltfRenderer{ pRenderer.getSwapChainRenderPass(), pRenderer.getSwapChainExtent() }; // gltfRenderer - gltfRenderer
-
-		bool reload = false;
 
         // add functions to imgui layer
         {
@@ -73,21 +73,27 @@ namespace Nyxis
             pImguiLayer.AddFunction([&] {
                 ImGui::Begin("Reload");
 				
-				ImGui::InputText("Path", &gltfRenderer.envMapFile, ImGuiInputTextFlags_EnterReturnsTrue);
-            	if (ImGui::Button("Reload", ImVec2(100, 50)))
+            	if (ImGui::Button("Reload", ImVec2(100, 50)) || ImGui::InputText("Path", &gltfRenderer.envMapFile, ImGuiInputTextFlags_EnterReturnsTrue))
                 {
                     gltfRenderer.SceneUpdated = true;
                 }
 
             	ImGui::End();
             });
+
+			pImguiLayer.AddFunction([&]() {
+				ImGui::Begin("Physics");
+				ImGui::Checkbox("Enable Animations", &gltfRenderer.animate);
+				ImGui::End();
+				});
         }
 
-        
-
-        auto currentTime = std::chrono::high_resolution_clock::now();
+    	auto currentTime = std::chrono::high_resolution_clock::now();
 
         veGameObject::Map map;
+
+        std::thread animationThread;
+        bool animationThreadActive = true;
 
         while (!pWindow.shouldClose()) {
             glfwPollEvents();
@@ -111,11 +117,23 @@ namespace Nyxis
             pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
             pRenderer.endFrame();
 
-            pScene.OnUpdate(frameInfo.frameTime, aspect);
+            pScene.OnUpdate(frameInfo.frameTime, aspect);   
             gltfRenderer.OnUpdate();
+
+            if (animationThreadActive) {
+                animationThread = std::thread([&gltfRenderer, &frameInfo]() {
+                    gltfRenderer.UpdateAnimation(frameInfo.frameTime);
+                    });
+                animationThread.detach();
+            }
         }
 
-        vkDeviceWaitIdle(pDevice.device());
+        animationThreadActive = false;
+        if (animationThread.joinable()) {
+            animationThread.join();
+        }
+
+    	vkDeviceWaitIdle(pDevice.device());
     }
 
     void App::loadGameObjects()

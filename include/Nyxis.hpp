@@ -1,9 +1,13 @@
 #include "Log.hpp"
 
-//#define NDEBUG
+#define NDEBUG
+
+#ifndef NDEBUG
+
 #define LOGGING
 #define LOGGING_LEVEL 0
 
+#endif
 #define NYXIS_VERSION_MAJOR 0
 #define NYXIS_VERSION_MINOR 1
 

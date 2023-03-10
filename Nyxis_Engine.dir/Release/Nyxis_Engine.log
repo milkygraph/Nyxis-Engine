@@ -1,0 +1,4 @@
+﻿  app.cpp
+D:\source\Nyxis-Engine\include\Nyxis.hpp(3,1): warning C4005: 'NDEBUG': macro redefinition
+D:\source\Nyxis-Engine\include\Nyxis.hpp(3,1): message : 'NDEBUG' previously declared on the command line
+  Nyxis_Engine.vcxproj -> D:\source\Nyxis-Engine\bin\Release\Nyxis_Engine.exe

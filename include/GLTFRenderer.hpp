@@ -66,11 +66,14 @@ namespace Nyxis
 
 		void OnUpdate();
 		void Render(FrameInfo& frameInfo);
+		void UpdateAnimation(float frameTime);
 		void LoadEnvironment(std::string& filename);
 		void UpdateSkyboxDescriptorSets();
 
 		std::string envMapFile = "";
 		bool SceneUpdated = false;
+
+		bool animate = true;
 	private:
 		void PrepareUniformBuffers();
 		void UpdateUniformBuffers(Scene& scene);
@@ -131,6 +134,8 @@ namespace Nyxis
 			glm::vec3 color = glm::vec3(1.0f, 0.2f, 0.5f);
 			glm::vec3 rotation = glm::vec3(75.0f, 40.0f, 0.0f);
 		} lightSource;
-	
+
+		int32_t animationIndex = 0;
+		float animationTimer = 0.0f;
 	};
 }

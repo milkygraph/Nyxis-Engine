@@ -3,6 +3,7 @@
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 
 #include "GLTFModel.hpp"
+#include "Nyxispch.hpp"
 
 namespace Nyxis
 {
