@@ -159,13 +159,10 @@ namespace Nyxis
      *
      * @return VkDescriptorBufferInfo of specified offset and range
      */
-    VkDescriptorBufferInfo Buffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset)
+    VkDescriptorBufferInfo* Buffer::getDescriptorInfo(VkDeviceSize size, VkDeviceSize offset)
     {
-        return VkDescriptorBufferInfo{
-            buffer,
-            offset,
-            size,
-        };
+        descriptorInfo = { buffer, offset, size };
+        return &descriptorInfo;
     }
 
     /**
@@ -197,7 +194,7 @@ namespace Nyxis
      */
     VkDescriptorBufferInfo Buffer::descriptorInfoForIndex(int index)
     {
-        return descriptorInfo(alignmentSize, index * alignmentSize);
+        return *getDescriptorInfo(alignmentSize, index * alignmentSize);
     }
 
     /**

@@ -23,7 +23,7 @@ namespace Nyxis
         vkDestroyPipeline(device.device(), graphicsPipeline, nullptr);
     }
 
-    std::vector<char> vePipeline::readFile(const std::string &filename)
+	std::vector<char> vePipeline::readFile(const std::string &filename)
     {
         std::ifstream file(filename, std::ios::ate | std::ios::binary);
 

@@ -1,9 +1,13 @@
 #include "Log.hpp"
 
-//#define NDEBUG
+#define NDEBUG
+
+#ifndef NDEBUG
+
 #define LOGGING
 #define LOGGING_LEVEL 0
 
+#endif
 #define NYXIS_VERSION_MAJOR 0
 #define NYXIS_VERSION_MINOR 1
 
@@ -23,3 +27,9 @@
 
 #define UPTR(x) std::unique_ptr<x>
 #define MAKE_UPTR(x, ...) std::make_unique<x>(__VA_ARGS__)
+
+template<typename T>
+using Ref = std::shared_ptr<T>;
+
+template<typename T>
+using Scope = std::unique_ptr<T>;

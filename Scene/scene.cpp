@@ -80,7 +80,8 @@ namespace Nyxis
         }
 
         if (m_Camera->getType() == CameraType::Perspective)
-            m_Camera->setPerspectiveProjection(glm::radians(60.0f), aspect, 0.1f, 1000.0f);
+            if (aspect > 0)
+				m_Camera->setPerspectiveProjection(glm::radians(60.0f), aspect, 0.1f, 1000.0f);
         else
             m_Camera->setOrthographicProjection(-aspect, aspect, -1.0f, 1.0f, 0.1f, 1000.0f);
 
@@ -146,11 +147,6 @@ namespace Nyxis
                                 player.ToJson(entity_json);
                             }
 
-                            if (m_Registry.all_of<Texture>(entity))
-                            {
-                                auto &texture = m_Registry.get<Texture>(entity);
-                                texture.ToJson(entity_json);
-                            }
                             j["entities"].push_back(entity_json);
                         });
 
@@ -200,11 +196,6 @@ namespace Nyxis
             {
                 std::string filepath = entity["MeshComponent"]["filepath"];
                 m_Registry.emplace<MeshComponent>(entity1, filepath);
-            }
-            if (entity.contains("Texture"))
-            {
-                std::string filepath = entity["Texture"]["filepath"];
-                m_Registry.emplace<Texture>(entity1, filepath);
             }
             if (entity.contains("Player"))
             {

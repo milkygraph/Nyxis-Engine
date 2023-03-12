@@ -77,7 +77,7 @@ namespace Nyxis
                                 0, 1,
                                 &frameInfo.globalDescriptorSet, 0, nullptr);
 
-        frameInfo.scene.m_Registry.view<RigidBody, MeshComponent>(entt::exclude<Texture>).each([&](auto entity, auto& rigidBody, auto& mesh)
+        frameInfo.scene.m_Registry.view<RigidBody, MeshComponent>().each([&](auto entity, auto& rigidBody, auto& mesh)
 		{
 			auto& model = *mesh.model;
 			if(model.loaded)

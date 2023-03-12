@@ -91,6 +91,7 @@ namespace Nyxis
         std::string SceneName = "scene.json";
 
     private:
+        friend class GLTFRenderer;
 		Camera* m_Camera = nullptr;
 		Entity m_CameraEntity = entt::null;
         uint32_t m_EntityCount = 0;

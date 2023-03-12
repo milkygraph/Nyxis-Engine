@@ -52,44 +52,44 @@ namespace Nyxis
 			0,
 			nullptr);
 
-		frameInfo.scene.m_Registry.view<RigidBody, MeshComponent, Texture>().each([&](auto entity, auto& rigidBody, auto& mesh, auto& texture)
-		{
-		  auto& model = *mesh.model;
-			  if(model.loaded)
-			  {
-				  auto imageInfo = texture.GetDescriptorImageInfo();
-				  VkDescriptorSet descriptorSet;
-				  veDescriptorWriter(*m_TextureSetLayout, *m_TexturePool[frameInfo.frameIndex])
-				        .writeImage(0, &imageInfo)
-					    .build(descriptorSet);
-
-				  vkCmdBindDescriptorSets(
-					  frameInfo.commandBuffer,
-					  VK_PIPELINE_BIND_POINT_GRAPHICS,
-					  m_PipelineLayout,
-					  1,  // first set
-					  1,  // set count
-					  &descriptorSet,
-					  0,
-					  nullptr);
-
-				  TexturePushConstantData push{};
-				  push.modelMatrix = rigidBody.mat4 ();
-				  push.normalMatrix = rigidBody.normalMatrix ();
-				  push.roughness = rigidBody.roughness;
-
-				  vkCmdPushConstants (
-					  frameInfo.commandBuffer,
-					  m_PipelineLayout,
-					  VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-				  0,
-				  sizeof (TexturePushConstantData),
-				  &push);
-
-			  model.bind (frameInfo.commandBuffer);
-			  model.draw (frameInfo.commandBuffer);
-		  }
-		});
+		// frameInfo.scene.m_Registry.view<RigidBody, MeshComponent, _Texture>().each([&](auto entity, auto& rigidBody, auto& mesh, auto& texture)
+		// {
+		//   auto& model = *mesh.model;
+		// 	  if(model.loaded)
+		// 	  {
+		// 		  auto imageInfo = texture.GetDescriptorImageInfo();
+		// 		  VkDescriptorSet descriptorSet;
+		// 		  veDescriptorWriter(*m_TextureSetLayout, *m_TexturePool[frameInfo.frameIndex])
+		// 		        .writeImage(0, &imageInfo)
+		// 			    .build(descriptorSet);
+		//
+		// 		  vkCmdBindDescriptorSets(
+		// 			  frameInfo.commandBuffer,
+		// 			  VK_PIPELINE_BIND_POINT_GRAPHICS,
+		// 			  m_PipelineLayout,
+		// 			  1,  // first set
+		// 			  1,  // set count
+		// 			  &descriptorSet,
+		// 			  0,
+		// 			  nullptr);
+		//
+		// 		  TexturePushConstantData push{};
+		// 		  push.modelMatrix = rigidBody.mat4 ();
+		// 		  push.normalMatrix = rigidBody.normalMatrix ();
+		// 		  push.roughness = rigidBody.roughness;
+		//
+		// 		  vkCmdPushConstants (
+		// 			  frameInfo.commandBuffer,
+		// 			  m_PipelineLayout,
+		// 			  VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+		// 		  0,
+		// 		  sizeof (TexturePushConstantData),
+		// 		  &push);
+		//
+		// 	  model.bind (frameInfo.commandBuffer);
+		// 	  model.draw (frameInfo.commandBuffer);
+		//   }
+		// });
 
 	}
 

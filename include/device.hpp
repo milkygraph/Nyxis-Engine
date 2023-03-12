@@ -69,6 +69,12 @@ namespace Nyxis
             VkMemoryPropertyFlags properties,
             VkBuffer &buffer,
             VkDeviceMemory &bufferMemory);
+		VkResult createBufferWithData(
+            VkBufferUsageFlags usageFlags, 
+            VkMemoryPropertyFlags memoryPropertyFlags, 
+            VkDeviceSize size, VkBuffer* buffer, 
+            VkDeviceMemory* memory, void* data = nullptr);
+
         VkCommandBuffer beginSingleTimeCommands();
         void endSingleTimeCommands(VkCommandBuffer commandBuffer);
         void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
@@ -83,7 +89,7 @@ namespace Nyxis
 
         VkPhysicalDeviceProperties properties;
 
-		void generateMipmaps(VkImage& image, VkFormat& imageFormat, int32_t& texWidth, int32_t& texHeight, uint32_t& mipLevels);
+		void generateMipmaps(VkImage& image, VkFormat& imageFormat, uint32_t& texWidth, uint32_t& texHeight, uint32_t& mipLevels);
 		void createImGuiInitInfo(ImGui_ImplVulkan_InitInfo &init_info);
 
     private:

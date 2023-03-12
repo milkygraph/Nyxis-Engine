@@ -147,7 +147,10 @@ Device *Device::pInstance = nullptr;
         {
             throw std::runtime_error("failed to find GPUs with Vulkan support!");
         }
-        std::cout << "Device count: " << deviceCount << std::endl;
+        
+#ifndef NDEBUG
+    	std::cout << "Device count: " << deviceCount << std::endl;
+#endif
         std::vector<VkPhysicalDevice> devices(deviceCount);
         vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
@@ -166,7 +169,7 @@ Device *Device::pInstance = nullptr;
         }
 
         vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-        std::cout << "physical device: " << properties.deviceName << std::endl;
+		LOG_INFO("Device name: {}", properties.deviceName);
     }
 
     void Device::createLogicalDevice()
@@ -343,20 +346,29 @@ Device *Device::pInstance = nullptr;
         std::vector<VkExtensionProperties> extensions(extensionCount);
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-        std::cout << "available extensions:" << std::endl;
-        std::unordered_set<std::string> available;
+#ifndef NDEBUG
+    	std::cout << "available extensions:" << std::endl;
+#endif
+    	std::unordered_set<std::string> available;
         for (const auto &extension : extensions)
         {
-            std::cout << "\t" << extension.extensionName << std::endl;
-            available.insert(extension.extensionName);
+#ifndef NDEBUG 
+		std::cout << "\t" << extension.extensionName << std::endl;
+#endif
+        	available.insert(extension.extensionName);
         }
-
+        
+#ifndef NDEBUG
         std::cout << "required extensions:" << std::endl;
-        auto requiredExtensions = getRequiredExtensions();
+#endif
+
+    	auto requiredExtensions = getRequiredExtensions();
         for (const auto &required : requiredExtensions)
         {
-            std::cout << "\t" << required << std::endl;
-            if (available.find(required) == available.end())
+#ifndef NDEBUG
+        	std::cout << "\t" << required << std::endl;
+#endif
+        	if (available.find(required) == available.end())
             {
                 throw std::runtime_error("Missing required glfw extension");
             }
@@ -523,6 +535,51 @@ Device *Device::pInstance = nullptr;
         vkBindBufferMemory(device_, buffer, bufferMemory, 0);
     }
 
+	VkResult Device::createBufferWithData(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, VkBuffer* buffer, VkDeviceMemory* memory, void* data)
+	{
+        // Create the buffer handle
+        VkBufferCreateInfo bufferCreateInfo{};
+        bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferCreateInfo.usage = usageFlags;
+        bufferCreateInfo.size = size;
+        bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        vkCreateBuffer(device_, &bufferCreateInfo, nullptr, buffer);
+
+        // Create the memory backing up the buffer handle
+        VkMemoryRequirements memReqs;
+        VkMemoryAllocateInfo memAlloc{};
+        memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        vkGetBufferMemoryRequirements(device_, *buffer, &memReqs);
+        memAlloc.allocationSize = memReqs.size;
+        // Find a memory type index that fits the properties of the buffer
+        memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, memoryPropertyFlags);
+        vkAllocateMemory(device_, &memAlloc, nullptr, memory);
+
+        // If a pointer to the buffer data has been passed, map the buffer and copy over the data
+        if (data != nullptr)
+        {
+            void* mapped;
+            vkMapMemory(device_, *memory, 0, size, 0, &mapped);
+            memcpy(mapped, data, size);
+            // If host coherency hasn't been requested, do a manual flush to make writes visible
+            if ((memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
+            {
+                VkMappedMemoryRange mappedRange{};
+                mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+                mappedRange.memory = *memory;
+                mappedRange.offset = 0;
+                mappedRange.size = size;
+                vkFlushMappedMemoryRanges(device_, 1, &mappedRange);
+            }
+            vkUnmapMemory(device_, *memory);
+        }
+
+        // Attach the memory to the buffer object
+        vkBindBufferMemory(device_, *buffer, *memory, 0);
+
+        return VK_SUCCESS;
+	}
+
     VkCommandBuffer Device::beginSingleTimeCommands()
     {
         VkCommandBufferAllocateInfo allocInfo{};
@@ -629,7 +686,7 @@ Device *Device::pInstance = nullptr;
         }
     }
 
-	void Device::generateMipmaps(VkImage& image, VkFormat& imageFormat, int32_t& texWidth, int32_t& texHeight, uint32_t& mipLevels) {
+	void Device::generateMipmaps(VkImage& image, VkFormat& imageFormat, uint32_t& texWidth, uint32_t& texHeight, uint32_t& mipLevels) {
 		VkFormatProperties formatProperties;
 		vkGetPhysicalDeviceFormatProperties( physicalDevice, imageFormat, &formatProperties);
 
