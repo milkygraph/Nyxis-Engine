@@ -132,7 +132,7 @@ namespace Nyxis
 
 	void GLTFRenderer::LoadModel(std::string& filename)
 	{
-		std::cout << "Loading model from " << filename << std::endl;
+		LOG_INFO("Loading model from {}", filename);
 		models.scene.destroy();
 		animationIndex = 0;
 		animationTimer = 0.0f;
@@ -938,7 +938,7 @@ namespace Nyxis
 
 		auto tEnd = std::chrono::high_resolution_clock::now();
 		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
-		std::cout << "Generating BRDF LUT took " << tDiff << " ms" << std::endl;
+		LOG_INFO("Generating BRDF LUT took {} ms", tDiff);
 	}
 
 	void GLTFRenderer::GenerateCubemaps()

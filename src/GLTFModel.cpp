@@ -950,7 +950,7 @@ namespace Nyxis
 						break;
 					}
 					default: {
-						std::cout << "unknown type" << std::endl;
+						LOG_WARN("Unknown accessor type", accessor.type);
 						break;
 					}
 					}
@@ -973,7 +973,7 @@ namespace Nyxis
 					channel.path = AnimationChannel::PathType::SCALE;
 				}
 				if (source.target_path == "weights") {
-					std::cout << "weights not yet supported, skipping channel" << std::endl;
+					LOG_WARN("weights not yet supported, skipping channel");
 					continue;
 				}
 				channel.samplerIndex = source.sampler;

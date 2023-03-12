@@ -18,22 +18,19 @@ namespace Nyxis
 {
     App* App::pInstance = nullptr;
 
-    App::App() {
-
-        // calculate the time it takes for below code to execute
-        auto start = std::chrono::high_resolution_clock::now();
+    App::App()
+	{
         Setup();
         loadGameObjects();
         pScene.LoadModels();
-        std::cout << "loadGameObjects() took " << std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::high_resolution_clock::now() - start).count() << "ms" << std::endl;
         pWindow.SetEventCallback(std::bind(&App::OnEvent, this, std::placeholders::_1));
         pInstance = this;
     }
 
     App::~App() = default;
 
-    void App::OnEvent(Event& e) {
+    void App::OnEvent(Event& e)
+	{
 #ifdef LOGGING
 #if LOGGING_LEVEL == 0
         std::string event_name = e.toString();
