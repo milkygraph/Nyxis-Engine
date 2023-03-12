@@ -85,34 +85,39 @@ namespace Nyxis
 				});
         }
 
-    	auto currentTime = std::chrono::high_resolution_clock::now();
+        auto currentTime = std::chrono::high_resolution_clock::now();
 
         veGameObject::Map map;
 
         std::thread animationThread;
         bool animationThreadActive = true;
-
+        
         while (!pWindow.shouldClose()) {
             glfwPollEvents();
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
 
-            auto commandBuffer = pRenderer.beginFrame();
+            float aspect = pRenderer.GetAspectRatio();
+            auto worldCommandBuffer = pRenderer.BeginWorldFrame();
+        	int frameIndex = pRenderer.GetFrameIndex();
 
-            float aspect = pRenderer.getAspectRatio();
-            int frameIndex = pRenderer.getFrameIndex();
-            FrameInfo frameInfo{ frameIndex, frameTime, commandBuffer, VK_NULL_HANDLE, map, pScene };
+            FrameInfo frameInfo
+                    {frameIndex, frameTime, VK_NULL_HANDLE, globalDescriptorSets[frameIndex], gameObjects, pScene};
 
-            pRenderer.beginSwapChainRenderPass(frameInfo.commandBuffer);
+			frameInfo.commandBuffer = worldCommandBuffer;
 
+            pRenderer.BeginMainRenderPass(frameInfo.commandBuffer);
             gltfRenderer.Render(frameInfo);
-            pImguiLayer.OnUpdate(frameInfo);
+
             if (PhysicsEnabled)
                 physicsEngine.OnUpdate(pScene, frameInfo.frameTime);
-
-            pRenderer.endSwapChainRenderPass(frameInfo.commandBuffer);
-            pRenderer.endFrame();
+            pRenderer.EndMainRenderPass(worldCommandBuffer);
+            
+        	auto commandBuffer = pRenderer.BeginUIFrame();
+			frameInfo.commandBuffer = commandBuffer;
+			pImguiLayer.OnUpdate(frameInfo, pRenderer.GetWorldImageView(frameInfo.frameIndex));
+            pRenderer.EndUIRenderPass(commandBuffer);
 
             pScene.OnUpdate(frameInfo.frameTime, aspect);   
             gltfRenderer.OnUpdate();
