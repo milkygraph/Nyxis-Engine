@@ -42,14 +42,14 @@ namespace Nyxis
     void App::Setup()
     {
         auto commandBuffer = pDevice.beginSingleTimeCommands();
-        pImguiLayer.init(pRenderer.getSwapChainRenderPass(), commandBuffer);
+        pImguiLayer.init(pRenderer.GetUIRenderPass(), commandBuffer);
         pDevice.endSingleTimeCommands(commandBuffer);
     }
 
     void App::run() {
 
         // create systems
-        GLTFRenderer gltfRenderer{ pRenderer.getSwapChainRenderPass(), pRenderer.getSwapChainExtent() }; // gltfRenderer - gltfRenderer
+        GLTFRenderer gltfRenderer{ pRenderer.GetSwapChainRenderPass() }; // gltfRenderer - gltfRenderer
 
         // add functions to imgui layer
         {
@@ -103,7 +103,7 @@ namespace Nyxis
         	int frameIndex = pRenderer.GetFrameIndex();
 
             FrameInfo frameInfo
-                    {frameIndex, frameTime, VK_NULL_HANDLE, globalDescriptorSets[frameIndex], gameObjects, pScene};
+                    {frameIndex, frameTime, VK_NULL_HANDLE, VK_NULL_HANDLE, gameObjects, pScene};
 
 			frameInfo.commandBuffer = worldCommandBuffer;
 

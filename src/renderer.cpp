@@ -134,7 +134,7 @@ namespace Nyxis
         renderPassInfo.renderArea.extent = pSwapChain->GetSwapChainExtent();
 
         VkClearValue clearValues;
-        clearValues = { .3f, .3f, .3f, 1.0f };
+        clearValues = { 1.f, 1.f, .3f, 1.0f };
 
         renderPassInfo.clearValueCount = 1;
         renderPassInfo.pClearValues = &clearValues;
@@ -193,7 +193,6 @@ namespace Nyxis
         renderPassInfo.renderArea.extent = pSwapChain->GetSwapChainExtent();
 
         std::array<VkClearValue, 3> clearValues{};
-        clearValues[0].color = { 1.0f, .0f, .0f, 1.0f };
         clearValues[0].color = {1.0f, .0f, .0f, 1.0f};
         clearValues[1].depthStencil = {1.0f, 0};
 

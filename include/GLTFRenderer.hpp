@@ -61,7 +61,7 @@ namespace Nyxis
 			float debugViewEquation = 0;
 		} shaderValuesParams;
 
-		GLTFRenderer(VkRenderPass renderPass, VkExtent2D extent);
+		GLTFRenderer(VkRenderPass renderPass);
 		~GLTFRenderer();
 
 		void OnUpdate();

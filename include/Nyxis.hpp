@@ -1,6 +1,6 @@
 #include "Log.hpp"
 
-#define NDEBUG
+// #define NDEBUG
 
 #ifndef NDEBUG
 
