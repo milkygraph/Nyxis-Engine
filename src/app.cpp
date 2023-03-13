@@ -48,6 +48,9 @@ namespace Nyxis
 
     void App::run() {
 
+        std::thread animationThread;
+        bool animationThreadActive = true;
+
         // create systems
         GLTFRenderer gltfRenderer{ pRenderer.GetSwapChainRenderPass() }; // gltfRenderer - gltfRenderer
 
@@ -80,7 +83,7 @@ namespace Nyxis
 
 			pImguiLayer.AddFunction([&]() {
 				ImGui::Begin("Physics");
-				ImGui::Checkbox("Enable Animations", &gltfRenderer.animate);
+				ImGui::Checkbox("Enable Animations", &animationThreadActive);
 				ImGui::End();
 				});
         }
@@ -89,8 +92,6 @@ namespace Nyxis
 
         veGameObject::Map map;
 
-        std::thread animationThread;
-        bool animationThreadActive = true;
         
         while (!pWindow.shouldClose()) {
             glfwPollEvents();

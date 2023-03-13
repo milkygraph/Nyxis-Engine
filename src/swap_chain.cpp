@@ -182,8 +182,7 @@ namespace Nyxis
 		SwapChainSupportDetails swapChainSupport = device.getSwapChainSupport();
 
 		VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
-		VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
-		VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
+    	VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
 
 		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 		if (swapChainSupport.capabilities.maxImageCount > 0 &&
@@ -221,7 +220,7 @@ namespace Nyxis
 		createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
 		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
-		createInfo.presentMode = presentMode;
+		createInfo.presentMode = m_PresentMode;
 		createInfo.clipped = VK_TRUE;
 
 		createInfo.oldSwapchain = m_OldSwapChain == nullptr ? VK_NULL_HANDLE : m_OldSwapChain->m_SwapChain;
@@ -675,4 +674,5 @@ namespace Nyxis
 			{VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
 			VK_IMAGE_TILING_OPTIMAL,
 			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-	}} // namespace lve
+	}
+} // namespace 

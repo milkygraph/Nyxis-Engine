@@ -279,9 +279,9 @@ namespace Nyxis
 		ImGui::ShowDemoWindow();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+		// ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0)); // Set the alpha channel to 0.5
 		ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
-			ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse |
-			ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+			ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
 
 		if(dst[frameInfo.frameIndex] == VK_NULL_HANDLE)
 			dst[frameInfo.frameIndex] = ImGui_ImplVulkan_AddTexture(m_Sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -304,6 +304,7 @@ namespace Nyxis
 		ImGui::Image(dst[frameInfo.frameIndex], windowSize);
 		ImGui::End();
 		ImGui::PopStyleVar();
+		// ImGui::PopStyleColor();
 
 		AddSceneHierarchy();
 		AddComponentView();

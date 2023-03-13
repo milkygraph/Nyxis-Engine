@@ -121,12 +121,12 @@ namespace Nyxis
 	void GLTFRenderer::LoadEnvironment(std::string& filename)
 	{
 		LOG_INFO("Loading environment from {}", filename);
-		if (textures.environmentCube.image) {
-			textures.environmentCube.destroy();
-			textures.irradianceCube->destroy();
-			textures.prefilteredCube->destroy();
+		if (textures.environmentCube.m_Image) {
+			textures.environmentCube.Destroy();
+			textures.irradianceCube->Destroy();
+			textures.prefilteredCube->Destroy();
 		}
-		textures.environmentCube.loadFromFile(filename, VK_FORMAT_R16G16B16A16_SFLOAT);
+		textures.environmentCube.LoadFromFile(filename, VK_FORMAT_R16G16B16A16_SFLOAT);
 		GenerateCubemaps();
 	}
 
@@ -148,7 +148,7 @@ namespace Nyxis
 		std::map<std::string, std::string> environments;
 		// readDirectory("../assets/environments", "*.ktx", environments, false);
 
-		textures.empty.loadFromFile("../assets/textures/empty.ktx", VK_FORMAT_R8G8B8A8_UNORM);
+		textures.empty.LoadFromFile("../assets/textures/empty.ktx", VK_FORMAT_R8G8B8A8_UNORM);
 
 		std::string sceneFile = "../models/roboto/scene.gltf";
 		envMapFile = "../assets/environments/papermill.ktx";
@@ -274,21 +274,21 @@ namespace Nyxis
 				writeDescriptorSets[2].descriptorCount = 1;
 				writeDescriptorSets[2].dstSet = descriptorSets[i].scene;
 				writeDescriptorSets[2].dstBinding = 2;
-				writeDescriptorSets[2].pImageInfo = &textures.irradianceCube->descriptor;
+				writeDescriptorSets[2].pImageInfo = &textures.irradianceCube->m_Descriptor;
 
 				writeDescriptorSets[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				writeDescriptorSets[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				writeDescriptorSets[3].descriptorCount = 1;
 				writeDescriptorSets[3].dstSet = descriptorSets[i].scene;
 				writeDescriptorSets[3].dstBinding = 3;
-				writeDescriptorSets[3].pImageInfo = &textures.prefilteredCube->descriptor;
+				writeDescriptorSets[3].pImageInfo = &textures.prefilteredCube->m_Descriptor;
 
 				writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				writeDescriptorSets[4].descriptorCount = 1;
 				writeDescriptorSets[4].dstSet = descriptorSets[i].scene;
 				writeDescriptorSets[4].dstBinding = 4;
-				writeDescriptorSets[4].pImageInfo = &textures.lutBrdf.descriptor;
+				writeDescriptorSets[4].pImageInfo = &textures.lutBrdf.m_Descriptor;
 
 				vkUpdateDescriptorSets(device.device(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
 			}
@@ -319,11 +319,11 @@ namespace Nyxis
 				vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &material.descriptorSet);
 
 				std::vector<VkDescriptorImageInfo> imageDescriptors = {
-					textures.empty.descriptor,
-					textures.empty.descriptor,
-					material.normalTexture ? material.normalTexture->descriptor : textures.empty.descriptor,
-					material.occlusionTexture ? material.occlusionTexture->descriptor : textures.empty.descriptor,
-					material.emissiveTexture ? material.emissiveTexture->descriptor : textures.empty.descriptor
+					textures.empty.m_Descriptor,
+					textures.empty.m_Descriptor,
+					material.normalTexture ? material.normalTexture->descriptor : textures.empty.m_Descriptor,
+					material.occlusionTexture ? material.occlusionTexture->descriptor : textures.empty.m_Descriptor,
+					material.emissiveTexture ? material.emissiveTexture->descriptor : textures.empty.m_Descriptor
 				};
 
 				// TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is present
@@ -420,7 +420,7 @@ namespace Nyxis
 			writeDescriptorSets[2].descriptorCount = 1;
 			writeDescriptorSets[2].dstSet = descriptorSets[i].skybox;
 			writeDescriptorSets[2].dstBinding = 2;
-			writeDescriptorSets[2].pImageInfo = &textures.prefilteredCube->descriptor;
+			writeDescriptorSets[2].pImageInfo = &textures.prefilteredCube->m_Descriptor;
 
 			vkUpdateDescriptorSets(device.device(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 		}
@@ -610,11 +610,7 @@ namespace Nyxis
 		std::vector<VkVertexInputAttributeDescription> vertexInputAttributes = {
 			{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
 			{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
-			{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 },
-			{ 3, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 8 },
-			{ 4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 10 },
-			{ 5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 14 },
-			{ 6, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 18 }
+			{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 }
 		};
 		VkPipelineVertexInputStateCreateInfo vertexInputStateCI{};
 		vertexInputStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -661,6 +657,20 @@ namespace Nyxis
 		}
 
 		// PBR pipeline
+
+		vertexInputAttributes = {
+			{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
+			{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
+			{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 },
+			{ 3, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 8 },
+			{ 4, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 10 },
+			{ 5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 14 },
+			{ 6, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 18 }
+		};
+
+		vertexInputStateCI.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
+		vertexInputStateCI.pVertexAttributeDescriptions = vertexInputAttributes.data();
+
 		shaderStages = {
 			loadShader(device.device(), "../shaders/pbr/pbr.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
 			loadShader(device.device(), "../shaders/pbr/pbr_khr.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -677,8 +687,8 @@ namespace Nyxis
 		blendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 		blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 		blendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
-		blendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-		blendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		blendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		blendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 		blendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
 		vkCreateGraphicsPipelines(device.device(), pipelineCache, 1, &pipelineCI, nullptr, &pipelines.pbrAlphaBlend);
 
@@ -707,15 +717,15 @@ namespace Nyxis
 		imageCI.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageCI.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageCI.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-		vkCreateImage(device.device(), &imageCI, nullptr, &textures.lutBrdf.image);
+		vkCreateImage(device.device(), &imageCI, nullptr, &textures.lutBrdf.m_Image);
 		VkMemoryRequirements memReqs;
-		vkGetImageMemoryRequirements(device.device(), textures.lutBrdf.image, &memReqs);
+		vkGetImageMemoryRequirements(device.device(), textures.lutBrdf.m_Image, &memReqs);
 		VkMemoryAllocateInfo memAllocInfo{};
 		memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		memAllocInfo.allocationSize = memReqs.size;
 		memAllocInfo.memoryTypeIndex = device.findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		vkAllocateMemory(device.device(), &memAllocInfo, nullptr, &textures.lutBrdf.deviceMemory);
-		vkBindImageMemory(device.device(), textures.lutBrdf.image, textures.lutBrdf.deviceMemory, 0);
+		vkAllocateMemory(device.device(), &memAllocInfo, nullptr, &textures.lutBrdf.m_DeviceMemory);
+		vkBindImageMemory(device.device(), textures.lutBrdf.m_Image, textures.lutBrdf.m_DeviceMemory, 0);
 
 		// View
 		VkImageViewCreateInfo viewCI{};
@@ -726,8 +736,8 @@ namespace Nyxis
 		viewCI.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		viewCI.subresourceRange.levelCount = 1;
 		viewCI.subresourceRange.layerCount = 1;
-		viewCI.image = textures.lutBrdf.image;
-		vkCreateImageView(device.device(), &viewCI, nullptr, &textures.lutBrdf.view);
+		viewCI.image = textures.lutBrdf.m_Image;
+		vkCreateImageView(device.device(), &viewCI, nullptr, &textures.lutBrdf.m_View);
 
 		// Sampler
 		VkSamplerCreateInfo samplerCI{};
@@ -742,7 +752,7 @@ namespace Nyxis
 		samplerCI.maxLod = 1.0f;
 		samplerCI.maxAnisotropy = 1.0f;
 		samplerCI.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-		vkCreateSampler(device.device(), &samplerCI, nullptr, &textures.lutBrdf.sampler);
+		vkCreateSampler(device.device(), &samplerCI, nullptr, &textures.lutBrdf.m_Sampler);
 
 		// FB, Att, RP, Pipe, etc.
 		VkAttachmentDescription attDesc{};
@@ -796,7 +806,7 @@ namespace Nyxis
 		framebufferCI.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferCI.renderPass = renderpass;
 		framebufferCI.attachmentCount = 1;
-		framebufferCI.pAttachments = &textures.lutBrdf.view;
+		framebufferCI.pAttachments = &textures.lutBrdf.m_View;
 		framebufferCI.width = dim;
 		framebufferCI.height = dim;
 		framebufferCI.layers = 1;
@@ -932,9 +942,9 @@ namespace Nyxis
 		vkDestroyFramebuffer(device.device(), framebuffer, nullptr);
 		vkDestroyDescriptorSetLayout(device.device(), descriptorsetlayout, nullptr);
 
-		textures.lutBrdf.descriptor.imageView = textures.lutBrdf.view;
-		textures.lutBrdf.descriptor.sampler = textures.lutBrdf.sampler;
-		textures.lutBrdf.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		textures.lutBrdf.m_Descriptor.imageView = textures.lutBrdf.m_View;
+		textures.lutBrdf.m_Descriptor.sampler = textures.lutBrdf.m_Sampler;
+		textures.lutBrdf.m_Descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		auto tEnd = std::chrono::high_resolution_clock::now();
 		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
@@ -983,16 +993,16 @@ namespace Nyxis
 				imageCI.tiling = VK_IMAGE_TILING_OPTIMAL;
 				imageCI.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 				imageCI.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-				NYXIS_ASSERT(vkCreateImage(device.device(), &imageCI, nullptr, &cubemap->image) == VK_SUCCESS, "Failed to create cubemap image!");
+				NYXIS_ASSERT(vkCreateImage(device.device(), &imageCI, nullptr, &cubemap->m_Image) == VK_SUCCESS, "Failed to create cubemap m_Image!");
 
 				VkMemoryRequirements memReqs;
-				vkGetImageMemoryRequirements(device.device(), cubemap->image, &memReqs);
+				vkGetImageMemoryRequirements(device.device(), cubemap->m_Image, &memReqs);
 				VkMemoryAllocateInfo memAllocInfo{};
 				memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 				memAllocInfo.allocationSize = memReqs.size;
 				memAllocInfo.memoryTypeIndex = device.findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-				vkAllocateMemory(device.device(), &memAllocInfo, nullptr, &cubemap->deviceMemory);
-				vkBindImageMemory(device.device(), cubemap->image, cubemap->deviceMemory, 0);
+				vkAllocateMemory(device.device(), &memAllocInfo, nullptr, &cubemap->m_DeviceMemory);
+				vkBindImageMemory(device.device(), cubemap->m_Image, cubemap->m_DeviceMemory, 0);
 
 				// View
 				VkImageViewCreateInfo viewCI{};
@@ -1003,8 +1013,8 @@ namespace Nyxis
 				viewCI.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 				viewCI.subresourceRange.levelCount = numMips;
 				viewCI.subresourceRange.layerCount = 6;
-				viewCI.image = cubemap->image;
-				vkCreateImageView(device.device(), &viewCI, nullptr, &cubemap->view);
+				viewCI.image = cubemap->m_Image;
+				vkCreateImageView(device.device(), &viewCI, nullptr, &cubemap->m_View);
 
 				// Sampler
 				VkSamplerCreateInfo samplerCI{};
@@ -1019,7 +1029,7 @@ namespace Nyxis
 				samplerCI.maxLod = static_cast<float>(numMips);
 				samplerCI.maxAnisotropy = 1.0f;
 				samplerCI.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-				vkCreateSampler(device.device(), &samplerCI, nullptr, &cubemap->sampler);
+				vkCreateSampler(device.device(), &samplerCI, nullptr, &cubemap->m_Sampler);
 			}
 
 			// FB, Att, RP, Pipe, etc.
@@ -1175,7 +1185,7 @@ namespace Nyxis
 			writeDescriptorSet.descriptorCount = 1;
 			writeDescriptorSet.dstSet = descriptorset;
 			writeDescriptorSet.dstBinding = 0;
-			writeDescriptorSet.pImageInfo = &textures.environmentCube.descriptor;
+			writeDescriptorSet.pImageInfo = &textures.environmentCube.m_Descriptor;
 			vkUpdateDescriptorSets(device.device(), 1, &writeDescriptorSet, 0, nullptr);
 
 			struct PushBlockIrradiance {
@@ -1344,7 +1354,7 @@ namespace Nyxis
 			{
 				VkImageMemoryBarrier imageMemoryBarrier{};
 				imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-				imageMemoryBarrier.image = cubemap->image;
+				imageMemoryBarrier.image = cubemap->m_Image;
 				imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 				imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 				imageMemoryBarrier.srcAccessMask = 0;
@@ -1431,7 +1441,7 @@ namespace Nyxis
 						cmdBuf,
 						offscreen.image,
 						VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-						cubemap->image,
+						cubemap->m_Image,
 						VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 						1,
 						&copyRegion);
@@ -1456,7 +1466,7 @@ namespace Nyxis
 				cmdBuf = device.beginSingleTimeCommands();
 				VkImageMemoryBarrier imageMemoryBarrier{};
 				imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-				imageMemoryBarrier.image = cubemap->image;
+				imageMemoryBarrier.image = cubemap->m_Image;
 				imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 				imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 				imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -1477,9 +1487,9 @@ namespace Nyxis
 			vkDestroyPipeline(device.device(), pipeline, nullptr);
 			vkDestroyPipelineLayout(device.device(), pipelinelayout, nullptr);
 
-			cubemap->descriptor.imageView = cubemap->view;
-			cubemap->descriptor.sampler = cubemap->sampler;
-			cubemap->descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			cubemap->m_Descriptor.imageView = cubemap->m_View;
+			cubemap->m_Descriptor.sampler = cubemap->m_Sampler;
+			cubemap->m_Descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 			switch (target) {
 			case IRRADIANCE:

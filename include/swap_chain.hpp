@@ -57,6 +57,7 @@ namespace Nyxis
         VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
         VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) const;
 
+		VkPresentModeKHR m_PresentMode = VK_PRESENT_MODE_FIFO_KHR;
         VkFormat m_SwapChainImageFormat;
         VkExtent2D m_SwapChainExtent;
 
