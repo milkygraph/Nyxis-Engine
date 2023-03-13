@@ -1,5 +1,6 @@
 # Nyxis Engine
 
+![Screenshot](screenshots/robot.png)
 ## Building Instructions
 
 Clone repository using 
