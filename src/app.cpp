@@ -71,14 +71,6 @@ namespace Nyxis
                 ImGui::End();
             });
             pImguiLayer.AddFunction([&] {
-                ImGui::Begin("Reload");
-				
-            	if (ImGui::Button("Reload", ImVec2(100, 50)) || ImGui::InputText("Path", &gltfRenderer.envMapFile, ImGuiInputTextFlags_EnterReturnsTrue))
-                {
-                    gltfRenderer.SceneUpdated = true;
-                }
-
-            	ImGui::End();
             });
 
 			pImguiLayer.AddFunction([&]() {
@@ -86,6 +78,21 @@ namespace Nyxis
 				ImGui::Checkbox("Enable Animations", &animationThreadActive);
 				ImGui::End();
 				});
+
+            pImguiLayer.AddFunction([&]()
+            {
+                ImGui::Begin("Scene Settings");
+                ImGui::Text("SkyMap");
+				ImGui::DragFloat("Exposure", &gltfRenderer.shaderValuesParams.exposure, 0.1, 0.0f, 10.0f);
+				ImGui::DragFloat("Gamma", &gltfRenderer.shaderValuesParams.gamma, 0.1, 0.0f, 10.0f);
+				ImGui::DragFloat3("Light Direction", &gltfRenderer.shaderValuesParams.lightDir.x);
+
+                if (ImGui::InputText("Path", &gltfRenderer.envMapFile, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Reload", ImVec2(75, 25)))
+                {
+                    gltfRenderer.SceneUpdated = true;
+                }
+            	ImGui::End();
+            });
         }
 
         auto currentTime = std::chrono::high_resolution_clock::now();

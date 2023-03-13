@@ -151,7 +151,7 @@ namespace Nyxis
 		textures.empty.LoadFromFile("../assets/textures/empty.ktx", VK_FORMAT_R8G8B8A8_UNORM);
 
 		std::string sceneFile = "../models/roboto/scene.gltf";
-		envMapFile = "../assets/environments/papermill.ktx";
+		envMapFile = "../assets/environments/sky.ktx";
 
 		LoadModel(sceneFile);
 
