@@ -276,7 +276,6 @@ namespace Nyxis
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		ShowExampleAppDockSpace();
-		ImGui::ShowDemoWindow();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 		// ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0)); // Set the alpha channel to 0.5
