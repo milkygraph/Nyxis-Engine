@@ -5,11 +5,12 @@ namespace Nyxis
     SwapChain::SwapChain(VkExtent2D extent)
 		: m_WindowExtent{extent}
 	{
+		m_WorldExtent = m_WindowExtent;
 		Init();
 	}
 
-	SwapChain::SwapChain(VkExtent2D extent, std::shared_ptr<SwapChain> previous)
-		: m_WindowExtent{extent}, m_OldSwapChain{previous}
+	SwapChain::SwapChain(VkExtent2D windowExtent, VkExtent2D worldExtent, std::shared_ptr<SwapChain> previous)
+		: m_WindowExtent{ windowExtent }, m_WorldExtent(worldExtent), m_OldSwapChain{ previous }
 	{
 		Init();
 		m_OldSwapChain = nullptr;
@@ -68,10 +69,12 @@ namespace Nyxis
 	{
 		CreateSwapChain();
 		CreateWorldImages();
-		CreateImageViews();
+		CreateSwapChainImageViews();
+		CreateWorldImageViews();
 		CreateRenderPass();
 		CreateDepthResources();
-		CreateFramebuffers();
+		CreateSwapChainFramebuffers();
+		CreateWorldFramebuffers();
 		CreateSyncObjects();
 	}
 
@@ -278,7 +281,7 @@ namespace Nyxis
 	void SwapChain::CreateWorldImages()
 	{
 		m_WorldImages.resize(m_SwapChainImages.size());
-		VkExtent2D swapChainExtent = GetSwapChainExtent();
+		m_WorldImageMemories.resize(m_SwapChainImages.size());
 
 		for (size_t i = 0; i < m_WorldImages.size(); i++)
 		{
@@ -287,10 +290,9 @@ namespace Nyxis
 			VkImageCreateInfo imageInfo = {};
 			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			imageInfo.imageType = VK_IMAGE_TYPE_2D;
-			imageInfo.extent.width = m_SwapChainExtent.width;
 			imageInfo.format = m_SwapChainImageFormat;
-			imageInfo.extent.height = swapChainExtent.height;
-			imageInfo.extent.width = swapChainExtent.width;
+			imageInfo.extent.height = m_WorldExtent.height;
+			imageInfo.extent.width = m_WorldExtent.width;
 			imageInfo.extent.depth = 1;
 			imageInfo.mipLevels = 1;
 			imageInfo.arrayLayers = 1;
@@ -305,22 +307,21 @@ namespace Nyxis
 
 			VkMemoryRequirements memoryRequirements;
 			vkGetImageMemoryRequirements(device.device(), m_WorldImages[i], &memoryRequirements);
-			VkDeviceMemory memory;
 			VkMemoryAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			allocInfo.allocationSize = memoryRequirements.size;
 			allocInfo.memoryTypeIndex = device.findMemoryType(memoryRequirements.memoryTypeBits,
 			                                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-			if (vkAllocateMemory(device.device(), &allocInfo, nullptr, &memory) != VK_SUCCESS)
+			if (vkAllocateMemory(device.device(), &allocInfo, nullptr, &m_WorldImageMemories[i]) != VK_SUCCESS)
 				throw std::runtime_error("failed to allocate world image memory!");
 
-			if (vkBindImageMemory(device.device(), m_WorldImages[i], memory, 0) != VK_SUCCESS)
+			if (vkBindImageMemory(device.device(), m_WorldImages[i], m_WorldImageMemories[i], 0) != VK_SUCCESS)
 				throw std::runtime_error("failed to bind world image memory!");
 			VkImageMemoryBarrier barrier = {};
 			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			barrier.srcAccessMask = 0;
 			barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -339,10 +340,37 @@ namespace Nyxis
 		LOG_INFO("Successfully created world images.");
 	}
 
-	void SwapChain::CreateImageViews()
+	void SwapChain::CreateSwapChainImageViews()
+	{
+		m_SwapChainImageViews.resize(m_SwapChainImages.size());
+
+		for (size_t i = 0; i < m_WorldImages.size(); i++)
+		{
+			VkImageViewCreateInfo viewInfo{};
+			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			viewInfo.image = m_SwapChainImages[i];
+			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			viewInfo.format = m_SwapChainImageFormat;
+			viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			viewInfo.subresourceRange.baseMipLevel = 0;
+			viewInfo.subresourceRange.levelCount = 1;
+			viewInfo.subresourceRange.baseArrayLayer = 0;
+			viewInfo.subresourceRange.layerCount = 1;
+
+
+			if (vkCreateImageView(device.device(), &viewInfo, nullptr, &m_SwapChainImageViews[i]) !=
+				VK_SUCCESS)
+			{
+				throw std::runtime_error("failed to create swap chain image image view!");
+			}
+		}
+
+		LOG_INFO("Successfully created swap chain image views.");
+	}
+
+	void SwapChain::CreateWorldImageViews()
 	{
 		m_WorldImageViews.resize(m_WorldImages.size());
-		m_SwapChainImageViews.resize(m_SwapChainImages.size());
 
 		for (size_t i = 0; i < m_WorldImages.size(); i++)
 		{
@@ -362,17 +390,9 @@ namespace Nyxis
 			{
 				throw std::runtime_error("failed to create world image view!");
 			}
-
-			viewInfo.image = m_SwapChainImages[i];
-
-			if (vkCreateImageView(device.device(), &viewInfo, nullptr, &m_SwapChainImageViews[i]) !=
-				VK_SUCCESS)
-			{
-				throw std::runtime_error("failed to create swap chain image image view!");
-			}
 		}
 
-		LOG_INFO("Successfully created image views.");
+		LOG_INFO("Successfully created world image views.");
 	}
 
 	void SwapChain::CreateRenderPass()
@@ -459,36 +479,9 @@ namespace Nyxis
 		}
 	}
 
-	void SwapChain::CreateFramebuffers()
+	void SwapChain::CreateSwapChainFramebuffers()
 	{
 		m_SwapChainFramebuffers.resize(ImageCount());
-		m_WorldFramebuffers.resize(ImageCount());
-
-		VkExtent2D swapChainExtent = GetSwapChainExtent();
-		for (size_t i = 0; i < ImageCount(); i++)
-		{
-			VkImageView attachments[2] = {m_WorldImageViews[i], m_DepthImageViews[i]};
-			VkFramebufferCreateInfo framebufferInfo{};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = m_MainRenderPass; // all object rendering is done in world render pass
-			framebufferInfo.attachmentCount = 2;
-			framebufferInfo.pAttachments = attachments;
-			framebufferInfo.width = swapChainExtent.width;
-			framebufferInfo.height = swapChainExtent.height;
-			framebufferInfo.layers = 1;
-
-			if (vkCreateFramebuffer(
-				device.device(),
-				&framebufferInfo,
-				nullptr,
-				&m_WorldFramebuffers[i]) != VK_SUCCESS)
-			{
-				// TODO: ADD NYXIS ASSERTIONS
-				throw std::runtime_error("failed to create world framebuffer!");
-			}
-		}
-
-		LOG_INFO("Successfully created world framebuffers");
 
 		for (int i = 0; i < ImageCount(); i++)
 		{
@@ -498,8 +491,8 @@ namespace Nyxis
 			framebufferInfo.renderPass = m_UIRenderPass; // ui rendering is done in ui render pass
 			framebufferInfo.attachmentCount = 1;
 			framebufferInfo.pAttachments = attachments;
-			framebufferInfo.width = swapChainExtent.width;
-			framebufferInfo.height = swapChainExtent.height;
+			framebufferInfo.width = m_SwapChainExtent.width;
+			framebufferInfo.height = m_SwapChainExtent.height;
 			framebufferInfo.layers = 1;
 
 			if (vkCreateFramebuffer(
@@ -516,6 +509,36 @@ namespace Nyxis
 		LOG_INFO("Successfully created swap chain framebuffers");
 	}
 
+	void SwapChain::CreateWorldFramebuffers()
+    {
+		m_WorldFramebuffers.resize(ImageCount());
+
+    	for (size_t i = 0; i < ImageCount(); i++)
+		{
+			VkImageView attachments[2] = { m_WorldImageViews[i], m_DepthImageViews[i] };
+			VkFramebufferCreateInfo framebufferInfo{};
+			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebufferInfo.renderPass = m_MainRenderPass; // all object rendering is done in world render pass
+			framebufferInfo.attachmentCount = 2;
+			framebufferInfo.pAttachments = attachments;
+			framebufferInfo.width = m_WorldExtent.width;
+			framebufferInfo.height = m_WorldExtent.height;
+			framebufferInfo.layers = 1;
+
+			if (vkCreateFramebuffer(
+				device.device(),
+				&framebufferInfo,
+				nullptr,
+				&m_WorldFramebuffers[i]) != VK_SUCCESS)
+			{
+				// TODO: ADD NYXIS ASSERTIONS
+				throw std::runtime_error("failed to create world framebuffer!");
+			}
+		}
+
+		LOG_INFO("Successfully created world framebuffers");
+    }
+
 	void SwapChain::CreateDepthResources()
 	{
 		VkFormat depthFormat = FindDepthFormat();
@@ -530,8 +553,8 @@ namespace Nyxis
 			VkImageCreateInfo imageInfo{};
 			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			imageInfo.imageType = VK_IMAGE_TYPE_2D;
-			imageInfo.extent.width = swapChainExtent.width;
-			imageInfo.extent.height = swapChainExtent.height;
+			imageInfo.extent.width = m_WorldExtent.width;
+			imageInfo.extent.height = m_WorldExtent.height;
 			imageInfo.extent.depth = 1;
 			imageInfo.mipLevels = 1;
 			imageInfo.arrayLayers = 1;
@@ -666,6 +689,51 @@ namespace Nyxis
 
 			return actualExtent;
 		}
+	}
+
+	void SwapChain::RecreateWorldImages()
+	{
+		LOG_TRACE("Recreating world images");
+		vkDeviceWaitIdle(device.device());
+		// destroy old images and image views
+
+    	for (auto& imageView : m_WorldImageViews)
+		{
+			vkDestroyImageView(device.device(), imageView, nullptr);
+		}
+
+    	for (auto framebuffer : m_WorldFramebuffers)
+		{
+			vkDestroyFramebuffer(device.device(), framebuffer, nullptr);
+		}
+
+		for (int i = 0; i < m_DepthImages.size(); i++)
+		{
+			vkDestroyImageView(device.device(), m_DepthImageViews[i], nullptr);
+			vkDestroyImage(device.device(), m_DepthImages[i], nullptr);
+			vkFreeMemory(device.device(), m_DepthImageMemories[i], nullptr);
+		}
+		
+		for (auto& image : m_WorldImages)
+		{
+			vkDestroyImage(device.device(), image, nullptr);
+		}
+
+		for (auto& imageMemory : m_WorldImageMemories)
+		{
+			vkFreeMemory(device.device(), imageMemory, nullptr);
+		}
+
+		m_WorldImages.clear();
+		m_WorldImageViews.clear();
+		m_DepthImages.clear();
+    	m_WorldFramebuffers.clear();
+		m_WorldImageMemories.clear();
+
+    	CreateWorldImages();
+		CreateWorldImageViews();
+    	CreateDepthResources();
+		CreateWorldFramebuffers();
 	}
 
 	VkFormat SwapChain::FindDepthFormat() const

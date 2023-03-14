@@ -12,7 +12,7 @@ namespace Nyxis
         static constexpr int MAX_FRAMES_IN_FLIGHT = 3;
 
         SwapChain(VkExtent2D windowExtent);
-        SwapChain(VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous);
+        SwapChain(VkExtent2D windowExtent, VkExtent2D worldExtent, std::shared_ptr<SwapChain> previous);
 
         ~SwapChain();
 
@@ -28,28 +28,31 @@ namespace Nyxis
         [[nodiscard]] size_t ImageCount() const { return m_WorldImages.size(); }
         [[nodiscard]] VkFormat GetSwapChainImageFormat() const { return m_SwapChainImageFormat; }
         [[nodiscard]] VkExtent2D GetSwapChainExtent() const { return m_SwapChainExtent; }
+        [[nodiscard]] VkExtent2D GetWorldExtent() const { return m_WorldExtent; }
         [[nodiscard]] uint32_t GetSwapChainWidth() const { return m_SwapChainExtent.width; }
         [[nodiscard]] uint32_t GetSwapChainHeight() const { return m_SwapChainExtent.height; }
-
         [[nodiscard]] float ExtentAspectRatio() const {
             return static_cast<float>(m_SwapChainExtent.width) / static_cast<float>(m_SwapChainExtent.height);
         }
+        [[nodiscard]] VkFormat FindDepthFormat() const;
 
-    	[[nodiscard]] VkFormat FindDepthFormat() const;
+    	void RecreateWorldImages();
+		void SetWorldImageExtent(VkExtent2D extent) { m_WorldExtent = extent; }
+        void SubmitWorldCommandBuffers(const VkCommandBuffer* commandBuffer, uint32_t* imageIndex);
+        VkResult SubmitSwapChainCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex);
 
         VkResult AcquireNextImage(uint32_t *imageIndex);
-
-		void SubmitWorldCommandBuffers(const VkCommandBuffer* commandBuffer, uint32_t* imageIndex);
-    	VkResult SubmitSwapChainCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex);
 
     private:
         void Init();
         void CreateSwapChain();
         void CreateWorldImages();
-        void CreateImageViews();
+        void CreateSwapChainImageViews();
+        void CreateWorldImageViews();
         void CreateDepthResources();
         void CreateRenderPass();
-        void CreateFramebuffers();
+        void CreateSwapChainFramebuffers();
+        void CreateWorldFramebuffers();
         void CreateSyncObjects();
 
         // Helper functions
@@ -70,6 +73,7 @@ namespace Nyxis
         std::vector<VkDeviceMemory> m_DepthImageMemories;
         std::vector<VkImageView> m_DepthImageViews;
 
+		std::vector<VkDeviceMemory> m_WorldImageMemories;
         std::vector<VkImage> m_WorldImages;
 		std::vector<VkImage> m_SwapChainImages;
 
@@ -78,6 +82,7 @@ namespace Nyxis
 
         Device &device = Device::get();
         VkExtent2D m_WindowExtent;
+        VkExtent2D m_WorldExtent;
 
         VkSwapchainKHR m_SwapChain;
         std::shared_ptr<SwapChain> m_OldSwapChain;

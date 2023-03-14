@@ -14,8 +14,9 @@ namespace Nyxis
         ~ImguiLayer();
 
         void init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer);
-        void OnUpdate(FrameInfo &frameInfo, VkImageView imageView);
+        VkExtent2D OnUpdate(FrameInfo &frameInfo, VkImageView imageView);
         void AddFunction(const std::function<void()>& function);
+        VkExtent2D AddViewport(FrameInfo& frameInfo, VkImageView imageView);
         void AddComponentView();
         void AddSceneHierarchy();
         void AddMenuBar();

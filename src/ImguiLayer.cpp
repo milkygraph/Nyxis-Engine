@@ -1,4 +1,6 @@
 #include "ImguiLayer.hpp"
+
+#include <imgui_internal.h>
 #include <string>
 
 namespace Nyxis
@@ -20,8 +22,8 @@ namespace Nyxis
 			ImGui::SetNextWindowPos(viewport->WorkPos);
 			ImGui::SetNextWindowSize(viewport->WorkSize);
 			ImGui::SetNextWindowViewport(viewport->ID);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, .0f);
 			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize
 				| ImGuiWindowFlags_NoMove;
 			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
@@ -52,7 +54,6 @@ namespace Nyxis
 			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
 			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 		}
-
 		ImGui::End();
 	}
 
@@ -64,12 +65,12 @@ namespace Nyxis
 		style.Alpha = 1.0f;
 		style.DisabledAlpha = 0.6000000238418579f;
 		style.WindowPadding = ImVec2(8.0f, 8.0f);
-		style.WindowRounding = 0.0f;
-		style.WindowBorderSize = 1.0f;
+		style.WindowRounding = 8.0f;
+		style.WindowBorderSize = 0.0f;
 		style.WindowMinSize = ImVec2(32.0f, 32.0f);
 		style.WindowTitleAlign = ImVec2(0.0f, 0.5f);
 		style.WindowMenuButtonPosition = ImGuiDir_Left;
-		style.ChildRounding = 0.0f;
+		style.ChildRounding = 8.0f;
 		style.ChildBorderSize = 1.0f;
 		style.PopupRounding = 0.0f;
 		style.PopupBorderSize = 1.0f;
@@ -270,41 +271,15 @@ namespace Nyxis
 		functions.push_back(function);
 	}
 
-	void ImguiLayer::OnUpdate(FrameInfo& frameInfo, VkImageView imageView)
+	VkExtent2D ImguiLayer::OnUpdate(FrameInfo& frameInfo, VkImageView imageView)
 	{
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		ShowExampleAppDockSpace();
+		ImGui::ShowDemoWindow();
 
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-		// ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0)); // Set the alpha channel to 0.5
-		ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
-			ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
-
-		if(dst[frameInfo.frameIndex] == VK_NULL_HANDLE)
-			dst[frameInfo.frameIndex] = ImGui_ImplVulkan_AddTexture(m_Sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		else
-		{
-			VkDescriptorImageInfo desc_image[1] = {};
-			desc_image[0].sampler = m_Sampler;
-			desc_image[0].imageView = imageView;
-			desc_image[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			VkWriteDescriptorSet write_desc[1] = {};
-			write_desc[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			write_desc[0].dstSet = dst[frameInfo.frameIndex];
-			write_desc[0].descriptorCount = 1;
-			write_desc[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			write_desc[0].pImageInfo = desc_image;
-			vkUpdateDescriptorSets(Device::get().device(), 1, write_desc, 0, nullptr);
-		}
-		
-		ImVec2 windowSize = ImGui::GetContentRegionAvail();
-		ImGui::Image(dst[frameInfo.frameIndex], windowSize);
-		ImGui::End();
-		ImGui::PopStyleVar();
-		// ImGui::PopStyleColor();
-
+		auto extent = AddViewport(frameInfo, imageView);
 		AddSceneHierarchy();
 		AddComponentView();
 		AddMenuBar();
@@ -316,6 +291,7 @@ namespace Nyxis
 
 		ImGui::Render();
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
+		return extent;
 	}
 
 	void ImguiLayer::AddMenuBar()
@@ -358,6 +334,42 @@ namespace Nyxis
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
+	}
+
+	VkExtent2D ImguiLayer::AddViewport(FrameInfo& frameInfo, VkImageView imageView)
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+		// ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0)); // Set the alpha channel to 0.5
+		ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
+			ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
+
+		if (dst[frameInfo.frameIndex] == VK_NULL_HANDLE)
+			dst[frameInfo.frameIndex] = ImGui_ImplVulkan_AddTexture(m_Sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		else
+		{
+			VkDescriptorImageInfo desc_image[1] = {};
+			desc_image[0].sampler = m_Sampler;
+			desc_image[0].imageView = imageView;
+			desc_image[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			VkWriteDescriptorSet write_desc[1] = {};
+			write_desc[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			write_desc[0].dstSet = dst[frameInfo.frameIndex];
+			write_desc[0].descriptorCount = 1;
+			write_desc[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			write_desc[0].pImageInfo = desc_image;
+			vkUpdateDescriptorSets(Device::get().device(), 1, write_desc, 0, nullptr);
+		}
+		float windowWidth = ImGui::GetWindowWidth();
+		float windowHeight = ImGui::GetWindowHeight();
+
+		// display image in the middle of the window with the correct aspect ratio
+		ImGui::Image(dst[frameInfo.frameIndex], ImVec2(windowWidth, windowHeight));
+
+		ImGui::End();
+		ImGui::PopStyleVar();
+
+		return { static_cast<uint32_t>(windowWidth), static_cast<uint32_t>(windowHeight) };
+		// Update camera fov
 	}
 
 	void ImguiLayer::AddComponentView()

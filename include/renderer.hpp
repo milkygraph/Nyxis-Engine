@@ -28,9 +28,9 @@ namespace Nyxis
         Renderer &operator=(const Renderer &) = delete;
 
         [[nodiscard]] VkImageView GetWorldImageView(int index) const;
-    	  [[nodiscard]] VkRenderPass GetSwapChainRenderPass() const { return pSwapChain->GetMainRenderPass(); }
+    	[[nodiscard]] VkRenderPass GetSwapChainRenderPass() const { return pSwapChain->GetMainRenderPass(); }
         [[nodiscard]] VkRenderPass GetUIRenderPass() const { return pSwapChain->GetUIRenderPass(); }
-        [[nodiscard]] float GetAspectRatio() const { return pSwapChain->ExtentAspectRatio(); }
+        [[nodiscard]] VkExtent2D GetAspectRatio() const { return m_WorldImageSize; }
         [[nodiscard]] bool IsFrameInProgress() const { return m_IsFrameStarted; }
 
         [[nodiscard]] VkCommandBuffer GetMainCommandBuffer() const
@@ -61,6 +61,7 @@ namespace Nyxis
         void EndMainRenderPass(VkCommandBuffer commandBuffer);
 
         std::unique_ptr<SwapChain> pSwapChain;
+		VkExtent2D m_WorldImageSize;
 
     private:
         void CreateCommandBuffers();
@@ -78,5 +79,6 @@ namespace Nyxis
         int m_CurrentFrameIndex{0};
         bool m_IsFrameStarted{false};
 
+		VkExtent2D m_OldWorldImageSize;
     }; // class Renderer
 } // namespace Nyxis

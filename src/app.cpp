@@ -82,7 +82,7 @@ namespace Nyxis
             pImguiLayer.AddFunction([&]()
             {
                 ImGui::Begin("Scene Settings");
-                ImGui::Text("SkyMap");
+            	ImGui::Text("SkyMap");
 				ImGui::DragFloat("Exposure", &gltfRenderer.shaderValuesParams.exposure, 0.1, 0.0f, 10.0f);
 				ImGui::DragFloat("Gamma", &gltfRenderer.shaderValuesParams.gamma, 0.1, 0.0f, 10.0f);
 				ImGui::DragFloat3("Light Direction", &gltfRenderer.shaderValuesParams.lightDir.x);
@@ -106,12 +106,13 @@ namespace Nyxis
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
 
-            float aspect = pRenderer.GetAspectRatio();
-            auto worldCommandBuffer = pRenderer.BeginWorldFrame();
+        	auto worldExtent = pRenderer.GetAspectRatio();
+			float aspect = static_cast<float>(worldExtent.width) / static_cast<float>(worldExtent.height);
+        	auto worldCommandBuffer = pRenderer.BeginWorldFrame();
         	int frameIndex = pRenderer.GetFrameIndex();
 
             FrameInfo frameInfo
-                    {frameIndex, frameTime, VK_NULL_HANDLE, VK_NULL_HANDLE, gameObjects, pScene};
+            { frameIndex, frameTime, VK_NULL_HANDLE, VK_NULL_HANDLE, gameObjects, pScene };
 
 			frameInfo.commandBuffer = worldCommandBuffer;
 
@@ -124,8 +125,9 @@ namespace Nyxis
             
         	auto commandBuffer = pRenderer.BeginUIFrame();
 			frameInfo.commandBuffer = commandBuffer;
-			pImguiLayer.OnUpdate(frameInfo, pRenderer.GetWorldImageView(frameInfo.frameIndex));
+        	auto extent = pImguiLayer.OnUpdate(frameInfo, pRenderer.GetWorldImageView(frameInfo.frameIndex));
             pRenderer.EndUIRenderPass(commandBuffer);
+            pRenderer.m_WorldImageSize = extent;
 
             pScene.OnUpdate(frameInfo.frameTime, aspect);   
             gltfRenderer.OnUpdate();
