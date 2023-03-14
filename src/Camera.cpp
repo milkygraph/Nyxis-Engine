@@ -27,7 +27,7 @@ namespace Nyxis
 	void Camera::setPerspectiveProjection(float fovy, float aspect, float near, float far)
 	{
 		const float tanHalfFovY = tan(fovy / 2.f);
-		const float tanHalfFovX = tanHalfFovY * aspect;
+		const float tanHalfFovX = tanHalfFovY / aspect;
 		fovy = 2.f * atan(tanHalfFovX) * 180.f / glm::pi<float>();
 
 		assert(glm::abs(aspect - std::numeric_limits<float>::epsilon()) > 0.0f);
