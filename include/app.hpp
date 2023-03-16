@@ -63,7 +63,7 @@ namespace Nyxis
 
         std::unique_ptr<veDescriptorPool> globalPool{};
         std::unique_ptr<veDescriptorSetLayout> globalSetLayout{};
-		std::vector<VkDescriptorSet> globalDescriptorSets;
+    	std::vector<VkDescriptorSet> globalDescriptorSets;
 
 		std::unique_ptr<veDescriptorPool> imguiPool{};
 
@@ -71,7 +71,6 @@ namespace Nyxis
 
 
         veGameObject::Map gameObjects;
-        Model model;
 
         Scene pScene{};
         PhysicsEngine physicsEngine{};

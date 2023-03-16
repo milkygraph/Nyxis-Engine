@@ -72,8 +72,9 @@ namespace Nyxis
 
 		std::string envMapFile = "";
 		bool SceneUpdated = false;
-
 		bool animate = true;
+
+		RigidBody rigidBody{};
 	private:
 		void PrepareUniformBuffers();
 		void UpdateUniformBuffers(Scene& scene);

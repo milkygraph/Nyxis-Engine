@@ -93,6 +93,15 @@ namespace Nyxis
                 }
             	ImGui::End();
             });
+
+			pImguiLayer.AddFunction([&]() {
+				ImGui::Begin("Model");
+				ImGui::DragFloat3("Translation", &gltfRenderer.rigidBody.translation.x);
+				ImGui::DragFloat3("Rotation", &gltfRenderer.rigidBody.rotation.x);
+				ImGui::DragFloat3("Scale", &gltfRenderer.rigidBody.scale.x);
+				ImGui::End();
+			});
+				
         }
 
         auto currentTime = std::chrono::high_resolution_clock::now();

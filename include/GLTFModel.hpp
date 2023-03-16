@@ -4,6 +4,7 @@
 #include "Nyxispch.hpp"
 #include "device.hpp"
 #include "buffer.hpp"
+#include "components.hpp"
 
 #include "tinygltf/tiny_gltf.h"
 
@@ -167,7 +168,8 @@ namespace Nyxis
 	};
 
 	struct Model {
-
+		// Model() = default;
+		// Model(const std::string& filename);
 		Device& device = Device::get();
 
 		struct Vertex {
@@ -184,12 +186,14 @@ namespace Nyxis
 			VkBuffer buffer = VK_NULL_HANDLE;
 			VkDeviceMemory memory;
 		} vertices;
+
 		struct Indices {
 			VkBuffer buffer = VK_NULL_HANDLE;
 			VkDeviceMemory memory;
 		} indices;
 
 		glm::mat4 aabb;
+		glm::mat4 modelMatrix{ 1.0f };
 
 		std::vector<Node*> nodes;
 		std::vector<Node*> linearNodes;
@@ -214,6 +218,9 @@ namespace Nyxis
 			size_t vertexPos = 0;
 		};
 
+		uint32_t animationIndex = 0;
+		float animationTimer = 0.0f;
+
 		void destroy();
 		void loadNode(Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& model, LoaderInfo& loaderInfo, float globalscale);
 		void getNodeProps(const tinygltf::Node& node, const tinygltf::Model& model, size_t& vertexCount, size_t& indexCount);
@@ -229,8 +236,9 @@ namespace Nyxis
 		void draw(VkCommandBuffer commandBuffer);
 		void calculateBoundingBox(Node* node, Node* parent);
 		void getSceneDimensions();
-		void updateAnimation(uint32_t index, float time);
+		void updateAnimation(float deltaTime);
 		Node* findNode(Node* parent, uint32_t index);
 		Node* nodeFromIndex(uint32_t index);
+		void updateModelMatrix(RigidBody& rigidBody);
 	};
 }

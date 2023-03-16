@@ -104,7 +104,6 @@ namespace Nyxis
 		viewMatrix[3][0] = -glm::dot(u, position);
 		viewMatrix[3][1] = -glm::dot(v, position);
 		viewMatrix[3][2] = -glm::dot(w, position);
-
 		inverseViewMatrix = glm::mat4{ 1.f };
 		inverseViewMatrix[0][0] = u.x;
 		inverseViewMatrix[0][1] = u.y;

@@ -5,6 +5,10 @@ namespace Nyxis
 {
 	GLTFRenderer::GLTFRenderer(VkRenderPass renderPass)
 	{
+		rigidBody.translation = { 1.0f, 2.0f, 3.0f };
+		rigidBody.rotation = { 0.0f, 0.0f , 0.0f };
+		rigidBody.scale = { 1.0f, 1.0f, 1.0f };
+
 		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		uniformBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
@@ -62,12 +66,8 @@ namespace Nyxis
 
 	void GLTFRenderer::UpdateAnimation(float frameTime)
 	{
-		if ((animate) && (models.scene.animations.size() > 0)) {
-			animationTimer += frameTime;
-			if (animationTimer > models.scene.animations[animationIndex].end) {
-				animationTimer -= models.scene.animations[animationIndex].end;
-			}
-			models.scene.updateAnimation(animationIndex, animationTimer);
+		if (animate) {
+			models.scene.updateAnimation(frameTime);
 		}
 	}
 
@@ -90,11 +90,11 @@ namespace Nyxis
 		shaderValuesScene.projection = scene.m_Camera->getProjectionMatrix();
 		shaderValuesScene.view = scene.m_Camera->getViewMatrix();
 
-		shaderValuesScene.model = glm::mat4(1.0f);
+		models.scene.updateModelMatrix(rigidBody);
+		shaderValuesScene.model = models.scene.modelMatrix;
 
 		auto& rigidBody = scene.m_Registry.get<RigidBody>(scene.m_CameraEntity);
-
-
+		
 		shaderValuesScene.camPos = glm::vec3(
 			-rigidBody.translation.z * sin(glm::radians(rigidBody.translation.y)) * cos(glm::radians(rigidBody.translation.x)),
 			-rigidBody.translation.z * sin(glm::radians(rigidBody.translation.x)),
@@ -150,7 +150,7 @@ namespace Nyxis
 
 		textures.empty.LoadFromFile("../assets/textures/empty.ktx", VK_FORMAT_R8G8B8A8_UNORM);
 
-		std::string sceneFile = "../models/roboto/scene.gltf";
+		std::string sceneFile = "../models/microphone/scene.gltf";
 		envMapFile = "../assets/environments/sky.ktx";
 
 		LoadModel(sceneFile);

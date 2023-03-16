@@ -81,7 +81,7 @@ namespace Nyxis
 
         if (m_Camera->getType() == CameraType::Perspective)
             if (aspect > 0)
-				m_Camera->setPerspectiveProjection(glm::radians(45.0f), aspect, 0.1f, 1000.0f);
+				m_Camera->setPerspectiveProjection(glm::radians(60.0f), aspect, 0.1f, 1000.0f);
         else
             m_Camera->setOrthographicProjection(-aspect, aspect, -1.0f, 1.0f, 0.1f, 1000.0f);
 

@@ -402,6 +402,17 @@ namespace Nyxis
 			delete child;
 	}
 
+	// Model::Model(const std::string& filename)
+	// {
+	// 	LOG_INFO("Loading model from {}", filename);
+	// 	animationIndex = 0;
+	// 	animationTimer = 0.0f;
+	// 	auto tStart = std::chrono::high_resolution_clock::now();
+	// 	loadFromFile(filename);
+	// 	auto tFileLoad = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
+	// 	LOG_INFO("Loading took {} ms", tFileLoad);
+	// }
+
 	// Model
 	void Model::destroy()
 	{
@@ -1197,28 +1208,34 @@ namespace Nyxis
 		aabb[3][2] = dimensions.min[2];
 	}
 
-	void Model::updateAnimation(uint32_t index, float time)
+	void Model::updateAnimation(float deltaTime)
 	{
-		if (animations.empty()) {
-			std::cout << ".glTF does not contain animation." << std::endl;
+		if (animations.size() == 0)
+			return;
+
+		animationTimer += deltaTime;
+		if (animationTimer > animations[animationIndex].end)
+			animationTimer -= animations[animationIndex].end;
+
+		if (animations.empty())
+			return;
+
+		if (animationIndex > static_cast<uint32_t>(animations.size()) - 1) {
+			std::cout << "No animation with index " << animationIndex << std::endl;
 			return;
 		}
-		if (index > static_cast<uint32_t>(animations.size()) - 1) {
-			std::cout << "No animation with index " << index << std::endl;
-			return;
-		}
-		Animation& animation = animations[index];
+
+		Animation& animation = animations[animationIndex];
 
 		bool updated = false;
 		for (auto& channel : animation.channels) {
 			AnimationSampler& sampler = animation.samplers[channel.samplerIndex];
-			if (sampler.inputs.size() > sampler.outputsVec4.size()) {
+			if (sampler.inputs.size() > sampler.outputsVec4.size()) 
 				continue;
-			}
 
 			for (size_t i = 0; i < sampler.inputs.size() - 1; i++) {
-				if ((time >= sampler.inputs[i]) && (time <= sampler.inputs[i + 1])) {
-					float u = std::max(0.0f, time - sampler.inputs[i]) / (sampler.inputs[i + 1] - sampler.inputs[i]);
+				if ((animationTimer >= sampler.inputs[i]) && (animationTimer <= sampler.inputs[i + 1])) {
+					float u = std::max(0.0f, animationTimer - sampler.inputs[i]) / (sampler.inputs[i + 1] - sampler.inputs[i]);
 					if (u <= 1.0f) {
 						switch (channel.path) {
 						case AnimationChannel::PathType::TRANSLATION: {
@@ -1281,5 +1298,20 @@ namespace Nyxis
 			}
 		}
 		return nodeFound;
+	}
+
+	void Model::updateModelMatrix(RigidBody& rigidBody)
+	{
+		modelMatrix = glm::mat4(1.0f);
+		modelMatrix = glm::translate(modelMatrix, rigidBody.translation);
+		modelMatrix = glm::scale(modelMatrix, rigidBody.scale);
+
+		// Check if all rotation angles are zero
+		if (glm::all(glm::equal(rigidBody.rotation, glm::vec3(0.0f))))
+			return;
+
+		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 }
