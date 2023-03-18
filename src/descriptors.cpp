@@ -1,3 +1,4 @@
+#include "Nyxis.hpp"
 #include "descriptors.hpp"
 
 // std
@@ -9,7 +10,7 @@ namespace Nyxis
 
   // *************** Descriptor Set Layout Builder *********************
 
-  veDescriptorSetLayout::Builder &veDescriptorSetLayout::Builder::addBinding(
+  DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::addBinding(
       uint32_t binding,
       VkDescriptorType descriptorType,
       VkShaderStageFlags stageFlags,
@@ -25,14 +26,14 @@ namespace Nyxis
     return *this;
   }
 
-  std::unique_ptr<veDescriptorSetLayout> veDescriptorSetLayout::Builder::build() const
+  Ref<DescriptorSetLayout> DescriptorSetLayout::Builder::build() const
   {
-    return std::make_unique<veDescriptorSetLayout>(bindings);
+    return std::make_shared<DescriptorSetLayout>(bindings);
   }
 
   // *************** Descriptor Set Layout *********************
 
-  veDescriptorSetLayout::veDescriptorSetLayout(
+  DescriptorSetLayout::DescriptorSetLayout(
       std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
       : bindings{bindings}
   {
@@ -57,40 +58,40 @@ namespace Nyxis
     }
   }
 
-  veDescriptorSetLayout::~veDescriptorSetLayout()
+  DescriptorSetLayout::~DescriptorSetLayout()
   {
     vkDestroyDescriptorSetLayout(device.device(), descriptorSetLayout, nullptr);
   }
 
   // *************** Descriptor Pool Builder *********************
 
-  veDescriptorPool::Builder &veDescriptorPool::Builder::addPoolSize(
+  DescriptorPool::Builder &DescriptorPool::Builder::addPoolSize(
       VkDescriptorType descriptorType, uint32_t count)
   {
     poolSizes.push_back({descriptorType, count});
     return *this;
   }
 
-  veDescriptorPool::Builder &veDescriptorPool::Builder::setPoolFlags(
+  DescriptorPool::Builder &DescriptorPool::Builder::setPoolFlags(
       VkDescriptorPoolCreateFlags flags)
   {
-    poolFlags = flags;
+    poolFlags = flags;  
     return *this;
   }
-  veDescriptorPool::Builder &veDescriptorPool::Builder::setMaxSets(uint32_t count)
+  DescriptorPool::Builder &DescriptorPool::Builder::setMaxSets(uint32_t count)
   {
     maxSets = count;
     return *this;
   }
 
-  std::unique_ptr<veDescriptorPool> veDescriptorPool::Builder::build() const
+  Ref<DescriptorPool> DescriptorPool::Builder::build() const
   {
-    return std::make_unique<veDescriptorPool>(maxSets, poolFlags, poolSizes);
+    return std::make_shared<DescriptorPool>(maxSets, poolFlags, poolSizes);
   }
 
   // *************** Descriptor Pool *********************
 
-  veDescriptorPool::veDescriptorPool(
+  DescriptorPool::DescriptorPool(
       uint32_t maxSets,
       VkDescriptorPoolCreateFlags poolFlags,
       const std::vector<VkDescriptorPoolSize> &poolSizes)
@@ -109,12 +110,12 @@ namespace Nyxis
     }
   }
 
-  veDescriptorPool::~veDescriptorPool()
+  DescriptorPool::~DescriptorPool()
   {
     vkDestroyDescriptorPool(device.device(), descriptorPool, nullptr);
   }
 
-  bool veDescriptorPool::allocateDescriptor(
+  bool DescriptorPool::allocateDescriptor(
       const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor) const
   {
     VkDescriptorSetAllocateInfo allocInfo{};
@@ -132,7 +133,7 @@ namespace Nyxis
     return true;
   }
 
-  void veDescriptorPool::freeDescriptors(std::vector<VkDescriptorSet> &descriptors) const
+  void DescriptorPool::freeDescriptors(std::vector<VkDescriptorSet> &descriptors) const
   {
     vkFreeDescriptorSets(
         device.device(),
@@ -141,26 +142,22 @@ namespace Nyxis
         descriptors.data());
   }
 
-  void veDescriptorPool::resetPool()
+  void DescriptorPool::resetPool()
   {
     vkResetDescriptorPool(device.device(), descriptorPool, 0);
   }
 
   // *************** Descriptor Writer *********************
 
-  veDescriptorWriter::veDescriptorWriter(veDescriptorSetLayout &setLayout, veDescriptorPool &pool)
+  DescriptorWriter::DescriptorWriter(Ref<DescriptorSetLayout> setLayout, Ref<DescriptorPool> pool)
       : setLayout{setLayout}, pool{pool} {}
 
-  veDescriptorWriter &veDescriptorWriter::writeBuffer(
+  DescriptorWriter &DescriptorWriter::writeBuffer(
       uint32_t binding, VkDescriptorBufferInfo *bufferInfo)
   {
-    assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
+    assert(setLayout->bindings.count(binding) == 1 && "Layout does not contain specified binding");
 
-    auto &bindingDescription = setLayout.bindings[binding];
-
-    assert(
-        bindingDescription.descriptorCount == 1 &&
-        "Binding single descriptor info, but binding expects multiple");
+    auto &bindingDescription = setLayout->bindings[binding];
 
     VkWriteDescriptorSet write{};
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -173,16 +170,12 @@ namespace Nyxis
     return *this;
   }
 
-  veDescriptorWriter &veDescriptorWriter::writeImage(
+  DescriptorWriter &DescriptorWriter::writeImage(
       uint32_t binding, VkDescriptorImageInfo *imageInfo)
   {
-    assert(setLayout.bindings.count(binding) == 1 && "Layout does not contain specified binding");
+    assert(setLayout->bindings.count(binding) == 1 && "Layout does not contain specified binding");
 
-    auto &bindingDescription = setLayout.bindings[binding];
-
-    assert(
-        bindingDescription.descriptorCount == 1 &&
-        "Binding single descriptor info, but binding expects multiple");
+    auto &bindingDescription = setLayout->bindings[binding];
 
     VkWriteDescriptorSet write{};
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -195,9 +188,9 @@ namespace Nyxis
     return *this;
   }
 
-  bool veDescriptorWriter::build(VkDescriptorSet &set)
+  bool DescriptorWriter::build(VkDescriptorSet &set)
   {
-    bool success = pool.allocateDescriptor(setLayout.getDescriptorSetLayout(), set);
+    bool success = pool->allocateDescriptor(setLayout->getDescriptorSetLayout(), set);
     if (!success)
     {
       return false;
@@ -206,13 +199,13 @@ namespace Nyxis
     return true;
   }
 
-  void veDescriptorWriter::overwrite(VkDescriptorSet &set)
+  void DescriptorWriter::overwrite(VkDescriptorSet &set)
   {
     for (auto &write : writes)
     {
       write.dstSet = set;
     }
-    vkUpdateDescriptorSets(pool.device.device(), writes.size(), writes.data(), 0, nullptr);
+    vkUpdateDescriptorSets(pool->device.device(), writes.size(), writes.data(), 0, nullptr);
   }
 
 } // namespace Nyxis

@@ -7,7 +7,7 @@
 namespace Nyxis
 {
 
-    class veDescriptorSetLayout
+    class DescriptorSetLayout
     {
     public:
         class Builder
@@ -20,18 +20,18 @@ namespace Nyxis
                 VkDescriptorType descriptorType,
                 VkShaderStageFlags stageFlags,
                 uint32_t count = 1);
-            std::unique_ptr<veDescriptorSetLayout> build() const;
+            Ref<DescriptorSetLayout> build() const;
 
         private:
           Device &device = Device::get();
             std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings{};
         };
 
-        veDescriptorSetLayout(
+        DescriptorSetLayout(
             std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings);
-        ~veDescriptorSetLayout();
-        veDescriptorSetLayout(const veDescriptorSetLayout &) = delete;
-        veDescriptorSetLayout &operator=(const veDescriptorSetLayout &) = delete;
+        ~DescriptorSetLayout();
+        DescriptorSetLayout(const DescriptorSetLayout &) = delete;
+        DescriptorSetLayout &operator=(const DescriptorSetLayout &) = delete;
 
         VkDescriptorSetLayout getDescriptorSetLayout() const { return descriptorSetLayout; }
 
@@ -40,10 +40,10 @@ namespace Nyxis
         VkDescriptorSetLayout descriptorSetLayout;
         std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
 
-        friend class veDescriptorWriter;
+        friend class DescriptorWriter;
     };
 
-    class veDescriptorPool
+    class DescriptorPool
     {
     public:
         VkDescriptorPool getDescriptorPool() {return descriptorPool;}
@@ -55,7 +55,7 @@ namespace Nyxis
             Builder &addPoolSize(VkDescriptorType descriptorType, uint32_t count);
             Builder &setPoolFlags(VkDescriptorPoolCreateFlags flags);
             Builder &setMaxSets(uint32_t count);
-            std::unique_ptr<veDescriptorPool> build() const;
+            Ref<DescriptorPool> build() const;
 
         private:
           Device &device = Device::get();
@@ -64,13 +64,13 @@ namespace Nyxis
             VkDescriptorPoolCreateFlags poolFlags = 0;
         };
 
-        veDescriptorPool(
+        DescriptorPool(
             uint32_t maxSets,
             VkDescriptorPoolCreateFlags poolFlags,
             const std::vector<VkDescriptorPoolSize> &poolSizes);
-        ~veDescriptorPool();
-        veDescriptorPool(const veDescriptorPool &) = delete;
-        veDescriptorPool &operator=(const veDescriptorPool &) = delete;
+        ~DescriptorPool();
+        DescriptorPool(const DescriptorPool &) = delete;
+        DescriptorPool &operator=(const DescriptorPool &) = delete;
 
         bool allocateDescriptor(
             const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor) const;
@@ -83,23 +83,23 @@ namespace Nyxis
       Device &device = Device::get();
         VkDescriptorPool descriptorPool;
 
-        friend class veDescriptorWriter;
+        friend class DescriptorWriter;
     };
 
-    class veDescriptorWriter
+    class DescriptorWriter
     {
     public:
-        veDescriptorWriter(veDescriptorSetLayout &setLayout, veDescriptorPool &pool);
+        DescriptorWriter(Ref<DescriptorSetLayout> setLayout, Ref<DescriptorPool> pool);
 
-        veDescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo *bufferInfo);
-        veDescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo *imageInfo);
+        DescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo *bufferInfo);
+        DescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo *imageInfo);
 
         bool build(VkDescriptorSet &set);
         void overwrite(VkDescriptorSet &set);
 
     private:
-        veDescriptorSetLayout &setLayout;
-        veDescriptorPool &pool;
+        Ref<DescriptorSetLayout> setLayout;
+        Ref<DescriptorPool> &pool;
         std::vector<VkWriteDescriptorSet> writes;
     };
 

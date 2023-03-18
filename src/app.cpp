@@ -83,14 +83,24 @@ namespace Nyxis
             {
                 ImGui::Begin("Scene Settings");
             	ImGui::Text("SkyMap");
-				ImGui::DragFloat("Exposure", &gltfRenderer.shaderValuesParams.exposure, 0.1, 0.0f, 10.0f);
-				ImGui::DragFloat("Gamma", &gltfRenderer.shaderValuesParams.gamma, 0.1, 0.0f, 10.0f);
-				ImGui::DragFloat3("Light Direction", &gltfRenderer.shaderValuesParams.lightDir.x);
-
+				ImGui::DragFloat("Exposure", &gltfRenderer.sceneInfo.shaderValuesParams.exposure, 0.1, 0.0f, 10.0f);
+				ImGui::DragFloat("Gamma", &gltfRenderer.sceneInfo.shaderValuesParams.gamma, 0.1, 0.0f, 10.0f);
+				ImGui::DragFloat3("Light Direction", &gltfRenderer.sceneInfo.shaderValuesParams.lightDir.x);
                 if (ImGui::InputText("Path", &gltfRenderer.envMapFile, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Reload", ImVec2(75, 25)))
                 {
                     gltfRenderer.SceneUpdated = true;
                 }
+
+				static std::vector<const char *> debugViews = { "None", "Base color", "Normal", "Occlusion", "Emissive", "Metallic", "Roughness" };
+            	static int debugViewIndex = 0;
+                if (ImGui::Combo("Debug View", &debugViewIndex, &debugViews[0], debugViews.size(), debugViews.size()))
+                    gltfRenderer.sceneInfo.shaderValuesParams.debugViewInputs = static_cast<float>(debugViewIndex);
+
+                static std::vector<const char*> pbrEquations = { "None", "Diff (l,n)", "F (l,h)", "G (l,v,h)", "D (h)", "Specular" };
+                static int pbrIndex = 0;
+                if (ImGui::Combo("PBR Equation", &pbrIndex, &pbrEquations[0], pbrEquations.size(), pbrEquations.size()))
+                    gltfRenderer.sceneInfo.shaderValuesParams.debugViewEquation = static_cast<float>(pbrIndex);
+
             	ImGui::End();
             });
 

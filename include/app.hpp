@@ -61,11 +61,11 @@ namespace Nyxis
 		bool PhysicsEnabled = false;
 
 
-        std::unique_ptr<veDescriptorPool> globalPool{};
-        std::unique_ptr<veDescriptorSetLayout> globalSetLayout{};
+        Ref<DescriptorPool> globalPool{};
+        Ref<DescriptorSetLayout> globalSetLayout{};
     	std::vector<VkDescriptorSet> globalDescriptorSets;
 
-		std::unique_ptr<veDescriptorPool> imguiPool{};
+		Ref<DescriptorPool> imguiPool{};
 
 	    std::vector<std::unique_ptr<Buffer>> uboBuffers;
 

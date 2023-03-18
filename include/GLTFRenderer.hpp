@@ -13,18 +13,12 @@ namespace Nyxis
 	class GLTFRenderer
 	{
 	public:
-		struct Textures {
-			TextureCubeMap environmentCube;
-			Texture2D empty;
-			Texture2D lutBrdf;
-			Ref<TextureCubeMap> irradianceCube = nullptr;
-			Ref<TextureCubeMap> prefilteredCube = nullptr;
-		} textures;
+		SceneInfo sceneInfo;
 
 		struct Models
 		{
-			Model scene;
-			Model skybox;
+			Ref<Model> scene;
+			Ref<Model> skybox;
 		} models;
 
 		struct PushConstBlockMaterial {
@@ -44,22 +38,7 @@ namespace Nyxis
 			float alphaMaskCutoff;
 		} pushConstBlockMaterial;
 
-		struct UBOMatrices {
-			glm::mat4 projection;
-			glm::mat4 model;
-			glm::mat4 view;
-			glm::vec3 camPos;
-		} shaderValuesScene, shaderValuesSkybox;
-
-		struct shaderValuesParams {
-			glm::vec4 lightDir;
-			float exposure = 4.5f;
-			float gamma = 2.2f;
-			float prefilteredCubeMipLevels;
-			float scaleIBLAmbient = 1.0f;
-			float debugViewInputs = 0;
-			float debugViewEquation = 0;
-		} shaderValuesParams;
+		UBOMatrices shaderValuesScene{}, shaderValuesSkybox{};
 
 		GLTFRenderer(VkRenderPass renderPass);
 		~GLTFRenderer();

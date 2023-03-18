@@ -5,6 +5,8 @@
 #include "device.hpp"
 #include "buffer.hpp"
 #include "components.hpp"
+#include "descriptors.hpp"
+#include "buffer.hpp"
 
 #include "tinygltf/tiny_gltf.h"
 
@@ -13,6 +15,36 @@
 namespace Nyxis
 {
 	struct Node;
+
+	struct ShaderValuesParams {
+		glm::vec4 lightDir{};
+		float exposure = 4.5f;
+		float gamma = 2.2f;
+		float prefilteredCubeMipLevels;
+		float scaleIBLAmbient = 1.0f;
+		float debugViewInputs = 0;
+		float debugViewEquation = 0;
+	};
+
+	struct UBOMatrices {
+		glm::mat4 projection;
+		glm::mat4 model;
+		glm::mat4 view;
+		glm::vec3 camPos;
+	};
+
+	struct Textures {
+		TextureCubeMap environmentCube;
+		Texture2D empty;
+		Texture2D lutBrdf;
+		Ref<TextureCubeMap> irradianceCube = nullptr;
+		Ref<TextureCubeMap> prefilteredCube = nullptr;
+	};
+
+	struct SceneInfo{
+		Textures textures;
+		ShaderValuesParams shaderValuesParams;
+	};
 
 	struct BoundingBox {
 		glm::vec3 min;
@@ -168,8 +200,6 @@ namespace Nyxis
 	};
 
 	struct Model {
-		// Model() = default;
-		// Model(const std::string& filename);
 		Device& device = Device::get();
 
 		struct Vertex {
@@ -221,6 +251,12 @@ namespace Nyxis
 		uint32_t animationIndex = 0;
 		float animationTimer = 0.0f;
 
+		std::vector<Ref<Buffer>> uniformBuffers;
+		std::vector<VkDescriptorSet> descriptorSets;
+
+		Model();
+		Model(const std::string& filename);
+
 		void destroy();
 		void loadNode(Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& model, LoaderInfo& loaderInfo, float globalscale);
 		void getNodeProps(const tinygltf::Node& node, const tinygltf::Model& model, size_t& vertexCount, size_t& indexCount);
@@ -240,5 +276,27 @@ namespace Nyxis
 		Node* findNode(Node* parent, uint32_t index);
 		Node* nodeFromIndex(uint32_t index);
 		void updateModelMatrix(RigidBody& rigidBody);
+		void setupDescriptorSet(SceneInfo& sceneInfo, std::vector<Ref<Buffer>> shaderValuesBuffer);
+		void setupNodeDescriptorSet(const Node* node);
+		void updateUniformBuffer(uint32_t index, UBOMatrices* ubo);
+		VkDescriptorSet getDescriptorSet(uint32_t index) { return descriptorSets[index]; }
+	};
+
+	class ModelManager
+	{
+		friend struct Model;
+
+		static Ref<DescriptorPool> GetDescriptorPool();
+		static Ref<DescriptorSetLayout> GetModelDescriptorSetLayout();
+		static Ref<DescriptorSetLayout> GetMaterialDescriptorSetLayout();
+		static Ref<DescriptorSetLayout> GetNodeDescriptorSetLayout();
+		static void Setup();
+
+		inline static Ref<DescriptorPool> m_DescriptorPool = nullptr;
+		inline static Ref<DescriptorSetLayout> m_ModelDescriptorSetLayout = nullptr;
+		inline static Ref<DescriptorSetLayout> m_MaterialDescriptorSetLayout = nullptr;
+		inline static Ref<DescriptorSetLayout> m_NodeDescriptorSetLayout = nullptr;
+
+		inline static bool m_SetupState = false;
 	};
 }

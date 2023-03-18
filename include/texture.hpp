@@ -69,6 +69,30 @@ namespace Nyxis{
 
 	class TextureCubeMap : public Texture {
 	public:
+		TextureCubeMap& operator=(const TextureCubeMap& other)
+		{
+			// Self-assignment check
+			if (this == &other) {
+				return *this;
+			}
+
+			// Destroy the current resources of this object
+			Destroy();
+
+			// Copy the resources from the other object
+			m_Image = other.m_Image;
+			m_ImageLayout = other.m_ImageLayout;
+			m_DeviceMemory = other.m_DeviceMemory;
+			m_View = other.m_View;
+			m_Width = other.m_Width;
+			m_Height = other.m_Height;
+			m_MipLevels = other.m_MipLevels;
+			m_LayerCount = other.m_LayerCount;
+			m_Descriptor = other.m_Descriptor;
+			m_Sampler = other.m_Sampler;
+
+			return *this;
+		}
 		void LoadFromFile(
 			std::string filename,
 			VkFormat format,

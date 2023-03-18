@@ -12,7 +12,7 @@ namespace Nyxis
 	TextureRenderSystem::TextureRenderSystem(VkRenderPass RenderPass, VkDescriptorSetLayout globalDescriptorSetLayout)
 	{
 		m_TexturePool.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-		auto framePoolBuilder = veDescriptorPool::Builder()
+		auto framePoolBuilder = DescriptorPool::Builder()
 			.setMaxSets(1000)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
@@ -59,7 +59,7 @@ namespace Nyxis
 		// 	  {
 		// 		  auto imageInfo = texture.GetDescriptorImageInfo();
 		// 		  VkDescriptorSet descriptorSet;
-		// 		  veDescriptorWriter(*m_TextureSetLayout, *m_TexturePool[frameInfo.frameIndex])
+		// 		  DescriptorWriter(*m_TextureSetLayout, *m_TexturePool[frameInfo.frameIndex])
 		// 		        .writeImage(0, &imageInfo)
 		// 			    .build(descriptorSet);
 		//
@@ -106,7 +106,7 @@ namespace Nyxis
 		pushConstantRange.size = sizeof(TexturePushConstantData);
 
 		m_TextureSetLayout =
-			veDescriptorSetLayout::Builder()
+			DescriptorSetLayout::Builder()
 				.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
 				.build();
 

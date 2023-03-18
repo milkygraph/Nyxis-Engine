@@ -27,7 +27,7 @@ namespace Nyxis
         Entity m_SelectedEntity;
 		bool m_ShowEntityLoader = false;
         std::vector<std::function<void()>> functions;
-    	std::unique_ptr<veDescriptorPool> imguiPool{};
+    	Ref<DescriptorPool> imguiPool{};
 
 		VkSampler m_Sampler;
 		std::vector<VkDescriptorSet> dst;

@@ -5,9 +5,13 @@ namespace Nyxis
 {
 	GLTFRenderer::GLTFRenderer(VkRenderPass renderPass)
 	{
-		rigidBody.translation = { 1.0f, 2.0f, 3.0f };
-		rigidBody.rotation = { 0.0f, 0.0f , 0.0f };
-		rigidBody.scale = { 1.0f, 1.0f, 1.0f };
+		sceneInfo.shaderValuesParams.lightDir = { 1.0f, 1.0f, 1.0f, 0.5f };
+		sceneInfo.shaderValuesParams.exposure = 4.5f;
+		sceneInfo.shaderValuesParams.gamma = 2.2f;
+		sceneInfo.shaderValuesParams.prefilteredCubeMipLevels = 0.0f;
+		sceneInfo.shaderValuesParams.scaleIBLAmbient = 1.0f;
+		sceneInfo.shaderValuesParams.debugViewInputs = 0;
+		sceneInfo.shaderValuesParams.debugViewEquation = 0;
 
 		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		uniformBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -18,6 +22,7 @@ namespace Nyxis
 		SetupDescriptorPool();
 		SetupDescriptorSets();
 		PreparePipelines(renderPass);
+
 	}
 
 	GLTFRenderer::~GLTFRenderer()
@@ -42,32 +47,33 @@ namespace Nyxis
 		UpdateUniformBuffers(frameInfo.scene);
 		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[frameInfo.frameIndex].skybox, 0, nullptr);
 		vkCmdBindPipeline(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
-		models.skybox.draw(frameInfo.commandBuffer);
+		models.skybox->draw(frameInfo.commandBuffer);
 
+		auto modelView = frameInfo.scene.m_Registry.view<Model>();
 		VkDeviceSize offsets[] = { 0 };
 
-		vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, &models.scene.vertices.buffer, offsets);
+		vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, &models.scene->vertices.buffer, offsets);
 
-		if (models.scene.indices.buffer != VK_NULL_HANDLE)
-			vkCmdBindIndexBuffer(frameInfo.commandBuffer, models.scene.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+		if (models.scene->indices.buffer != VK_NULL_HANDLE)
+			vkCmdBindIndexBuffer(frameInfo.commandBuffer, models.scene->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
 
 		boundPipeline = VK_NULL_HANDLE;
 
-		for (auto node : models.scene.nodes)
+		for (auto node : models.scene->nodes)
 			RenderNode(node, frameInfo, Material::ALPHAMODE_OPAQUE);
 		// Alpha masked primitives
-		for (auto node : models.scene.nodes)
+		for (auto node : models.scene->nodes)
 			RenderNode(node, frameInfo, Material::ALPHAMODE_MASK);
 		// Transparent primitives
 		// TODO: Correct depth sorting
-		for (auto node : models.scene.nodes)
+		for (auto node : models.scene->nodes)
 			RenderNode(node, frameInfo, Material::ALPHAMODE_BLEND);
 	}
 
 	void GLTFRenderer::UpdateAnimation(float frameTime)
 	{
 		if (animate) {
-			models.scene.updateAnimation(frameTime);
+			models.scene->updateAnimation(frameTime);
 		}
 	}
 
@@ -76,7 +82,7 @@ namespace Nyxis
 		for (auto& uniformBuffer : uniformBuffers) {
 			uniformBuffer.scene = std::make_shared<Buffer>(sizeof(shaderValuesScene), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			uniformBuffer.skybox = std::make_shared<Buffer>(sizeof(shaderValuesSkybox), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			uniformBuffer.params = std::make_shared<Buffer>(sizeof(shaderValuesParams), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			uniformBuffer.params = std::make_shared<Buffer>(sizeof(sceneInfo.shaderValuesParams), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 			uniformBuffer.scene->map();
 			uniformBuffer.skybox->map();
@@ -90,8 +96,8 @@ namespace Nyxis
 		shaderValuesScene.projection = scene.m_Camera->getProjectionMatrix();
 		shaderValuesScene.view = scene.m_Camera->getViewMatrix();
 
-		models.scene.updateModelMatrix(rigidBody);
-		shaderValuesScene.model = models.scene.modelMatrix;
+		models.scene->updateModelMatrix(rigidBody);
+		shaderValuesScene.model = models.scene->modelMatrix;
 
 		auto& rigidBody = scene.m_Registry.get<RigidBody>(scene.m_CameraEntity);
 		
@@ -106,38 +112,41 @@ namespace Nyxis
 		shaderValuesSkybox.view = scene.m_Camera->getViewMatrix();
 		shaderValuesSkybox.model = glm::mat4(glm::mat3(shaderValuesSkybox.view));
 
-		for (auto& uniformBuffer : uniformBuffers)
+		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			uniformBuffer.params->writeToBuffer(&shaderValuesParams);
-			uniformBuffer.scene->writeToBuffer(&shaderValuesScene);
-			uniformBuffer.skybox->writeToBuffer(&shaderValuesSkybox);
+			uniformBuffers[i].params->writeToBuffer(&sceneInfo.shaderValuesParams);
+			uniformBuffers[i].skybox->writeToBuffer(&shaderValuesSkybox);
+			models.scene->updateUniformBuffer(i, &shaderValuesScene);
 
-			uniformBuffer.params->flush();
-			uniformBuffer.scene->flush();
-			uniformBuffer.skybox->flush();
+			uniformBuffers[i].params->flush();
+			uniformBuffers[i].skybox->flush();
 		}
 	}
 
 	void GLTFRenderer::LoadEnvironment(std::string& filename)
 	{
 		LOG_INFO("Loading environment from {}", filename);
-		if (textures.environmentCube.m_Image) {
-			textures.environmentCube.Destroy();
-			textures.irradianceCube->Destroy();
-			textures.prefilteredCube->Destroy();
+		if (sceneInfo.textures.environmentCube.m_Image) {
+			sceneInfo.textures.environmentCube.Destroy();
+			sceneInfo.textures.irradianceCube->Destroy();
+			sceneInfo.textures.prefilteredCube->Destroy();
 		}
-		textures.environmentCube.LoadFromFile(filename, VK_FORMAT_R16G16B16A16_SFLOAT);
+		sceneInfo.textures.environmentCube.LoadFromFile(filename, VK_FORMAT_R16G16B16A16_SFLOAT);
 		GenerateCubemaps();
 	}
 
 	void GLTFRenderer::LoadModel(std::string& filename)
 	{
 		LOG_INFO("Loading model from {}", filename);
-		models.scene.destroy();
-		animationIndex = 0;
-		animationTimer = 0.0f;
+		// models.scene.destroy();
+		// animationIndex = 0;
+		// animationTimer = 0.0f;
 		auto tStart = std::chrono::high_resolution_clock::now();
-		models.scene.loadFromFile(filename);
+		// models.scene.loadFromFile(filename);
+
+		models.scene = std::make_shared<Model>();
+		models.scene->loadFromFile(filename);
+
 		auto tFileLoad = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
 		LOG_INFO("Loading took {} ms", tFileLoad);
 	}
@@ -148,14 +157,15 @@ namespace Nyxis
 		std::map<std::string, std::string> environments;
 		// readDirectory("../assets/environments", "*.ktx", environments, false);
 
-		textures.empty.LoadFromFile("../assets/textures/empty.ktx", VK_FORMAT_R8G8B8A8_UNORM);
+		sceneInfo.textures.empty.LoadFromFile("../assets/textures/empty.ktx", VK_FORMAT_R8G8B8A8_UNORM);
 
-		std::string sceneFile = "../models/microphone/scene.gltf";
 		envMapFile = "../assets/environments/sky.ktx";
+		std::string sceneFile = "../models/roboto/scene.gltf";
 
 		LoadModel(sceneFile);
 
-		models.skybox.loadFromFile("../models/Box/glTF-Embedded/Box.gltf");
+		models.skybox = std::make_shared<Model>();
+		models.skybox->loadFromFile("../models/Box/glTF-Embedded/Box.gltf");
 
 		LoadEnvironment(envMapFile);
 	}
@@ -197,7 +207,7 @@ namespace Nyxis
 		// Environment samplers (radiance, irradiance, brdf lut)
 		imageSamplerCount += 3;
 
-		std::vector<Model*> modellist = { &models.skybox, &models.scene };
+		std::vector<Ref<Model>> modellist = { models.skybox, models.scene};
 		for (auto& model : modellist) {
 			for (auto& material : model->materials) {
 				imageSamplerCount += 5;
@@ -229,6 +239,15 @@ namespace Nyxis
 			Descriptor sets
 		*/
 
+		std::vector<Ref<Buffer>> shaderValues;
+		shaderValues.reserve(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			shaderValues.push_back(uniformBuffers[i].params);
+		}
+
+		models.scene->setupDescriptorSet(sceneInfo, shaderValues);
+
 		// Scene (matrices and environment maps)
 		{
 			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
@@ -243,57 +262,8 @@ namespace Nyxis
 			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
 			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
 			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.scene);
-
-			for (auto i = 0; i < descriptorSets.size(); i++) {
-
-				VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
-				descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-				descriptorSetAllocInfo.descriptorPool = descriptorPool;
-				descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayouts.scene;
-				descriptorSetAllocInfo.descriptorSetCount = 1;
-				vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &descriptorSets[i].scene);
-
-				std::array<VkWriteDescriptorSet, 5> writeDescriptorSets{};
-
-				writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				writeDescriptorSets[0].descriptorCount = 1;
-				writeDescriptorSets[0].dstSet = descriptorSets[i].scene;
-				writeDescriptorSets[0].dstBinding = 0;
-				writeDescriptorSets[0].pBufferInfo = uniformBuffers[i].scene->getDescriptorInfo();
-
-				writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				writeDescriptorSets[1].descriptorCount = 1;
-				writeDescriptorSets[1].dstSet = descriptorSets[i].scene;
-				writeDescriptorSets[1].dstBinding = 1;
-				writeDescriptorSets[1].pBufferInfo = uniformBuffers[i].params->getDescriptorInfo();
-
-				writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writeDescriptorSets[2].descriptorCount = 1;
-				writeDescriptorSets[2].dstSet = descriptorSets[i].scene;
-				writeDescriptorSets[2].dstBinding = 2;
-				writeDescriptorSets[2].pImageInfo = &textures.irradianceCube->m_Descriptor;
-
-				writeDescriptorSets[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeDescriptorSets[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writeDescriptorSets[3].descriptorCount = 1;
-				writeDescriptorSets[3].dstSet = descriptorSets[i].scene;
-				writeDescriptorSets[3].dstBinding = 3;
-				writeDescriptorSets[3].pImageInfo = &textures.prefilteredCube->m_Descriptor;
-
-				writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writeDescriptorSets[4].descriptorCount = 1;
-				writeDescriptorSets[4].dstSet = descriptorSets[i].scene;
-				writeDescriptorSets[4].dstBinding = 4;
-				writeDescriptorSets[4].pImageInfo = &textures.lutBrdf.m_Descriptor;
-
-				vkUpdateDescriptorSets(device.device(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
-			}
 		}
-
+		
 		// Material (samplers)
 		{
 			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
@@ -308,73 +278,19 @@ namespace Nyxis
 			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
 			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
 			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.material);
-
-			// Per-Material descriptor sets
-			for (auto& material : models.scene.materials) {
-				VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
-				descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-				descriptorSetAllocInfo.descriptorPool = descriptorPool;
-				descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayouts.material;
-				descriptorSetAllocInfo.descriptorSetCount = 1;
-				vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &material.descriptorSet);
-
-				std::vector<VkDescriptorImageInfo> imageDescriptors = {
-					textures.empty.m_Descriptor,
-					textures.empty.m_Descriptor,
-					material.normalTexture ? material.normalTexture->descriptor : textures.empty.m_Descriptor,
-					material.occlusionTexture ? material.occlusionTexture->descriptor : textures.empty.m_Descriptor,
-					material.emissiveTexture ? material.emissiveTexture->descriptor : textures.empty.m_Descriptor
-				};
-
-				// TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is present
-
-				if (material.pbrWorkflows.metallicRoughness) {
-					if (material.baseColorTexture) {
-						imageDescriptors[0] = material.baseColorTexture->descriptor;
-					}
-					if (material.metallicRoughnessTexture) {
-						imageDescriptors[1] = material.metallicRoughnessTexture->descriptor;
-					}
-				}
-
-				if (material.pbrWorkflows.specularGlossiness) {
-					if (material.extension.diffuseTexture) {
-						imageDescriptors[0] = material.extension.diffuseTexture->descriptor;
-					}
-					if (material.extension.specularGlossinessTexture) {
-						imageDescriptors[1] = material.extension.specularGlossinessTexture->descriptor;
-					}
-				}
-
-				std::array<VkWriteDescriptorSet, 5> writeDescriptorSets{};
-				for (size_t i = 0; i < imageDescriptors.size(); i++) {
-					writeDescriptorSets[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					writeDescriptorSets[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					writeDescriptorSets[i].descriptorCount = 1;
-					writeDescriptorSets[i].dstSet = material.descriptorSet;
-					writeDescriptorSets[i].dstBinding = static_cast<uint32_t>(i);
-					writeDescriptorSets[i].pImageInfo = &imageDescriptors[i];
-				}
-
-				vkUpdateDescriptorSets(device.device(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
-			}
-
-			// Model node (matrices)
-			{
-				std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
-					{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr },
-				};
-				VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
-				descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-				descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
-				descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
-				vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.node);
-
-				// Per-Node descriptor set
-				for (auto& node : models.scene.nodes) {
-					SetupNodeDescriptorSet(node);
-				}
-			}
+		
+		}
+		
+		// Model node (matrices)
+		{
+			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
+				{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr },
+			};
+			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
+			descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
+			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
+			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.node);
 		}
 
 		UpdateSkyboxDescriptorSets();
@@ -385,7 +301,7 @@ namespace Nyxis
 		for (auto descriptorSet : descriptorSets) {
 			vkFreeDescriptorSets(device.device(), descriptorPool, 1, &descriptorSet.scene);
 			vkFreeDescriptorSets(device.device(), descriptorPool, 1, &descriptorSet.skybox);
-		}	
+		}
 	}
 
 
@@ -420,7 +336,7 @@ namespace Nyxis
 			writeDescriptorSets[2].descriptorCount = 1;
 			writeDescriptorSets[2].dstSet = descriptorSets[i].skybox;
 			writeDescriptorSets[2].dstBinding = 2;
-			writeDescriptorSets[2].pImageInfo = &textures.prefilteredCube->m_Descriptor;
+			writeDescriptorSets[2].pImageInfo = &sceneInfo.textures.prefilteredCube->m_Descriptor;
 
 			vkUpdateDescriptorSets(device.device(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 		}
@@ -451,7 +367,7 @@ namespace Nyxis
 					}
 
 					const std::vector<VkDescriptorSet> descriptorsets = {
-						descriptorSets[frameInfo.frameIndex].scene,
+						models.scene->getDescriptorSet(frameInfo.frameIndex),
 						primitive->material.descriptorSet,
 						node->mesh->uniformBuffer.descriptorSet,
 					};
@@ -717,15 +633,15 @@ namespace Nyxis
 		imageCI.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageCI.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageCI.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-		vkCreateImage(device.device(), &imageCI, nullptr, &textures.lutBrdf.m_Image);
+		vkCreateImage(device.device(), &imageCI, nullptr, &sceneInfo.textures.lutBrdf.m_Image);
 		VkMemoryRequirements memReqs;
-		vkGetImageMemoryRequirements(device.device(), textures.lutBrdf.m_Image, &memReqs);
+		vkGetImageMemoryRequirements(device.device(), sceneInfo.textures.lutBrdf.m_Image, &memReqs);
 		VkMemoryAllocateInfo memAllocInfo{};
 		memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		memAllocInfo.allocationSize = memReqs.size;
 		memAllocInfo.memoryTypeIndex = device.findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		vkAllocateMemory(device.device(), &memAllocInfo, nullptr, &textures.lutBrdf.m_DeviceMemory);
-		vkBindImageMemory(device.device(), textures.lutBrdf.m_Image, textures.lutBrdf.m_DeviceMemory, 0);
+		vkAllocateMemory(device.device(), &memAllocInfo, nullptr, &sceneInfo.textures.lutBrdf.m_DeviceMemory);
+		vkBindImageMemory(device.device(), sceneInfo.textures.lutBrdf.m_Image, sceneInfo.textures.lutBrdf.m_DeviceMemory, 0);
 
 		// View
 		VkImageViewCreateInfo viewCI{};
@@ -736,8 +652,8 @@ namespace Nyxis
 		viewCI.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		viewCI.subresourceRange.levelCount = 1;
 		viewCI.subresourceRange.layerCount = 1;
-		viewCI.image = textures.lutBrdf.m_Image;
-		vkCreateImageView(device.device(), &viewCI, nullptr, &textures.lutBrdf.m_View);
+		viewCI.image = sceneInfo.textures.lutBrdf.m_Image;
+		vkCreateImageView(device.device(), &viewCI, nullptr, &sceneInfo.textures.lutBrdf.m_View);
 
 		// Sampler
 		VkSamplerCreateInfo samplerCI{};
@@ -752,7 +668,7 @@ namespace Nyxis
 		samplerCI.maxLod = 1.0f;
 		samplerCI.maxAnisotropy = 1.0f;
 		samplerCI.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-		vkCreateSampler(device.device(), &samplerCI, nullptr, &textures.lutBrdf.m_Sampler);
+		vkCreateSampler(device.device(), &samplerCI, nullptr, &sceneInfo.textures.lutBrdf.m_Sampler);
 
 		// FB, Att, RP, Pipe, etc.
 		VkAttachmentDescription attDesc{};
@@ -806,7 +722,7 @@ namespace Nyxis
 		framebufferCI.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferCI.renderPass = renderpass;
 		framebufferCI.attachmentCount = 1;
-		framebufferCI.pAttachments = &textures.lutBrdf.m_View;
+		framebufferCI.pAttachments = &sceneInfo.textures.lutBrdf.m_View;
 		framebufferCI.width = dim;
 		framebufferCI.height = dim;
 		framebufferCI.layers = 1;
@@ -942,9 +858,9 @@ namespace Nyxis
 		vkDestroyFramebuffer(device.device(), framebuffer, nullptr);
 		vkDestroyDescriptorSetLayout(device.device(), descriptorsetlayout, nullptr);
 
-		textures.lutBrdf.m_Descriptor.imageView = textures.lutBrdf.m_View;
-		textures.lutBrdf.m_Descriptor.sampler = textures.lutBrdf.m_Sampler;
-		textures.lutBrdf.m_Descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		sceneInfo.textures.lutBrdf.m_Descriptor.imageView = sceneInfo.textures.lutBrdf.m_View;
+		sceneInfo.textures.lutBrdf.m_Descriptor.sampler = sceneInfo.textures.lutBrdf.m_Sampler;
+		sceneInfo.textures.lutBrdf.m_Descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		auto tEnd = std::chrono::high_resolution_clock::now();
 		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
@@ -1185,7 +1101,7 @@ namespace Nyxis
 			writeDescriptorSet.descriptorCount = 1;
 			writeDescriptorSet.dstSet = descriptorset;
 			writeDescriptorSet.dstBinding = 0;
-			writeDescriptorSet.pImageInfo = &textures.environmentCube.m_Descriptor;
+			writeDescriptorSet.pImageInfo = &sceneInfo.textures.environmentCube.m_Descriptor;
 			vkUpdateDescriptorSets(device.device(), 1, &writeDescriptorSet, 0, nullptr);
 
 			struct PushBlockIrradiance {
@@ -1396,7 +1312,7 @@ namespace Nyxis
 
 					VkDeviceSize offsets[1] = { 0 };
 
-					models.skybox.draw(cmdBuf);
+					models.skybox->draw(cmdBuf);
 
 					vkCmdEndRenderPass(cmdBuf);
 
@@ -1493,11 +1409,11 @@ namespace Nyxis
 
 			switch (target) {
 			case IRRADIANCE:
-				textures.irradianceCube = cubemap;
+				sceneInfo.textures.irradianceCube = cubemap;
 				break;
 			case PREFILTEREDENV:
-				textures.prefilteredCube = cubemap;
-				shaderValuesParams.prefilteredCubeMipLevels = static_cast<float>(numMips);
+				sceneInfo.textures.prefilteredCube = cubemap;
+				sceneInfo.shaderValuesParams.prefilteredCubeMipLevels = static_cast<float>(numMips);
 				break;
 			}
 

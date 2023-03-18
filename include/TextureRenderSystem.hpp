@@ -25,8 +25,8 @@ namespace Nyxis
 		std::unique_ptr<vePipeline> pPipeline;
 		VkPipelineLayout m_PipelineLayout;
 		
-		std::vector<std::unique_ptr<veDescriptorPool>> m_TexturePool{};
+		std::vector<Ref<DescriptorPool>> m_TexturePool{};
 		std::vector<VkDescriptorSet> m_TextureDescriptorSets;
-		std::unique_ptr<veDescriptorSetLayout> m_TextureSetLayout;
+		Ref<DescriptorSetLayout> m_TextureSetLayout;
 	};
 }

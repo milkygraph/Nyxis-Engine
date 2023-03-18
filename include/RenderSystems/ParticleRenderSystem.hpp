@@ -32,8 +32,8 @@ namespace Nyxis
 		VkPipelineLayout m_PipelineLayout;
 		std::shared_ptr<vePipeline> m_Pipeline;
 		
-		std::vector<std::unique_ptr<veDescriptorPool>> m_ParticlePool{};
-		std::unique_ptr<veDescriptorSetLayout> m_ParticleSetLayout;
+		std::vector<Ref<DescriptorPool>> m_ParticlePool{};
+		Ref<DescriptorSetLayout> m_ParticleSetLayout;
 
 		std::vector<VkDescriptorSet>m_ParticleSets{};
 	};

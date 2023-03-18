@@ -402,16 +402,35 @@ namespace Nyxis
 			delete child;
 	}
 
-	// Model::Model(const std::string& filename)
-	// {
-	// 	LOG_INFO("Loading model from {}", filename);
-	// 	animationIndex = 0;
-	// 	animationTimer = 0.0f;
-	// 	auto tStart = std::chrono::high_resolution_clock::now();
-	// 	loadFromFile(filename);
-	// 	auto tFileLoad = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
-	// 	LOG_INFO("Loading took {} ms", tFileLoad);
-	// }
+	Model::Model()
+	{
+		uniformBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
+			uniformBuffers[i] = std::make_shared<Buffer>(sizeof(UBOMatrices), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			uniformBuffers[i]->map();
+		}
+
+		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+	}
+
+	Model::Model(const std::string& filename)
+	{
+		LOG_INFO("Loading model from {}", filename);
+		animationIndex = 0;
+		animationTimer = 0.0f;
+		auto tStart = std::chrono::high_resolution_clock::now();
+		loadFromFile(filename);
+		auto tFileLoad = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
+		LOG_INFO("Loading took {} ms", tFileLoad);
+
+		uniformBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
+			uniformBuffers[i] = std::make_shared<Buffer>(sizeof(UBOMatrices), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			uniformBuffers[i]->map();
+		}
+
+		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+	}
 
 	// Model
 	void Model::destroy()
@@ -1313,5 +1332,273 @@ namespace Nyxis
 		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
 		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+
+	void Model::setupDescriptorSet(SceneInfo& sceneInfo, std::vector<Ref<Buffer>> shaderValuesBuffer)
+	{
+
+		struct Layouts
+		{
+			VkDescriptorSetLayout scene = ModelManager::GetModelDescriptorSetLayout()->getDescriptorSetLayout();
+			VkDescriptorSetLayout material = ModelManager::GetMaterialDescriptorSetLayout()->getDescriptorSetLayout();
+			VkDescriptorSetLayout node = ModelManager::GetNodeDescriptorSetLayout()->getDescriptorSetLayout();
+		} descriptorSetLayouts;
+
+		VkDescriptorPool descriptorPool = ModelManager::GetDescriptorPool()->getDescriptorPool();
+		// Scene (matrices and environment maps)
+		{
+			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
+				{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+				{ 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+				{ 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+				{ 3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+				{ 4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+			};
+			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
+			descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
+			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
+			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.scene);
+		
+			for (auto i = 0; i < descriptorSets.size(); i++) {
+		
+				VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
+				descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+				descriptorSetAllocInfo.descriptorPool = descriptorPool;
+				descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayouts.scene;
+				descriptorSetAllocInfo.descriptorSetCount = 1;
+				vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &descriptorSets[i]);
+		
+				std::array<VkWriteDescriptorSet, 5> writeDescriptorSets{};
+		
+				writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				writeDescriptorSets[0].descriptorCount = 1;
+				writeDescriptorSets[0].dstSet = descriptorSets[i];
+				writeDescriptorSets[0].dstBinding = 0;
+				writeDescriptorSets[0].pBufferInfo = uniformBuffers[i]->getDescriptorInfo();
+		
+				writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				writeDescriptorSets[1].descriptorCount = 1;
+				writeDescriptorSets[1].dstSet = descriptorSets[i];
+				writeDescriptorSets[1].dstBinding = 1;
+				writeDescriptorSets[1].pBufferInfo = shaderValuesBuffer[i]->getDescriptorInfo();
+		
+				writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writeDescriptorSets[2].descriptorCount = 1;
+				writeDescriptorSets[2].dstSet = descriptorSets[i];
+				writeDescriptorSets[2].dstBinding = 2;
+				writeDescriptorSets[2].pImageInfo = &sceneInfo.textures.irradianceCube->m_Descriptor;
+		
+				writeDescriptorSets[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeDescriptorSets[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writeDescriptorSets[3].descriptorCount = 1;
+				writeDescriptorSets[3].dstSet = descriptorSets[i];
+				writeDescriptorSets[3].dstBinding = 3;
+				writeDescriptorSets[3].pImageInfo = &sceneInfo.textures.prefilteredCube->m_Descriptor;
+		
+				writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writeDescriptorSets[4].descriptorCount = 1;
+				writeDescriptorSets[4].dstSet = descriptorSets[i];
+				writeDescriptorSets[4].dstBinding = 4;
+				writeDescriptorSets[4].pImageInfo = &sceneInfo.textures.lutBrdf.m_Descriptor;
+		
+				vkUpdateDescriptorSets(device.device(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+			}
+		}
+		
+		// Material (samplers)
+		{
+			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
+				{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+				{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+				{ 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+				{ 3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+				{ 4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+			};
+			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
+			descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
+			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
+			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.material);
+		
+			// Per-Material descriptor sets
+			for (auto& material : materials) {
+				VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
+				descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+				descriptorSetAllocInfo.descriptorPool = descriptorPool;
+				descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayouts.material;
+				descriptorSetAllocInfo.descriptorSetCount = 1;
+				vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &material.descriptorSet);
+		
+				std::vector<VkDescriptorImageInfo> imageDescriptors = {
+					sceneInfo.textures.empty.m_Descriptor,
+					sceneInfo.textures.empty.m_Descriptor,
+					material.normalTexture ? material.normalTexture->descriptor : sceneInfo.textures.empty.m_Descriptor,
+					material.occlusionTexture ? material.occlusionTexture->descriptor : sceneInfo.textures.empty.m_Descriptor,
+					material.emissiveTexture ? material.emissiveTexture->descriptor : sceneInfo.textures.empty.m_Descriptor
+				};
+		
+				// TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is present
+		
+				if (material.pbrWorkflows.metallicRoughness) {
+					if (material.baseColorTexture) {
+						imageDescriptors[0] = material.baseColorTexture->descriptor;
+					}
+					if (material.metallicRoughnessTexture) {
+						imageDescriptors[1] = material.metallicRoughnessTexture->descriptor;
+					}
+				}
+		
+				if (material.pbrWorkflows.specularGlossiness) {
+					if (material.extension.diffuseTexture) {
+						imageDescriptors[0] = material.extension.diffuseTexture->descriptor;
+					}
+					if (material.extension.specularGlossinessTexture) {
+						imageDescriptors[1] = material.extension.specularGlossinessTexture->descriptor;
+					}
+				}
+		
+				std::array<VkWriteDescriptorSet, 5> writeDescriptorSets{};
+				for (size_t i = 0; i < imageDescriptors.size(); i++) {
+					writeDescriptorSets[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					writeDescriptorSets[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					writeDescriptorSets[i].descriptorCount = 1;
+					writeDescriptorSets[i].dstSet = material.descriptorSet;
+					writeDescriptorSets[i].dstBinding = static_cast<uint32_t>(i);
+					writeDescriptorSets[i].pImageInfo = &imageDescriptors[i];
+				}
+		
+				vkUpdateDescriptorSets(device.device(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+			}
+		
+			// Model node (matrices)
+			{
+				std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
+					{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr },
+				};
+				VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
+				descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+				descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
+				descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
+				vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.node);
+		
+				// Per-Node descriptor set
+				for (auto& node : nodes) {
+					setupNodeDescriptorSet(node);
+				}
+			}
+		}
+
+		// Setup Node descriptor sets
+		for(auto& node : nodes)
+		{
+			setupNodeDescriptorSet(node);
+		}
+	}
+
+	void Model::setupNodeDescriptorSet(const Node* node)
+	{
+		auto descriptorPool = ModelManager::GetDescriptorPool()->getDescriptorPool();
+		auto descriptorSetLayout = ModelManager::GetNodeDescriptorSetLayout()->getDescriptorSetLayout();
+		if (node->mesh) {
+			VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
+			descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			descriptorSetAllocInfo.descriptorPool = descriptorPool;
+			descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayout;
+			descriptorSetAllocInfo.descriptorSetCount = 1;
+			vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &node->mesh->uniformBuffer.descriptorSet);
+
+			VkWriteDescriptorSet writeDescriptorSet{};
+			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			writeDescriptorSet.descriptorCount = 1;
+			writeDescriptorSet.dstSet = node->mesh->uniformBuffer.descriptorSet;
+			writeDescriptorSet.dstBinding = 0;
+			writeDescriptorSet.pBufferInfo = &node->mesh->uniformBuffer.descriptor;
+
+			vkUpdateDescriptorSets(device.device(), 1, &writeDescriptorSet, 0, nullptr);
+		}
+		for (const auto& child : node->children) {
+			setupNodeDescriptorSet(child);
+		}
+	}
+
+	void Model::updateUniformBuffer(uint32_t index, UBOMatrices* ubo)
+	{
+		uniformBuffers[index]->writeToBuffer(ubo);
+		uniformBuffers[index]->flush();
+	}
+
+	Ref<DescriptorPool> ModelManager::GetDescriptorPool()
+	{
+		if (m_SetupState == false)
+		{
+			Setup();
+			m_SetupState = true;
+		}
+		return m_DescriptorPool;
+	}
+
+	void ModelManager::Setup()
+	{
+		m_DescriptorPool = DescriptorPool::Builder()
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
+			.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
+			.build();
+
+		m_ModelDescriptorSetLayout = DescriptorSetLayout::Builder()
+			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT)
+			.addBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.build();
+
+		m_MaterialDescriptorSetLayout = DescriptorSetLayout::Builder()
+			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.build();
+
+		m_NodeDescriptorSetLayout = DescriptorSetLayout::Builder()
+			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT)
+			.build();
+	}
+
+	Ref<DescriptorSetLayout> ModelManager::GetModelDescriptorSetLayout()
+	{
+		if (m_SetupState == false)
+		{
+			Setup();
+			m_SetupState = true;
+		}
+		return m_ModelDescriptorSetLayout;
+	}
+
+	Ref<DescriptorSetLayout> ModelManager::GetMaterialDescriptorSetLayout()
+	{
+		if (m_SetupState == false)
+		{
+			Setup();
+			m_SetupState = true;
+		}
+		return m_MaterialDescriptorSetLayout;
+	}
+
+	Ref<DescriptorSetLayout> ModelManager::GetNodeDescriptorSetLayout()
+	{
+		if (m_SetupState == false)
+		{
+			Setup();
+			m_SetupState = true;
+		}
+		return m_NodeDescriptorSetLayout;
 	}
 }

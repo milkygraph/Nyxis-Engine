@@ -8,7 +8,7 @@ namespace Nyxis
 		m_ParticlePool.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		m_ParticleSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
-		auto poolBuilder = veDescriptorPool::Builder()
+		auto poolBuilder = DescriptorPool::Builder()
 			.setMaxSets(1000)
 			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000)
 			.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
@@ -30,7 +30,7 @@ namespace Nyxis
 	void ParticleRenderSystem::CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout)
 	{
 		// a descriptor set layout with global ubo and a particles buffer
-		m_ParticleSetLayout = veDescriptorSetLayout::Builder()
+		m_ParticleSetLayout = DescriptorSetLayout::Builder()
 			.addBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT)
 			.build();
 		
@@ -81,7 +81,7 @@ namespace Nyxis
 		// write particle buffer to descriptor set
 		VkDescriptorSet descriptorSet;
 		auto bufferInfo = m_ParticleBuffer->getDescriptorInfo();
-		veDescriptorWriter(*m_ParticleSetLayout, *m_ParticlePool[frameInfo.frameIndex])
+		DescriptorWriter(m_ParticleSetLayout, m_ParticlePool[frameInfo.frameIndex])
 			.writeBuffer(0, bufferInfo)
 			.build(m_ParticleSets[frameInfo.frameIndex]);
 
