@@ -43,7 +43,7 @@ namespace Nyxis
 		GLTFRenderer(VkRenderPass renderPass);
 		~GLTFRenderer();
 
-		void OnUpdate();
+		void OnUpdate(Scene& scene);
 		void Render(FrameInfo& frameInfo);
 		void UpdateAnimation(FrameInfo& frameInfo);
 		void LoadEnvironment(std::string& filename);

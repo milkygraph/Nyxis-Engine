@@ -110,11 +110,11 @@ namespace Nyxis
         veGameObject::Map map;
 
         std::string sceneFile = "../models/roboto/scene.gltf";
-    	auto model1 = pScene.createEntity("Model2");
+    	auto model1 = pScene.createEntity("Robot");
 		pScene.addComponent<Model>(model1, sceneFile, gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
         pScene.addComponent<RigidBody>(model1);
 
-        auto model2 = pScene.createEntity("Model2");
+        auto model2 = pScene.createEntity("Microphone");
         pScene.addComponent<Model>(model2, "../models/microphone/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
         pScene.addComponent<RigidBody>(model2);
 
@@ -152,7 +152,7 @@ namespace Nyxis
 
             pScene.OnUpdate(frameInfo.frameTime, aspect);
 
-    		gltfRenderer.OnUpdate();
+    		gltfRenderer.OnUpdate(frameInfo.scene);
             if (animationThreadActive) {
                 animationThread = std::thread([&gltfRenderer, &frameInfo]() {
 					gltfRenderer.UpdateAnimation(frameInfo);

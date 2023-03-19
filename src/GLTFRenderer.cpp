@@ -30,7 +30,7 @@ namespace Nyxis
 
 	}
 
-	void GLTFRenderer::OnUpdate()
+	void GLTFRenderer::OnUpdate(Scene& scene)
 	{
 		if (SceneUpdated)
 		{
@@ -38,6 +38,14 @@ namespace Nyxis
 			LoadEnvironment(envMapFile);
 			FreeDescriptorSets();
 			SetupDescriptorSets();
+
+			auto modelView = scene.getComponentView<Model>();
+			for(auto entity : modelView)
+			{
+				auto& model = scene.getComponent<Model>(entity);
+				model.setupDescriptorSet(sceneInfo, uniformBuffersParams);
+			}
+
 			SceneUpdated = false;
 		}
 	}
