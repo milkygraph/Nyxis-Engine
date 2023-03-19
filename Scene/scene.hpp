@@ -83,6 +83,7 @@ namespace Nyxis
 		void OnUpdate(float dt, float aspect);
 
 		Camera *GetCamera() { return m_Camera; }
+		void SetCameraControl(bool control) { m_CameraControl = control; }
 
         Registry m_Registry;
         bool SaveSceneFlag = false;
@@ -98,6 +99,7 @@ namespace Nyxis
         std::atomic_int m_loadingEntity = 0;
         Device &device = Device::get();
 
-        std::queue<Entity> m_DeletionQueue;
+        bool m_CameraControl = false;
+    	std::queue<Entity> m_DeletionQueue;
     };
 } // namespace Nyxis

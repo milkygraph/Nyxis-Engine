@@ -25,6 +25,7 @@ namespace Nyxis
 		CameraType getCameraType() { return cameraType; }
 		float moveSpeed{10.f};
     private:
+		friend class Camera;
 		glm::vec3 ForwardDir = {0.f, 0.f, 1.f};
         glm::vec3 RightDir = {1.f, 0.f, 0.f};
         glm::vec3 UpDir = {0.f, 1.f, 0.f};

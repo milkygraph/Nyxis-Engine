@@ -77,7 +77,7 @@ namespace Nyxis
 				ImGui::Begin("Physics");
 				ImGui::Checkbox("Enable Animations", &animationThreadActive);
 				ImGui::End();
-				});
+			});
 
             pImguiLayer.AddFunction([&]()
             {
@@ -103,23 +103,22 @@ namespace Nyxis
 
             	ImGui::End();
             });
-
-			pImguiLayer.AddFunction([&]() {
-				ImGui::Begin("Model");
-				ImGui::DragFloat3("Translation", &gltfRenderer.rigidBody.translation.x);
-				ImGui::DragFloat3("Rotation", &gltfRenderer.rigidBody.rotation.x);
-				ImGui::DragFloat3("Scale", &gltfRenderer.rigidBody.scale.x);
-				ImGui::End();
-			});
-				
         }
 
         auto currentTime = std::chrono::high_resolution_clock::now();
 
         veGameObject::Map map;
 
-        
-        while (!pWindow.shouldClose()) {
+        std::string sceneFile = "../models/roboto/scene.gltf";
+    	auto model1 = pScene.createEntity("Model2");
+		pScene.addComponent<Model>(model1, sceneFile, gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
+        pScene.addComponent<RigidBody>(model1);
+
+        auto model2 = pScene.createEntity("Model2");
+        pScene.addComponent<Model>(model2, "../models/microphone/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
+        pScene.addComponent<RigidBody>(model2);
+
+    	while (!pWindow.shouldClose()) {
             glfwPollEvents();
             auto newTime = std::chrono::high_resolution_clock::now();
             float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
@@ -144,16 +143,19 @@ namespace Nyxis
             
         	auto commandBuffer = pRenderer.BeginUIFrame();
 			frameInfo.commandBuffer = commandBuffer;
-        	auto extent = pImguiLayer.OnUpdate(frameInfo, pRenderer.GetWorldImageView(frameInfo.frameIndex));
-            pRenderer.EndUIRenderPass(commandBuffer);
+
+            pImguiLayer.Begin();
+            auto extent = pImguiLayer.OnUpdate(frameInfo, pRenderer.GetWorldImageView(frameInfo.frameIndex));
+            pImguiLayer.End();
+    		pRenderer.EndUIRenderPass(commandBuffer);
             pRenderer.m_WorldImageSize = extent;
 
-            pScene.OnUpdate(frameInfo.frameTime, aspect);   
-            gltfRenderer.OnUpdate();
+            pScene.OnUpdate(frameInfo.frameTime, aspect);
 
+    		gltfRenderer.OnUpdate();
             if (animationThreadActive) {
                 animationThread = std::thread([&gltfRenderer, &frameInfo]() {
-                    gltfRenderer.UpdateAnimation(frameInfo.frameTime);
+					gltfRenderer.UpdateAnimation(frameInfo);
                     });
                 animationThread.detach();
             }

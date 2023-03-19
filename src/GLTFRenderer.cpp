@@ -15,6 +15,7 @@ namespace Nyxis
 
 		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		uniformBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		uniformBuffersParams.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
 		LoadAssets();
 		GenerateBRDFLUT();
@@ -22,7 +23,6 @@ namespace Nyxis
 		SetupDescriptorPool();
 		SetupDescriptorSets();
 		PreparePipelines(renderPass);
-
 	}
 
 	GLTFRenderer::~GLTFRenderer()
@@ -50,43 +50,58 @@ namespace Nyxis
 		models.skybox->draw(frameInfo.commandBuffer);
 
 		auto modelView = frameInfo.scene.m_Registry.view<Model>();
-		VkDeviceSize offsets[] = { 0 };
+		for(auto& model : modelView)
+		{
+			auto& gltfModel = frameInfo.scene.getComponent<Model>(model);
+			auto& rigidBody = frameInfo.scene.getComponent<RigidBody>(model);
+			gltfModel.updateModelMatrix(rigidBody);
+			shaderValuesScene.model = gltfModel.modelMatrix;
 
-		vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, &models.scene->vertices.buffer, offsets);
+			gltfModel.updateUniformBuffer(frameInfo.frameIndex, &shaderValuesScene);
 
-		if (models.scene->indices.buffer != VK_NULL_HANDLE)
-			vkCmdBindIndexBuffer(frameInfo.commandBuffer, models.scene->indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+			VkDeviceSize offsets[] = { 0 };
 
-		boundPipeline = VK_NULL_HANDLE;
+			vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, &gltfModel.vertices.buffer, offsets);
 
-		for (auto node : models.scene->nodes)
-			RenderNode(node, frameInfo, Material::ALPHAMODE_OPAQUE);
-		// Alpha masked primitives
-		for (auto node : models.scene->nodes)
-			RenderNode(node, frameInfo, Material::ALPHAMODE_MASK);
-		// Transparent primitives
-		// TODO: Correct depth sorting
-		for (auto node : models.scene->nodes)
-			RenderNode(node, frameInfo, Material::ALPHAMODE_BLEND);
+			if (gltfModel.indices.buffer != VK_NULL_HANDLE)
+				vkCmdBindIndexBuffer(frameInfo.commandBuffer, gltfModel.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+			boundPipeline = VK_NULL_HANDLE;
+
+			for (auto node : gltfModel.nodes)
+ 				RenderNodeImproved(node, frameInfo, Material::ALPHAMODE_OPAQUE, gltfModel);
+			// Alpha masked primitives
+			for (auto node : gltfModel.nodes)
+				RenderNodeImproved(node, frameInfo, Material::ALPHAMODE_MASK, gltfModel);
+			// Transparent primitives
+			// TODO: Correct depth sorting
+			for (auto node : gltfModel.nodes)
+				RenderNodeImproved(node, frameInfo, Material::ALPHAMODE_BLEND, gltfModel);
+		}
 	}
 
-	void GLTFRenderer::UpdateAnimation(float frameTime)
+	void GLTFRenderer::UpdateAnimation(FrameInfo& frameInfo)
 	{
 		if (animate) {
-			models.scene->updateAnimation(frameTime);
+			auto view = frameInfo.scene.getComponentView<Model>();
+			for (auto model : view)
+			{
+				auto& gltfModel = frameInfo.scene.getComponent<Model>(model);
+				gltfModel.updateAnimation(frameInfo.frameTime);
+			}
 		}
 	}
 
 	void GLTFRenderer::PrepareUniformBuffers()
 	{
 		for (auto& uniformBuffer : uniformBuffers) {
-			uniformBuffer.scene = std::make_shared<Buffer>(sizeof(shaderValuesScene), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			uniformBuffer.skybox = std::make_shared<Buffer>(sizeof(shaderValuesSkybox), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			uniformBuffer.params = std::make_shared<Buffer>(sizeof(sceneInfo.shaderValuesParams), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-			uniformBuffer.scene->map();
 			uniformBuffer.skybox->map();
-			uniformBuffer.params->map();
+		}
+
+		for (auto& uniformBuffer : uniformBuffersParams) {
+			uniformBuffer = std::make_shared<Buffer>(sizeof(sceneInfo.shaderValuesParams), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			uniformBuffer->map();
 		}
 	}
 
@@ -95,9 +110,6 @@ namespace Nyxis
 		// Scene
 		shaderValuesScene.projection = scene.m_Camera->getProjectionMatrix();
 		shaderValuesScene.view = scene.m_Camera->getViewMatrix();
-
-		models.scene->updateModelMatrix(rigidBody);
-		shaderValuesScene.model = models.scene->modelMatrix;
 
 		auto& rigidBody = scene.m_Registry.get<RigidBody>(scene.m_CameraEntity);
 		
@@ -114,11 +126,10 @@ namespace Nyxis
 
 		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			uniformBuffers[i].params->writeToBuffer(&sceneInfo.shaderValuesParams);
+			uniformBuffersParams[i]->writeToBuffer(&sceneInfo.shaderValuesParams);
 			uniformBuffers[i].skybox->writeToBuffer(&shaderValuesSkybox);
-			models.scene->updateUniformBuffer(i, &shaderValuesScene);
 
-			uniformBuffers[i].params->flush();
+			uniformBuffersParams[i]->flush();
 			uniformBuffers[i].skybox->flush();
 		}
 	}
@@ -137,18 +148,7 @@ namespace Nyxis
 
 	void GLTFRenderer::LoadModel(std::string& filename)
 	{
-		LOG_INFO("Loading model from {}", filename);
-		// models.scene.destroy();
-		// animationIndex = 0;
-		// animationTimer = 0.0f;
-		auto tStart = std::chrono::high_resolution_clock::now();
-		// models.scene.loadFromFile(filename);
-
-		models.scene = std::make_shared<Model>();
-		models.scene->loadFromFile(filename);
-
-		auto tFileLoad = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
-		LOG_INFO("Loading took {} ms", tFileLoad);
+		// models.scene = std::make_shared<Model>(filename, sceneInfo);
 	}
 
 
@@ -200,25 +200,13 @@ namespace Nyxis
 		/*
 			Descriptor Pool
 		*/
-		uint32_t imageSamplerCount = 0;
-		uint32_t materialCount = 0;
-		uint32_t meshCount = 0;
+		// TODO : Calculate the number of descriptors needed without hardcoding them
+		uint32_t imageSamplerCount = 5;
+		uint32_t materialCount = 5;
+		uint32_t meshCount = 5;
 
 		// Environment samplers (radiance, irradiance, brdf lut)
 		imageSamplerCount += 3;
-
-		std::vector<Ref<Model>> modellist = { models.skybox, models.scene};
-		for (auto& model : modellist) {
-			for (auto& material : model->materials) {
-				imageSamplerCount += 5;
-				materialCount++;
-			}
-			for (auto node : model->linearNodes) {
-				if (node->mesh) {
-					meshCount++;
-				}
-			}
-		}
 
 		std::vector<VkDescriptorPoolSize> poolSizes = {
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, (4 + meshCount) * SwapChain::MAX_FRAMES_IN_FLIGHT},
@@ -238,15 +226,6 @@ namespace Nyxis
 		/*
 			Descriptor sets
 		*/
-
-		std::vector<Ref<Buffer>> shaderValues;
-		shaderValues.reserve(SwapChain::MAX_FRAMES_IN_FLIGHT);
-		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++)
-		{
-			shaderValues.push_back(uniformBuffers[i].params);
-		}
-
-		models.scene->setupDescriptorSet(sceneInfo, shaderValues);
 
 		// Scene (matrices and environment maps)
 		{
@@ -329,7 +308,7 @@ namespace Nyxis
 			writeDescriptorSets[1].descriptorCount = 1;
 			writeDescriptorSets[1].dstSet = descriptorSets[i].skybox;
 			writeDescriptorSets[1].dstBinding = 1;
-			writeDescriptorSets[1].pBufferInfo = uniformBuffers[i].params->getDescriptorInfo();
+			writeDescriptorSets[1].pBufferInfo = uniformBuffersParams[i]->getDescriptorInfo();
 
 			writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -341,7 +320,6 @@ namespace Nyxis
 			vkUpdateDescriptorSets(device.device(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 		}
 	}
-
 
 	void GLTFRenderer::RenderNode(Node* node, FrameInfo& frameInfo, Material::AlphaMode alphaMode)
 	{
@@ -420,6 +398,86 @@ namespace Nyxis
 		}
 		for (auto child : node->children) {
 			RenderNode(child, frameInfo, alphaMode);
+		}
+	}
+
+	void GLTFRenderer::RenderNodeImproved(Node* node, FrameInfo& frameInfo, Material::AlphaMode alphaMode, Model& model)
+	{
+		if (node->mesh) {
+			// Render mesh primitives
+			for (Primitive* primitive : node->mesh->primitives) {
+				if (primitive->material.alphaMode == alphaMode) {
+
+					VkPipeline pipeline = VK_NULL_HANDLE;
+					switch (alphaMode) {
+					case Material::ALPHAMODE_OPAQUE:
+					case Material::ALPHAMODE_MASK:
+						pipeline = primitive->material.doubleSided ? pipelines.pbrDoubleSided : pipelines.pbr;
+						break;
+					case Material::ALPHAMODE_BLEND:
+						pipeline = pipelines.pbrAlphaBlend;
+						break;
+					}
+
+					if (pipeline != boundPipeline) {
+						vkCmdBindPipeline(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+						boundPipeline = pipeline;
+					}
+
+					const std::vector<VkDescriptorSet> descriptorsets = {
+						model.getDescriptorSet(frameInfo.frameIndex),
+						primitive->material.descriptorSet,
+						node->mesh->uniformBuffer.descriptorSet,
+					};
+					vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, static_cast<uint32_t>(descriptorsets.size()), descriptorsets.data(), 0, NULL);
+
+					// Pass material parameters as push constants
+					PushConstBlockMaterial pushConstBlockMaterial{};
+					pushConstBlockMaterial.emissiveFactor = primitive->material.emissiveFactor;
+					// To save push constant space, availabilty and texture coordiante set are combined
+					// -1 = texture not used for this material, >= 0 texture used and index of texture coordinate set
+					pushConstBlockMaterial.colorTextureSet = primitive->material.baseColorTexture != nullptr ? primitive->material.texCoordSets.baseColor : -1;
+					pushConstBlockMaterial.normalTextureSet = primitive->material.normalTexture != nullptr ? primitive->material.texCoordSets.normal : -1;
+					pushConstBlockMaterial.occlusionTextureSet = primitive->material.occlusionTexture != nullptr ? primitive->material.texCoordSets.occlusion : -1;
+					pushConstBlockMaterial.emissiveTextureSet = primitive->material.emissiveTexture != nullptr ? primitive->material.texCoordSets.emissive : -1;
+					pushConstBlockMaterial.alphaMask = static_cast<float>(primitive->material.alphaMode == Material::ALPHAMODE_MASK);
+					pushConstBlockMaterial.alphaMaskCutoff = primitive->material.alphaCutoff;
+
+					// TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is present
+
+					if (primitive->material.pbrWorkflows.metallicRoughness) {
+						// Metallic roughness workflow
+						pushConstBlockMaterial.workflow = static_cast<float>(PBR_WORKFLOW_METALLIC_ROUGHNESS);
+						pushConstBlockMaterial.baseColorFactor = primitive->material.baseColorFactor;
+						pushConstBlockMaterial.metallicFactor = primitive->material.metallicFactor;
+						pushConstBlockMaterial.roughnessFactor = primitive->material.roughnessFactor;
+						pushConstBlockMaterial.PhysicalDescriptorTextureSet = primitive->material.metallicRoughnessTexture != nullptr ? primitive->material.texCoordSets.metallicRoughness : -1;
+						pushConstBlockMaterial.colorTextureSet = primitive->material.baseColorTexture != nullptr ? primitive->material.texCoordSets.baseColor : -1;
+					}
+
+					if (primitive->material.pbrWorkflows.specularGlossiness) {
+						// Specular glossiness workflow
+						pushConstBlockMaterial.workflow = static_cast<float>(PBR_WORKFLOW_SPECULAR_GLOSINESS);
+						pushConstBlockMaterial.PhysicalDescriptorTextureSet = primitive->material.extension.specularGlossinessTexture != nullptr ? primitive->material.texCoordSets.specularGlossiness : -1;
+						pushConstBlockMaterial.colorTextureSet = primitive->material.extension.diffuseTexture != nullptr ? primitive->material.texCoordSets.baseColor : -1;
+						pushConstBlockMaterial.diffuseFactor = primitive->material.extension.diffuseFactor;
+						pushConstBlockMaterial.specularFactor = glm::vec4(primitive->material.extension.specularFactor, 1.0f);
+					}
+
+					vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstBlockMaterial), &pushConstBlockMaterial);
+
+					if (primitive->hasIndices) {
+						vkCmdDrawIndexed(frameInfo.commandBuffer, primitive->indexCount, 1, primitive->firstIndex, 0, 0);
+					}
+					else {
+						vkCmdDraw(frameInfo.commandBuffer, primitive->vertexCount, 1, 0, 0);
+					}
+				}
+			}
+
+		}
+		for (auto child : node->children) {
+			RenderNodeImproved(child, frameInfo, alphaMode, model);
 		}
 	}
 

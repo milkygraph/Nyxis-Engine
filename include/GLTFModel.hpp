@@ -255,7 +255,7 @@ namespace Nyxis
 		std::vector<VkDescriptorSet> descriptorSets;
 
 		Model();
-		Model(const std::string& filename);
+		Model(const std::string& filename, SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValueBuffers);
 
 		void destroy();
 		void loadNode(Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& model, LoaderInfo& loaderInfo, float globalscale);
@@ -276,7 +276,7 @@ namespace Nyxis
 		Node* findNode(Node* parent, uint32_t index);
 		Node* nodeFromIndex(uint32_t index);
 		void updateModelMatrix(RigidBody& rigidBody);
-		void setupDescriptorSet(SceneInfo& sceneInfo, std::vector<Ref<Buffer>> shaderValuesBuffer);
+		void setupDescriptorSet(SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValuesBuffer);
 		void setupNodeDescriptorSet(const Node* node);
 		void updateUniformBuffer(uint32_t index, UBOMatrices* ubo);
 		VkDescriptorSet getDescriptorSet(uint32_t index) { return descriptorSets[index]; }

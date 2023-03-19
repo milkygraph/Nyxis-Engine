@@ -79,15 +79,29 @@ namespace Nyxis
             LoadScene(SceneName);
         }
 
-        if (m_Camera->getType() == CameraType::Perspective)
+    	if (m_Camera->getType() == CameraType::Perspective)
             if (aspect > 0)
-				m_Camera->setPerspectiveProjection(glm::radians(60.0f), aspect, 0.1f, 1000.0f);
-        else
-            m_Camera->setOrthographicProjection(-aspect, aspect, -1.0f, 1.0f, 0.1f, 1000.0f);
+                m_Camera->setPerspectiveProjection(glm::radians(60.0f), aspect, 0.1f, 1000.0f);
+            else
+                m_Camera->setOrthographicProjection(-aspect, aspect, -1.0f, 1.0f, 0.1f, 1000.0f);
 
-        m_Camera->OnUpdate(dt);
-        getComponentView<Player, RigidBody>().each([&](auto entity, auto &player, auto &rigidBody)
-                                                            { player.OnUpdate(dt, rigidBody); });
+
+        if (!Input::isMouseButtonPressed(MouseCodes::MouseButtonRight))
+        {
+            Input::setCursorMode(CursorMode::CursorNormal);
+            SetCameraControl(false);
+            m_Camera->setMousePosition(Input::getMousePosition());
+        }
+
+        if (this->m_CameraControl)
+        {
+            m_Camera->OnUpdate(dt);
+        }
+
+    	getComponentView<Player, RigidBody>().each([&](auto entity, auto &player, auto &rigidBody)
+        {
+	        player.OnUpdate(dt, rigidBody);
+        });
 
         if(!m_DeletionQueue.empty())
         {

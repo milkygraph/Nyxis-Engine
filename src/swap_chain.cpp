@@ -224,7 +224,7 @@ namespace Nyxis
 		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
 		createInfo.presentMode = m_PresentMode;
-		createInfo.clipped = VK_TRUE;
+    	createInfo.clipped = VK_TRUE;
 
 		createInfo.oldSwapchain = m_OldSwapChain == nullptr ? VK_NULL_HANDLE : m_OldSwapChain->m_SwapChain;
 

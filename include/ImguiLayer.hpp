@@ -14,8 +14,10 @@ namespace Nyxis
         ~ImguiLayer();
 
         void init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer);
+		void Begin();
         VkExtent2D OnUpdate(FrameInfo &frameInfo, VkImageView imageView);
-        void AddFunction(const std::function<void()>& function);
+        void End();
+    	void AddFunction(const std::function<void()>& function);
         VkExtent2D AddViewport(FrameInfo& frameInfo, VkImageView imageView);
         void AddComponentView();
         void AddSceneHierarchy();
@@ -29,7 +31,8 @@ namespace Nyxis
         std::vector<std::function<void()>> functions;
     	Ref<DescriptorPool> imguiPool{};
 
-		VkSampler m_Sampler;
+        VkCommandBuffer commandBuffer;
+    	VkSampler m_Sampler;
 		std::vector<VkDescriptorSet> dst;
     };
 }

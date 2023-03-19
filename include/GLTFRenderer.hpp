@@ -45,7 +45,7 @@ namespace Nyxis
 
 		void OnUpdate();
 		void Render(FrameInfo& frameInfo);
-		void UpdateAnimation(float frameTime);
+		void UpdateAnimation(FrameInfo& frameInfo);
 		void LoadEnvironment(std::string& filename);
 		void UpdateSkyboxDescriptorSets();
 
@@ -54,6 +54,12 @@ namespace Nyxis
 		bool animate = true;
 
 		RigidBody rigidBody{};
+		struct UniformBufferSet {
+			Ref<Buffer> skybox = nullptr;
+		};
+		std::vector<UniformBufferSet> uniformBuffers;
+		std::vector<Ref<Buffer>> uniformBuffersParams;
+
 	private:
 		void PrepareUniformBuffers();
 		void UpdateUniformBuffers(Scene& scene);
@@ -68,6 +74,7 @@ namespace Nyxis
 		void SetupDescriptorSets();
 		void FreeDescriptorSets();
 		void RenderNode(Node* node, FrameInfo& frameInfo, Material::AlphaMode alphaMode);
+		void RenderNodeImproved(Node* node, FrameInfo& frameInfo, Material::AlphaMode alphaMode, Model& model);
 
 		Device& device = Device::get();
 		Ref<Scene> scene;
@@ -101,14 +108,8 @@ namespace Nyxis
 			VkDescriptorSet skybox;
 		};
 
-		struct UniformBufferSet {
-			Ref<Buffer> scene = nullptr;
-			Ref<Buffer> skybox = nullptr;
-			Ref<Buffer> params = nullptr;
-		};
 
 		std::vector<DescriptorSets> descriptorSets;
-		std::vector<UniformBufferSet> uniformBuffers;
 
 		struct LightSource {
 			glm::vec3 color = glm::vec3(1.0f, 0.2f, 0.5f);

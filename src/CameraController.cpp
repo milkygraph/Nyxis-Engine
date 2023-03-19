@@ -4,31 +4,22 @@ namespace Nyxis
 {
 	void CameraController::processMouseMovement(float dt, RigidBody& rigidBody)
 	{
-		if(Input::isMouseButtonPressed(MouseCodes::MouseButtonRight) && cameraType == CameraType::Perspective)
-		{
-			Input::setCursorMode(CursorMode::CursorDisabled);
-			glm::vec2 mousePosition = Input::getMousePosition();
-			glm::vec2 mouseDelta = (mousePosition - lastMousePosition) * rotationSpeed;
-			lastMousePosition = mousePosition;
+		glm::vec2 mousePosition = Input::getMousePosition();
+		glm::vec2 mouseDelta = (mousePosition - lastMousePosition) * rotationSpeed;
+		lastMousePosition = mousePosition;
 
-			rigidBody.rotation.y += mouseDelta.x;
-			rigidBody.rotation.x += -mouseDelta.y;
+		rigidBody.rotation.y += mouseDelta.x;
+		rigidBody.rotation.x += -mouseDelta.y;
 
-			rigidBody.rotation.x = glm::clamp(rigidBody.rotation.x, -glm::half_pi<float>(), glm::half_pi<float>());
-			rigidBody.rotation.y = glm::mod(rigidBody.rotation.y, glm::two_pi<float>());
+		rigidBody.rotation.x = glm::clamp(rigidBody.rotation.x, -glm::half_pi<float>(), glm::half_pi<float>());
+		rigidBody.rotation.y = glm::mod(rigidBody.rotation.y, glm::two_pi<float>());
 
-            float yaw = rigidBody.rotation.y;
-            ForwardDir = {sin(yaw), 0.f, cos(yaw)};
-            RightDir = {ForwardDir.z, 0.f, -ForwardDir.x};
-            UpDir = {0.f, -1.f, 0.f};
+        float yaw = rigidBody.rotation.y;
+        ForwardDir = {sin(yaw), 0.f, cos(yaw)};
+        RightDir = {ForwardDir.z, 0.f, -ForwardDir.x};
+        UpDir = {0.f, -1.f, 0.f};
 
-            moveInPlaneXZ(dt, rigidBody);
-        }
-		else
-		{
-			Input::setCursorMode(CursorMode::CursorNormal);
-			lastMousePosition = Input::getMousePosition();
-		}
+        moveInPlaneXZ(dt, rigidBody);
 	}
     void CameraController::moveInPlaneXZ(float dt, RigidBody& rigidBody)
     {

@@ -413,7 +413,7 @@ namespace Nyxis
 		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 	}
 
-	Model::Model(const std::string& filename)
+	Model::Model(const std::string& filename, SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValuesBuffer)
 	{
 		LOG_INFO("Loading model from {}", filename);
 		animationIndex = 0;
@@ -430,6 +430,7 @@ namespace Nyxis
 		}
 
 		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		setupDescriptorSet(sceneInfo, shaderValuesBuffer);
 	}
 
 	// Model
@@ -1334,7 +1335,7 @@ namespace Nyxis
 		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 
-	void Model::setupDescriptorSet(SceneInfo& sceneInfo, std::vector<Ref<Buffer>> shaderValuesBuffer)
+	void Model::setupDescriptorSet(SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValuesBuffer)
 	{
 
 		struct Layouts
@@ -1359,7 +1360,7 @@ namespace Nyxis
 			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
 			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
 			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.scene);
-		
+
 			for (auto i = 0; i < descriptorSets.size(); i++) {
 		
 				VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
@@ -1424,7 +1425,7 @@ namespace Nyxis
 			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
 			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
 			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.material);
-		
+
 			// Per-Material descriptor sets
 			for (auto& material : materials) {
 				VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
@@ -1492,35 +1493,17 @@ namespace Nyxis
 				}
 			}
 		}
-
-		// Setup Node descriptor sets
-		for(auto& node : nodes)
-		{
-			setupNodeDescriptorSet(node);
-		}
 	}
 
 	void Model::setupNodeDescriptorSet(const Node* node)
 	{
-		auto descriptorPool = ModelManager::GetDescriptorPool()->getDescriptorPool();
+		auto descriptorPool = ModelManager::GetDescriptorPool();
 		auto descriptorSetLayout = ModelManager::GetNodeDescriptorSetLayout()->getDescriptorSetLayout();
 		if (node->mesh) {
-			VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
-			descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			descriptorSetAllocInfo.descriptorPool = descriptorPool;
-			descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayout;
-			descriptorSetAllocInfo.descriptorSetCount = 1;
-			vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &node->mesh->uniformBuffer.descriptorSet);
-
-			VkWriteDescriptorSet writeDescriptorSet{};
-			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			writeDescriptorSet.descriptorCount = 1;
-			writeDescriptorSet.dstSet = node->mesh->uniformBuffer.descriptorSet;
-			writeDescriptorSet.dstBinding = 0;
-			writeDescriptorSet.pBufferInfo = &node->mesh->uniformBuffer.descriptor;
-
-			vkUpdateDescriptorSets(device.device(), 1, &writeDescriptorSet, 0, nullptr);
+			ModelManager::GetDescriptorPool()->allocateDescriptor(descriptorSetLayout, node->mesh->uniformBuffer.descriptorSet);
+			DescriptorWriter (ModelManager::GetNodeDescriptorSetLayout(), ModelManager::GetDescriptorPool())
+				.writeBuffer(0, &node->mesh->uniformBuffer.descriptor)
+				.build(node->mesh->uniformBuffer.descriptorSet);
 		}
 		for (const auto& child : node->children) {
 			setupNodeDescriptorSet(child);

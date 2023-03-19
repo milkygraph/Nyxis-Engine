@@ -237,6 +237,15 @@ namespace Nyxis
 		dst.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 	}
 
+	void ImguiLayer::Begin()
+	{
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		ShowExampleAppDockSpace();
+		ImGui::ShowDemoWindow();
+	}
+
 	void ImguiLayer::AddFunction(const std::function<void()>& function)
 	{
 		functions.push_back(function);
@@ -244,12 +253,6 @@ namespace Nyxis
 
 	VkExtent2D ImguiLayer::OnUpdate(FrameInfo& frameInfo, VkImageView imageView)
 	{
-		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-		ShowExampleAppDockSpace();
-		ImGui::ShowDemoWindow();
-
 		auto extent = AddViewport(frameInfo, imageView);
 		AddSceneHierarchy();
 		AddComponentView();
@@ -259,10 +262,14 @@ namespace Nyxis
 		{
 			function();
 		}
-
-		ImGui::Render();
-		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
+		this->commandBuffer = frameInfo.commandBuffer;
 		return extent;
+	}
+
+	void ImguiLayer::End()
+	{
+		ImGui::Render();
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 	}
 
 	void ImguiLayer::AddMenuBar()
@@ -336,6 +343,14 @@ namespace Nyxis
 		// display image in the middle of the window with the correct aspect ratio
 		ImGui::Image(dst[frameInfo.frameIndex], ImVec2(windowWidth, windowHeight));
 
+		auto windowPos = ImGui::GetWindowPos();
+		// check if mouse is in window
+		if (ImGui::IsWindowHovered() && Input::isMouseButtonPressed(MouseCodes::MouseButtonRight))
+		{
+				Input::setCursorMode(CursorMode::CursorDisabled);
+				frameInfo.scene.SetCameraControl(true);
+		}
+
 		ImGui::End();
 		ImGui::PopStyleVar();
 
@@ -370,9 +385,7 @@ namespace Nyxis
 							m_SelectedEntity); // TODO! Fix load scene bug
 						ImGui::Text("Rigid Body");
 						ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f, 0, 0, "%.1f");
-						auto rotation = glm::degrees(rigidBody.rotation);
-						ImGui::DragFloat3("Rotation", &rotation.x, 0.1f, 0, 0, "%.1f");
-						rigidBody.rotation = glm::radians(rotation);
+						ImGui::DragFloat3("Rotation", &rigidBody.rotation.x, 0.1f, 0, 0, "%.1f");
 						ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f, 0, 0, "%.2f");
 
 						ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);
