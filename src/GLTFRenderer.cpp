@@ -16,7 +16,7 @@ namespace Nyxis
 		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		uniformBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		uniformBuffersParams.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-		mouseSelectBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		depthBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
 		LoadAssets();
 		GenerateBRDFLUT();
@@ -117,8 +117,8 @@ namespace Nyxis
 			uniformBuffersParams[i] = std::make_shared<Buffer>(sizeof(sceneInfo.shaderValuesParams), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			uniformBuffersParams[i]->map();
 
-			mouseSelectBuffers[i] = std::make_shared<Buffer>(sizeof(uint32_t) * DEPTH_ARRAY_SCALE, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			mouseSelectBuffers[i]->map();
+			depthBuffers[i] = std::make_shared<Buffer>(sizeof(uint32_t) * DEPTH_ARRAY_SCALE, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			depthBuffers[i]->map();
 		}
 	}
 	void GLTFRenderer::UpdateUniformBuffers(FrameInfo& frameInfo)
@@ -146,8 +146,8 @@ namespace Nyxis
 		uniformBuffersParams[frameInfo.frameIndex]->flush();
 		uniformBuffers[frameInfo.frameIndex].skybox->flush();
 
-		mouseSelectBuffers[frameInfo.frameIndex]->writeToBuffer(&mouseSelectBufferObject);
-		mouseSelectBuffers[frameInfo.frameIndex]->flush();
+		depthBuffers[frameInfo.frameIndex]->writeToBuffer(&depthBufferObject);
+		depthBuffers[frameInfo.frameIndex]->flush();
 	}
 
 	void GLTFRenderer::LoadEnvironment(std::string& filename)
@@ -299,27 +299,27 @@ namespace Nyxis
 			descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
 			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
-			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.mouse);
+			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.depthBufferLayout);
 		}
 
-		mouseDescriptorSets.resize(mouseSelectBuffers.size());
+		depthBufferDescriptorSets.resize(depthBuffers.size());
 
-		for(auto i = 0; i < mouseSelectBuffers.size(); i++)
+		for(auto i = 0; i < depthBuffers.size(); i++)
 		{
 			VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
 			descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 			descriptorSetAllocInfo.descriptorPool = descriptorPool;
-			descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayouts.mouse;
+			descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayouts.depthBufferLayout;
 			descriptorSetAllocInfo.descriptorSetCount = 1;
-			vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &mouseDescriptorSets[i]);
+			vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &depthBufferDescriptorSets[i]);
 
 			VkWriteDescriptorSet writeDescriptor{};
 			writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 			writeDescriptor.descriptorCount = 1;
-			writeDescriptor.dstSet = mouseDescriptorSets[i];
+			writeDescriptor.dstSet = depthBufferDescriptorSets[i];
 			writeDescriptor.dstBinding = 0;
-			writeDescriptor.pBufferInfo = mouseSelectBuffers[i]->getDescriptorInfo();
+			writeDescriptor.pBufferInfo = depthBuffers[i]->getDescriptorInfo();
 
 			vkUpdateDescriptorSets(device.device(), 1, &writeDescriptor, 0, nullptr);
 		}
@@ -480,7 +480,7 @@ namespace Nyxis
 						model.getDescriptorSet(frameInfo.frameIndex),
 						primitive->material.descriptorSet,
 						node->mesh->uniformBuffer.descriptorSet,
-						mouseDescriptorSets[frameInfo.frameIndex]
+						depthBufferDescriptorSets[frameInfo.frameIndex]
 					};
 					vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, static_cast<uint32_t>(descriptorsets.size()), descriptorsets.data(), 0, NULL);
 
@@ -687,7 +687,7 @@ namespace Nyxis
 
 		// PBR pipeline
 
-		setLayouts.push_back(descriptorSetLayouts.mouse);
+		setLayouts.push_back(descriptorSetLayouts.depthBufferLayout);
 		pipelineLayoutCI.pSetLayouts = setLayouts.data();
 		pipelineLayoutCI.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
 		vkCreatePipelineLayout(device.device(), &pipelineLayoutCI, nullptr, &pipelineLayout);

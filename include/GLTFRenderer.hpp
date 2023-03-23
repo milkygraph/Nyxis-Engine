@@ -61,9 +61,9 @@ namespace Nyxis
 		};
 		std::vector<UniformBufferSet> uniformBuffers;
 		std::vector<Ref<Buffer>> uniformBuffersParams;
-		std::vector<Ref<Buffer>> mouseSelectBuffers;
+		std::vector<Ref<Buffer>> depthBuffers;
 
-		uint32_t mouseSelectBufferObject[DEPTH_ARRAY_SCALE];
+		uint32_t depthBufferObject[DEPTH_ARRAY_SCALE];
 
 	private:
 		void PrepareUniformBuffers();
@@ -105,7 +105,7 @@ namespace Nyxis
 			VkDescriptorSetLayout scene;
 			VkDescriptorSetLayout material;
 			VkDescriptorSetLayout node;
-			VkDescriptorSetLayout mouse;
+			VkDescriptorSetLayout depthBufferLayout;
 		} descriptorSetLayouts;
 
 		struct DescriptorSets
@@ -114,9 +114,8 @@ namespace Nyxis
 			VkDescriptorSet skybox;
 		};
 
-
 		std::vector<DescriptorSets> descriptorSets;
-		std::vector<VkDescriptorSet> mouseDescriptorSets;
+		std::vector<VkDescriptorSet> depthBufferDescriptorSets;
 
 		struct LightSource {
 			glm::vec3 color = glm::vec3(1.0f, 0.2f, 0.5f);
