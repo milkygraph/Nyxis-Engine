@@ -16,6 +16,7 @@ namespace Nyxis
 		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		uniformBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		uniformBuffersParams.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		mouseSelectBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
 		LoadAssets();
 		GenerateBRDFLUT();
@@ -52,18 +53,24 @@ namespace Nyxis
 
 	void GLTFRenderer::Render(FrameInfo& frameInfo)
 	{
-		UpdateUniformBuffers(frameInfo.scene);
+		UpdateUniformBuffers(frameInfo);
 		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[frameInfo.frameIndex].skybox, 0, nullptr);
 		vkCmdBindPipeline(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
 		models.skybox->draw(frameInfo.commandBuffer);
 
+
+		// TODO: make mousePos with respect to viewport
+		glm::vec2 mousePos = Input::getMousePosition();
+
 		auto modelView = frameInfo.scene.m_Registry.view<Model>();
-		for(auto& model : modelView)
+		for (auto& model : modelView)
 		{
 			auto& gltfModel = frameInfo.scene.getComponent<Model>(model);
 			auto& rigidBody = frameInfo.scene.getComponent<RigidBody>(model);
 			gltfModel.updateModelMatrix(rigidBody);
 			shaderValuesScene.model = gltfModel.modelMatrix;
+			shaderValuesScene.mousePos = mousePos;
+			shaderValuesScene.entityID = static_cast<uint32_t>(model);
 
 			gltfModel.updateUniformBuffer(frameInfo.frameIndex, &shaderValuesScene);
 
@@ -77,7 +84,7 @@ namespace Nyxis
 			boundPipeline = VK_NULL_HANDLE;
 
 			for (auto node : gltfModel.nodes)
- 				RenderNodeImproved(node, frameInfo, Material::ALPHAMODE_OPAQUE, gltfModel);
+				RenderNodeImproved(node, frameInfo, Material::ALPHAMODE_OPAQUE, gltfModel);
 			// Alpha masked primitives
 			for (auto node : gltfModel.nodes)
 				RenderNodeImproved(node, frameInfo, Material::ALPHAMODE_MASK, gltfModel);
@@ -87,7 +94,7 @@ namespace Nyxis
 				RenderNodeImproved(node, frameInfo, Material::ALPHAMODE_BLEND, gltfModel);
 		}
 	}
-
+	
 	void GLTFRenderer::UpdateAnimation(FrameInfo& frameInfo)
 	{
 		if (animate) {
@@ -102,24 +109,25 @@ namespace Nyxis
 
 	void GLTFRenderer::PrepareUniformBuffers()
 	{
-		for (auto& uniformBuffer : uniformBuffers) {
-			uniformBuffer.skybox = std::make_shared<Buffer>(sizeof(shaderValuesSkybox), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			uniformBuffer.skybox->map();
-		}
+		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			uniformBuffers[i].skybox = std::make_shared<Buffer>(sizeof(shaderValuesSkybox), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			uniformBuffers[i].skybox->map();
 
-		for (auto& uniformBuffer : uniformBuffersParams) {
-			uniformBuffer = std::make_shared<Buffer>(sizeof(sceneInfo.shaderValuesParams), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			uniformBuffer->map();
+			uniformBuffersParams[i] = std::make_shared<Buffer>(sizeof(sceneInfo.shaderValuesParams), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			uniformBuffersParams[i]->map();
+
+			mouseSelectBuffers[i] = std::make_shared<Buffer>(sizeof(uint32_t) * DEPTH_ARRAY_SCALE, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			mouseSelectBuffers[i]->map();
 		}
 	}
-
-	void GLTFRenderer::UpdateUniformBuffers(Scene& scene)
+	void GLTFRenderer::UpdateUniformBuffers(FrameInfo& frameInfo)
 	{
 		// Scene
-		shaderValuesScene.projection = scene.m_Camera->getProjectionMatrix();
-		shaderValuesScene.view = scene.m_Camera->getViewMatrix();
+		shaderValuesScene.projection = frameInfo.scene.m_Camera->getProjectionMatrix();
+		shaderValuesScene.view = frameInfo.scene.m_Camera->getViewMatrix();
 
-		auto& rigidBody = scene.m_Registry.get<RigidBody>(scene.m_CameraEntity);
+		auto& rigidBody = frameInfo.scene.m_Registry.get<RigidBody>(frameInfo.scene.m_CameraEntity);
 		
 		shaderValuesScene.camPos = glm::vec3(
 			-rigidBody.translation.z * sin(glm::radians(rigidBody.translation.y)) * cos(glm::radians(rigidBody.translation.x)),
@@ -128,18 +136,18 @@ namespace Nyxis
 		);
 
 		// Skybox
-		shaderValuesSkybox.projection = scene.m_Camera->getProjectionMatrix();
-		shaderValuesSkybox.view = scene.m_Camera->getViewMatrix();
+		shaderValuesSkybox.projection = frameInfo.scene.m_Camera->getProjectionMatrix();
+		shaderValuesSkybox.view = frameInfo.scene.m_Camera->getViewMatrix();
 		shaderValuesSkybox.model = glm::mat4(glm::mat3(shaderValuesSkybox.view));
 
-		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++)
-		{
-			uniformBuffersParams[i]->writeToBuffer(&sceneInfo.shaderValuesParams);
-			uniformBuffers[i].skybox->writeToBuffer(&shaderValuesSkybox);
+		uniformBuffersParams[frameInfo.frameIndex]->writeToBuffer(&sceneInfo.shaderValuesParams);
+		uniformBuffers[frameInfo.frameIndex].skybox->writeToBuffer(&shaderValuesSkybox);
 
-			uniformBuffersParams[i]->flush();
-			uniformBuffers[i].skybox->flush();
-		}
+		uniformBuffersParams[frameInfo.frameIndex]->flush();
+		uniformBuffers[frameInfo.frameIndex].skybox->flush();
+
+		mouseSelectBuffers[frameInfo.frameIndex]->writeToBuffer(&mouseSelectBufferObject);
+		mouseSelectBuffers[frameInfo.frameIndex]->flush();
 	}
 
 	void GLTFRenderer::LoadEnvironment(std::string& filename)
@@ -218,13 +226,14 @@ namespace Nyxis
 
 		std::vector<VkDescriptorPoolSize> poolSizes = {
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, (4 + meshCount) * SwapChain::MAX_FRAMES_IN_FLIGHT},
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageSamplerCount * SwapChain::MAX_FRAMES_IN_FLIGHT}
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageSamplerCount * SwapChain::MAX_FRAMES_IN_FLIGHT},
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 100 * SwapChain::MAX_FRAMES_IN_FLIGHT}
 		};
 		VkDescriptorPoolCreateInfo descriptorPoolCI{};
 		descriptorPoolCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		descriptorPoolCI.poolSizeCount = 2;
+		descriptorPoolCI.poolSizeCount = 3;
 		descriptorPoolCI.pPoolSizes = poolSizes.data();
-		descriptorPoolCI.maxSets = (2 + materialCount + meshCount) * SwapChain::MAX_FRAMES_IN_FLIGHT;
+		descriptorPoolCI.maxSets = (2 + materialCount + meshCount + 100) * SwapChain::MAX_FRAMES_IN_FLIGHT;
 		descriptorPoolCI.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 		vkCreateDescriptorPool(device.device(), &descriptorPoolCI, nullptr, &descriptorPool);
 	}
@@ -278,6 +287,41 @@ namespace Nyxis
 			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
 			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
 			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.node);
+		}
+
+		// Mouse Map descriptor layout
+		{
+			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
+				{ 0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr }
+			};
+
+			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
+			descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
+			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
+			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.mouse);
+		}
+
+		mouseDescriptorSets.resize(mouseSelectBuffers.size());
+
+		for(auto i = 0; i < mouseSelectBuffers.size(); i++)
+		{
+			VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
+			descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			descriptorSetAllocInfo.descriptorPool = descriptorPool;
+			descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayouts.mouse;
+			descriptorSetAllocInfo.descriptorSetCount = 1;
+			vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &mouseDescriptorSets[i]);
+
+			VkWriteDescriptorSet writeDescriptor{};
+			writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			writeDescriptor.descriptorCount = 1;
+			writeDescriptor.dstSet = mouseDescriptorSets[i];
+			writeDescriptor.dstBinding = 0;
+			writeDescriptor.pBufferInfo = mouseSelectBuffers[i]->getDescriptorInfo();
+
+			vkUpdateDescriptorSets(device.device(), 1, &writeDescriptor, 0, nullptr);
 		}
 
 		UpdateSkyboxDescriptorSets();
@@ -436,6 +480,7 @@ namespace Nyxis
 						model.getDescriptorSet(frameInfo.frameIndex),
 						primitive->material.descriptorSet,
 						node->mesh->uniformBuffer.descriptorSet,
+						mouseDescriptorSets[frameInfo.frameIndex]
 					};
 					vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, static_cast<uint32_t>(descriptorsets.size()), descriptorsets.data(), 0, NULL);
 
@@ -573,8 +618,10 @@ namespace Nyxis
 		dynamicStateCI.dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size());
 
 		// Pipeline layout
-		const std::vector<VkDescriptorSetLayout> setLayouts = {
-			descriptorSetLayouts.scene, descriptorSetLayouts.material, descriptorSetLayouts.node
+		std::vector<VkDescriptorSetLayout> setLayouts = {
+			descriptorSetLayouts.scene,
+			descriptorSetLayouts.material,
+			descriptorSetLayouts.node
 		};
 		VkPipelineLayoutCreateInfo pipelineLayoutCI{};
 		pipelineLayoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -640,6 +687,13 @@ namespace Nyxis
 
 		// PBR pipeline
 
+		setLayouts.push_back(descriptorSetLayouts.mouse);
+		pipelineLayoutCI.pSetLayouts = setLayouts.data();
+		pipelineLayoutCI.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
+		vkCreatePipelineLayout(device.device(), &pipelineLayoutCI, nullptr, &pipelineLayout);
+
+		pipelineCI.layout = pipelineLayout;
+
 		vertexInputAttributes = {
 			{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
 			{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
@@ -655,7 +709,7 @@ namespace Nyxis
 
 		shaderStages = {
 			loadShader(device.device(), "../shaders/pbr/pbr.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-			loadShader(device.device(), "../shaders/pbr/pbr_khr.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+			loadShader(device.device(), "../shaders/pbr/pbr.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 		depthStencilStateCI.depthWriteEnable = VK_TRUE;
 		depthStencilStateCI.depthTestEnable = VK_TRUE;

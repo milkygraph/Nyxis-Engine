@@ -31,6 +31,8 @@ namespace Nyxis
 		glm::mat4 model;
 		glm::mat4 view;
 		glm::vec3 camPos;
+		glm::vec2 mousePos;
+		uint32_t entityID;
 	};
 
 	struct Textures {
@@ -285,7 +287,7 @@ namespace Nyxis
 	class ModelManager
 	{
 		friend struct Model;
-
+		friend class GLTFRenderer;
 		static Ref<DescriptorPool> GetDescriptorPool();
 		static Ref<DescriptorSetLayout> GetModelDescriptorSetLayout();
 		static Ref<DescriptorSetLayout> GetMaterialDescriptorSetLayout();

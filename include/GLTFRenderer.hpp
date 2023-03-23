@@ -8,6 +8,8 @@
 
 #include "GLTFModel.hpp"
 
+#define DEPTH_ARRAY_SCALE 32 // will be used fir object picking buffer
+
 namespace Nyxis
 {
 	class GLTFRenderer
@@ -59,10 +61,13 @@ namespace Nyxis
 		};
 		std::vector<UniformBufferSet> uniformBuffers;
 		std::vector<Ref<Buffer>> uniformBuffersParams;
+		std::vector<Ref<Buffer>> mouseSelectBuffers;
+
+		uint32_t mouseSelectBufferObject[DEPTH_ARRAY_SCALE];
 
 	private:
 		void PrepareUniformBuffers();
-		void UpdateUniformBuffers(Scene& scene);
+		void UpdateUniformBuffers(FrameInfo& frameInfo);
 		void LoadModel(std::string& filename);
 		void SetScene(const Ref<Scene> scene) { this->scene = scene; }
 		void LoadAssets();
@@ -100,6 +105,7 @@ namespace Nyxis
 			VkDescriptorSetLayout scene;
 			VkDescriptorSetLayout material;
 			VkDescriptorSetLayout node;
+			VkDescriptorSetLayout mouse;
 		} descriptorSetLayouts;
 
 		struct DescriptorSets
@@ -110,6 +116,7 @@ namespace Nyxis
 
 
 		std::vector<DescriptorSets> descriptorSets;
+		std::vector<VkDescriptorSet> mouseDescriptorSets;
 
 		struct LightSource {
 			glm::vec3 color = glm::vec3(1.0f, 0.2f, 0.5f);

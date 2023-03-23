@@ -1,18 +1,11 @@
 #include "app.hpp"
 #include "components.hpp"
-#include "descriptors.hpp"
 #include "model.hpp"
-#include "swap_chain.hpp"
 #include "frameInfo.hpp"
 #include "simpleRenderSystem.hpp"
-#include "pointLightSystem.hpp"
-#include "TextureRenderSystem.hpp"
-#include "RenderSystems/ParticleRenderSystem.hpp"
-#include "path.hpp"
 #include "Log.hpp"
 #include "GLTFRenderer.hpp"
 #include "Nyxispch.hpp"
-#include "imgui/misc/cpp/imgui_stdlib.h"
 
 namespace Nyxis
 {
@@ -32,7 +25,7 @@ namespace Nyxis
     void App::OnEvent(Event& e)
 	{
 #ifdef LOGGING
-#if LOGGING_LEVEL == 0
+#if LOGGING_LEVEL == 1
         std::string event_name = e.toString();
         LOG_INFO(event_name);
 #endif // LOGGING_LEVEL
@@ -109,14 +102,13 @@ namespace Nyxis
 
         veGameObject::Map map;
 
-        std::string sceneFile = "../models/roboto/scene.gltf";
-    	auto model1 = pScene.createEntity("Robot");
-		pScene.addComponent<Model>(model1, sceneFile, gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
-        pScene.addComponent<RigidBody>(model1);
-
         auto model2 = pScene.createEntity("Microphone");
         pScene.addComponent<Model>(model2, "../models/microphone/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
         pScene.addComponent<RigidBody>(model2);
+
+		auto model3 = pScene.createEntity("Cute Robot");
+        pScene.addComponent<Model>(model3, "../models/roboto/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
+        pScene.addComponent<RigidBody>(model3);
 
     	while (!pWindow.shouldClose()) {
             glfwPollEvents();
