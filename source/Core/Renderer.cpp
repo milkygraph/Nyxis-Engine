@@ -1,6 +1,5 @@
 ﻿#include "Core/Renderer.hpp"
 #include "Core/Nyxispch.hpp"
-#include "Graphics/OBJModel.hpp"
 
 namespace Nyxis
 {

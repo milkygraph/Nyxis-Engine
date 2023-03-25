@@ -32,7 +32,7 @@ namespace Nyxis
     void App::Setup()
     {
         auto commandBuffer = pDevice.beginSingleTimeCommands();
-        m_EditorLayer.init(pRenderer.GetUIRenderPass(), commandBuffer);
+        m_EditorLayer.Init(pRenderer.GetUIRenderPass(), commandBuffer);
         pDevice.endSingleTimeCommands(commandBuffer);
     }
 
@@ -134,10 +134,10 @@ namespace Nyxis
 			frameInfo.commandBuffer = commandBuffer;
 
             m_EditorLayer.Begin();
-            auto extent = m_EditorLayer.OnUpdate(frameInfo, pRenderer.GetWorldImageView(frameInfo.frameIndex));
+    		m_EditorLayer.OnUpdate(frameInfo, pRenderer.GetWorldImageView(frameInfo.frameIndex));
             m_EditorLayer.End();
     		pRenderer.EndUIRenderPass(commandBuffer);
-            pRenderer.m_WorldImageSize = extent;
+			pRenderer.m_WorldImageSize = m_EditorLayer.GetViewportExtent();
 
             pScene.OnUpdate(frameInfo.frameTime, aspect);
 

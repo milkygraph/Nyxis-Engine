@@ -192,7 +192,7 @@ namespace Nyxis
 
 		SetupImGuiStyle();
 
-		// craete sampler
+		// create sampler
 		VkSamplerCreateInfo samplerInfo = {};
 		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 		samplerInfo.magFilter = VK_FILTER_LINEAR;
@@ -225,7 +225,7 @@ namespace Nyxis
 		ImGui::DestroyContext();
 	}
 
-	void EditorLayer::init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer)
+	void EditorLayer::Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer)
 	{
 		ImGui_ImplGlfw_InitForVulkan(Window::getGLFWwindow(), true);
 		ImGui_ImplVulkan_InitInfo init_info = {};
@@ -250,19 +250,17 @@ namespace Nyxis
 		functions.push_back(function);
 	}
 
-	VkExtent2D EditorLayer::OnUpdate(FrameInfo& frameInfo, VkImageView imageView)
+	void EditorLayer::OnUpdate(FrameInfo& frameInfo, VkImageView imageView)
 	{
-		auto extent = AddViewport(frameInfo, imageView);
+		m_Viewport.OnUpdate(frameInfo, imageView);
 		AddSceneHierarchy();
 		AddComponentView();
 		AddMenuBar();
 
 		for (auto& function : functions)
-		{
 			function();
-		}
+
 		this->commandBuffer = frameInfo.commandBuffer;
-		return extent;
 	}
 
 	void EditorLayer::End()
@@ -311,50 +309,6 @@ namespace Nyxis
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
-	}
-
-	VkExtent2D EditorLayer::AddViewport(FrameInfo& frameInfo, VkImageView imageView)
-	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-		// ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0)); // Set the alpha channel to 0.5
-		ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
-			ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
-
-		if (dst[frameInfo.frameIndex] == VK_NULL_HANDLE)
-			dst[frameInfo.frameIndex] = ImGui_ImplVulkan_AddTexture(m_Sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		else
-		{
-			VkDescriptorImageInfo desc_image[1] = {};
-			desc_image[0].sampler = m_Sampler;
-			desc_image[0].imageView = imageView;
-			desc_image[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			VkWriteDescriptorSet write_desc[1] = {};
-			write_desc[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			write_desc[0].dstSet = dst[frameInfo.frameIndex];
-			write_desc[0].descriptorCount = 1;
-			write_desc[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			write_desc[0].pImageInfo = desc_image;
-			vkUpdateDescriptorSets(Device::get().device(), 1, write_desc, 0, nullptr);
-		}
-		float windowWidth = ImGui::GetWindowWidth();
-		float windowHeight = ImGui::GetWindowHeight();
-
-		// display image in the middle of the window with the correct aspect ratio
-		ImGui::Image(dst[frameInfo.frameIndex], ImVec2(windowWidth, windowHeight));
-
-		auto windowPos = ImGui::GetWindowPos();
-		// check if mouse is in window
-		if (ImGui::IsWindowHovered() && Input::isMouseButtonPressed(MouseCodes::MouseButtonRight))
-		{
-				Input::setCursorMode(CursorMode::CursorDisabled);
-				frameInfo.scene.SetCameraControl(true);
-		}
-
-		ImGui::End();
-		ImGui::PopStyleVar();
-
-		return { static_cast<uint32_t>(windowWidth), static_cast<uint32_t>(windowHeight) };
-		// Update camera fov
 	}
 
 	void EditorLayer::AddComponentView()

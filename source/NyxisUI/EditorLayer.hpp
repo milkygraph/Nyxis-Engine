@@ -3,6 +3,7 @@
 #include "Core/FrameInfo.hpp"
 #include "Core/Descriptors.hpp"
 #include "Scene/Scene.hpp"
+#include "NyxisUI/Viewport.hpp"
 
 namespace Nyxis
 {
@@ -12,17 +13,21 @@ namespace Nyxis
         EditorLayer(Scene& scene);
         ~EditorLayer();
 
-        void init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer);
+        void Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer);
 		void Begin();
-        VkExtent2D OnUpdate(FrameInfo &frameInfo, VkImageView imageView);
+        void OnUpdate(FrameInfo &frameInfo, VkImageView imageView);
         void End();
     	void AddFunction(const std::function<void()>& function);
-        VkExtent2D AddViewport(FrameInfo& frameInfo, VkImageView imageView);
-        void AddComponentView();
+    	void AddComponentView();
         void AddSceneHierarchy();
         void AddMenuBar();
+
+    	VkExtent2D GetViewportExtent() { return m_Viewport.GetExtent(); }
+
     private:
         void DrawEntityNode(Entity entity);
+
+        Viewport m_Viewport;
 
         Scene& m_ActiveScene;
         Entity m_SelectedEntity;
