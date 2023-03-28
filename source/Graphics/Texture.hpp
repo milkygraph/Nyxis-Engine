@@ -5,17 +5,20 @@
 namespace Nyxis{
 	class Texture {
 	public:
-		Device& device = Device::get();
+		Texture& operator=(Texture& other) = delete;
+
+		Device& device = Device::Get();
 		VkImage m_Image = VK_NULL_HANDLE;
 		VkImageLayout m_ImageLayout;
 		VkDeviceMemory m_DeviceMemory;
 		VkImageView m_View;
-		uint32_t m_Width, m_Height;
-		uint32_t m_MipLevels;
-		uint32_t m_LayerCount;
-		VkDescriptorImageInfo m_Descriptor;
 		VkSampler m_Sampler;
+		VkDescriptorImageInfo m_Descriptor;
 
+		uint32_t m_Width{}, m_Height{};
+		uint32_t m_MipLevels{};
+		uint32_t m_LayerCount{};
+		
 		void UpdateDescriptor()
 		{
 			m_Descriptor.sampler = m_Sampler;
@@ -61,30 +64,30 @@ namespace Nyxis{
 
 	class TextureCubeMap : public Texture {
 	public:
-		TextureCubeMap& operator=(const TextureCubeMap& other)
-		{
-			// Self-assignment check
-			if (this == &other) {
-				return *this;
-			}
+		TextureCubeMap& operator=(TextureCubeMap& other)
+		 {
+		 	// Self-assignment check
+		 	if (this == &other) {
+		 		return *this;
+		 	}
 
-			// Destroy the current resources of this object
-			Destroy();
+		 	// Destroy the current resources of this object
+		 	Destroy();
 
-			// Copy the resources from the other object
-			m_Image = other.m_Image;
-			m_ImageLayout = other.m_ImageLayout;
-			m_DeviceMemory = other.m_DeviceMemory;
-			m_View = other.m_View;
-			m_Width = other.m_Width;
-			m_Height = other.m_Height;
-			m_MipLevels = other.m_MipLevels;
-			m_LayerCount = other.m_LayerCount;
-			m_Descriptor = other.m_Descriptor;
-			m_Sampler = other.m_Sampler;
+		 	// Copy the resources from the other object
+		 	m_Image = other.m_Image;
+		 	m_ImageLayout = other.m_ImageLayout;
+		 	m_DeviceMemory = other.m_DeviceMemory;
+		 	m_View = other.m_View;
+		 	m_Width =
+		 	m_Height = other.m_Height;
+		 	m_MipLevels = other.m_MipLevels;
+		 	m_LayerCount = other.m_LayerCount;
+		 	m_Descriptor = other.m_Descriptor;
+		 	m_Sampler = other.m_Sampler;
 
-			return *this;
-		}
+		 	return *this;
+		 }
 		void LoadFromFile(
 			std::string filename,
 			VkFormat format,

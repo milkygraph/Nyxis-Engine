@@ -78,7 +78,7 @@ namespace Nyxis
     	std::vector<VkImageView> m_WorldImageViews;
         std::vector<VkImageView> m_SwapChainImageViews;
 
-        Device &device = Device::get();
+        Device &device = Device::Get();
         VkExtent2D m_WindowExtent;
         VkExtent2D m_WorldExtent;
 

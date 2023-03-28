@@ -5,8 +5,6 @@
 
 namespace Nyxis
 {
-
-Device *Device::pInstance = nullptr;
     // local callback functions
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -14,9 +12,9 @@ Device *Device::pInstance = nullptr;
         const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
         void *pUserData)
     {
-//        std::cerr << "[Debug]: " << pCallbackData->pMessage << std::endl;
+        std::cerr << "[Debug]: " << pCallbackData->pMessage << std::endl;
 #ifdef LOGGING
-        LOG_ERROR(pCallbackData->pMessage);
+        // LOG_ERROR(pCallbackData->pMessage);
 #endif // LOGGING
 
         return VK_FALSE;

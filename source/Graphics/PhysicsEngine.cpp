@@ -1,19 +1,21 @@
 #include "Graphics/PhysicsEngine.hpp"
+#include "Core/Application.hpp"
 #include "Scene/Components.hpp"
 
 namespace Nyxis
 {
-	void PhysicsEngine::OnUpdate(Scene& scene, float deltaTime)
+	void PhysicsEngine::OnUpdate(float deltaTime)
 	{
-		auto view = scene.m_Registry.view<Collider>();
+        auto scene = Application::GetScene();
+		auto view = scene->m_Registry.view<Collider>();
 		
 		for (auto& entity_1 : view)
 		{
-            auto& collider_1 = scene.m_Registry.get<Collider>(entity_1);
-			auto& rigidBody_1 = scene.m_Registry.get<RigidBody>(entity_1);
+            auto& collider_1 = scene->m_Registry.get<Collider>(entity_1);
+			auto& rigidBody_1 = scene->m_Registry.get<RigidBody>(entity_1);
 
             // if Gravity component exists, apply gravity
-            if (scene.m_Registry.all_of<Gravity>(entity_1))
+            if (scene->m_Registry.all_of<Gravity>(entity_1))
             {
                 rigidBody_1.velocity.y += gravity * deltaTime;
             }
@@ -22,8 +24,8 @@ namespace Nyxis
 			{
 				if (entity_1 == entity_2)
 					continue;
-				auto& collider_2 = scene.m_Registry.get<Collider>(entity_2);
-				auto& rigidBody_2 = scene.m_Registry.get<RigidBody>(entity_2);
+				auto& collider_2 = scene->m_Registry.get<Collider>(entity_2);
+				auto& rigidBody_2 = scene->m_Registry.get<RigidBody>(entity_2);
 
                 auto distance = glm::distance(rigidBody_1.translation, rigidBody_2.translation);
                 auto overlap = collider_1.radius + collider_2.radius - distance;

@@ -47,7 +47,7 @@ namespace Nyxis
 		
 	private:
 
-		Device& device = Device::get();
+		Device& device = Device::Get();
 		
 		std::vector<Mesh> meshes;
 		std::vector<Material> materials;

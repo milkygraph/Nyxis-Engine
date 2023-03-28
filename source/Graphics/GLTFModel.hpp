@@ -37,8 +37,8 @@ namespace Nyxis
 		TextureCubeMap environmentCube;
 		Texture2D empty;
 		Texture2D lutBrdf;
-		Ref<TextureCubeMap> irradianceCube = nullptr;
-		Ref<TextureCubeMap> prefilteredCube = nullptr;
+		TextureCubeMap irradianceCube;
+		TextureCubeMap prefilteredCube;
 	};
 
 	struct SceneInfo{
@@ -64,7 +64,7 @@ namespace Nyxis
 	};
 
 	struct ModelTexture {
-		Device& device = Device::get();
+		Device& device = Device::Get();
 		VkImage image;
 		VkImageLayout imageLayout;
 		VkDeviceMemory deviceMemory;
@@ -127,7 +127,7 @@ namespace Nyxis
 	};
 
 	struct Mesh {
-		Device& device = Device::get();
+		Device& device = Device::Get();
 		std::vector<Primitive*> primitives;
 		BoundingBox bb;
 		BoundingBox aabb;
@@ -200,7 +200,7 @@ namespace Nyxis
 	};
 
 	struct Model {
-		Device& device = Device::get();
+		Device& device = Device::Get();
 
 		struct Vertex {
 			glm::vec3 pos;

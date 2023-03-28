@@ -19,7 +19,7 @@ namespace Nyxis
 		void CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout);
 		void CreatePipeline(VkRenderPass renderPass);
 
-		Device &pDevice = Device::get();
+		Device &pDevice = Device::Get();
 		std::unique_ptr<vePipeline> pPipeline;
 		VkPipelineLayout m_PipelineLayout;
 		

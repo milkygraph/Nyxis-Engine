@@ -9,11 +9,10 @@ namespace Nyxis
 		Layer() = default;
 		virtual ~Layer() = default;
 
-		virtual void onAttach() {}
-		virtual void onDetach() {}
-		virtual void onUpdate() {}
-		virtual void onImGuiRender() {}
-		virtual void onEvent() {}
+		virtual void OnAttach() {}
+		virtual void OnDetach() {}
+		virtual void OnImGuiRender() {}
+		virtual void OnEvent() {}
 	};
 
 	class LayerStack
@@ -22,10 +21,10 @@ namespace Nyxis
 		LayerStack() = default;
 		~LayerStack();
 
-		void pushLayer(Layer* layer);
-			void pushOverlay(Layer* overlay);
-		void popLayer(Layer* layer);
-		void popOverlay(Layer* overlay);
+		void PushLayer(Layer* layer);
+		void PushOverlay(Layer* overlay);
+		void PopLayer(Layer* layer);
+		void PopOverlay(Layer* overlay);
 
 		std::vector<Layer*>::iterator begin() { return layers.begin(); }
 		std::vector<Layer*>::iterator end() { return layers.end(); }

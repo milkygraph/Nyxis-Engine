@@ -49,7 +49,7 @@ namespace Nyxis
         void createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule);
         void createGraphicsPipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);
 
-        Device &device = Device::get();
+        Device &device = Device::Get();
         VkPipeline graphicsPipeline;
         VkShaderModule vertShaderModule;
         VkShaderModule fragShaderModule;

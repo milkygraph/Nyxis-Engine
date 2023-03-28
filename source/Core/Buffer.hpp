@@ -44,7 +44,7 @@ namespace Nyxis
     private:
         static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
 
-        Device &device = Device::get();
+        Device &device = Device::Get();
         void *mapped = nullptr;
         VkBuffer buffer = VK_NULL_HANDLE;
         VkDeviceMemory memory = VK_NULL_HANDLE;

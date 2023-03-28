@@ -6,14 +6,14 @@ namespace Nyxis
 	{
 		for (Layer* layer : layers)
 		{
-			layer->onDetach();
+			layer->OnDetach();
 			delete layer;
 		}
 	}
 	/**
 	* @brief Pushes a layer to the layer stack
 	*/
-	void LayerStack::pushLayer(Layer* layer)
+	void LayerStack::PushLayer(Layer* layer)
 	{
 		layers.emplace(layers.begin() + layerInsertIndex, layer); 
 		layerInsertIndex++;
@@ -22,12 +22,12 @@ namespace Nyxis
 	/**
 	* @brief Push an overlay to the top of the stack. Overlays are always rendered on top of layers.
 	*/
-	void LayerStack::pushOverlay(Layer* overlay)
+	void LayerStack::PushOverlay(Layer* overlay)
 	{
 		layers.emplace_back(overlay);
 	}
 
-	void LayerStack::popLayer(Layer* layer)
+	void LayerStack::PopLayer(Layer* layer)
 	{
 		auto it = std::find(layers.begin(), layers.end(), layer);
 		if (it != layers.end())
@@ -37,7 +37,7 @@ namespace Nyxis
 		}
 	}
 	
-	void LayerStack::popOverlay(Layer* overlay)
+	void LayerStack::PopOverlay(Layer* overlay)
 	{
 		auto it = std::find(layers.begin(), layers.end(), overlay);
 		if (it != layers.end())

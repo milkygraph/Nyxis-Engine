@@ -394,7 +394,6 @@ namespace Nyxis
 		}
 	}
 
-
 	Node::~Node()
 	{
 		if (mesh)
@@ -1393,14 +1392,14 @@ namespace Nyxis
 				writeDescriptorSets[2].descriptorCount = 1;
 				writeDescriptorSets[2].dstSet = descriptorSets[i];
 				writeDescriptorSets[2].dstBinding = 2;
-				writeDescriptorSets[2].pImageInfo = &sceneInfo.textures.irradianceCube->m_Descriptor;
+				writeDescriptorSets[2].pImageInfo = &sceneInfo.textures.irradianceCube.m_Descriptor;
 		
 				writeDescriptorSets[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				writeDescriptorSets[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				writeDescriptorSets[3].descriptorCount = 1;
 				writeDescriptorSets[3].dstSet = descriptorSets[i];
 				writeDescriptorSets[3].dstBinding = 3;
-				writeDescriptorSets[3].pImageInfo = &sceneInfo.textures.prefilteredCube->m_Descriptor;
+				writeDescriptorSets[3].pImageInfo = &sceneInfo.textures.prefilteredCube.m_Descriptor;
 		
 				writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

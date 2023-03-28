@@ -5,23 +5,29 @@
 
 namespace Nyxis
 {
-Window *Window::pInstance = nullptr;
-Window::Window(int width, int height, const std::string &name) : pTitle(name)
+	Window::Window(int width, int height, const std::string &name)
     {
-		pData.pWidth = width;
-		pData.pHeight = height;
+		m_Data.pWidth = width;
+		m_Data.pHeight = height;
 
-        initveWindow();
+		glfwInit();
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-	    glfwSetWindowUserPointer(pData.window, &pData);
-        glfwSetWindowAspectRatio(pData.window, 16, 9);
+		m_Data.window = glfwCreateWindow(m_Data.pWidth, m_Data.pHeight, name.c_str(), nullptr, nullptr);
+		glfwSetWindowSizeLimits(m_Data.window, 200, 200, GLFW_DONT_CARE, GLFW_DONT_CARE);
+		glfwSetWindowUserPointer(m_Data.window, this);
+		glfwSetFramebufferSizeCallback(m_Data.window, frameBufferResizedCallback);
+
+	    glfwSetWindowUserPointer(m_Data.window, &m_Data);
+        glfwSetWindowAspectRatio(m_Data.window, 16, 9);
 
 	    glfwSetErrorCallback([](int error, const char* description)
 	    {
 			LOG_ERROR("GLFW Error ({0}): {1}", error, description);
 	    });
 
-		glfwSetKeyCallback(pData.window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
+		glfwSetKeyCallback(m_Data.window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 	    {
 		    GLFWData& data = *(GLFWData*)glfwGetWindowUserPointer(window);
 		    switch (action)
@@ -47,7 +53,7 @@ Window::Window(int width, int height, const std::string &name) : pTitle(name)
 		    }
 	    });
 
-	    glfwSetCursorPosCallback(pData.window, [](GLFWwindow* window,double xPos, double yPos)
+	    glfwSetCursorPosCallback(m_Data.window, [](GLFWwindow* window,double xPos, double yPos)
 		{
 			GLFWData& data = *(GLFWData*)glfwGetWindowUserPointer(window);
 			MouseMovedEvent event(xPos, yPos);
@@ -58,25 +64,13 @@ Window::Window(int width, int height, const std::string &name) : pTitle(name)
 
     Window::~Window()
     {
-        glfwDestroyWindow(pData.window);
+        glfwDestroyWindow(m_Data.window);
         glfwTerminate();
     }
 
-    void Window::initveWindow()
+	void Window::CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface)
     {
-        glfwInit();
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-        pData.window = glfwCreateWindow(pData.pWidth, pData.pHeight, pTitle.c_str(), nullptr, nullptr);
-        glfwSetWindowSizeLimits(pData.window, 200, 200, GLFW_DONT_CARE, GLFW_DONT_CARE);
-        glfwSetWindowUserPointer(pData.window, this);
-        glfwSetFramebufferSizeCallback(pData.window, frameBufferResizedCallback);
-    }
-
-    void Window::CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface)
-    {
-        if (glfwCreateWindowSurface(instance, pData.window, nullptr, surface) != VK_SUCCESS)
+        if (glfwCreateWindowSurface(instance, m_Data.window, nullptr, surface) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create window surface!");
         }

@@ -2,20 +2,27 @@
 #include "Core/Nyxispch.hpp"
 #include "Core/FrameInfo.hpp"
 #include "Core/Descriptors.hpp"
+#include "Core/Layer.hpp"
 #include "Scene/Scene.hpp"
 #include "NyxisUI/Viewport.hpp"
 
 namespace Nyxis
 {
-    class EditorLayer
+    class EditorLayer : public Layer
     {
     public:
-        EditorLayer(Scene& scene);
-        ~EditorLayer();
+		EditorLayer() = default;
+		~EditorLayer() = default;
 
-        void Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer);
+        void OnAttach() override;
+        void OnDetach() override;
+        void OnImGuiRender() override;
+        void OnEvent() override;
+        void SetScene(Ref<Scene> scene);
+
+    	void Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer);
 		void Begin();
-        void OnUpdate(FrameInfo &frameInfo, VkImageView imageView);
+        void OnUpdate();
         void End();
     	void AddFunction(const std::function<void()>& function);
     	void AddComponentView();
@@ -29,7 +36,7 @@ namespace Nyxis
 
         Viewport m_Viewport;
 
-        Scene& m_ActiveScene;
+    	Ref<Scene> m_ActiveScene;
         Entity m_SelectedEntity;
 		bool m_ShowEntityLoader = false;
         std::vector<std::function<void()>> functions;

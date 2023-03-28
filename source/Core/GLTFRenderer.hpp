@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Nyxis.hpp"
 #include "Core/Nyxispch.hpp"
+#include "Core/Application.hpp"
 #include "Core/FrameInfo.hpp"
 #include "Core/Pipeline.hpp"
 #include "Scene/Scene.hpp"
@@ -43,9 +44,9 @@ namespace Nyxis
 		GLTFRenderer(VkRenderPass renderPass);
 		~GLTFRenderer();
 
-		void OnUpdate(Scene& scene);
-		void Render(FrameInfo& frameInfo);
-		void UpdateAnimation(FrameInfo& frameInfo);
+		void OnUpdate();
+		void Render();
+		void UpdateAnimation(double dt);
 		void LoadEnvironment(std::string& filename);
 		void UpdateSkyboxDescriptorSets();
 
@@ -65,9 +66,9 @@ namespace Nyxis
 
 	private:
 		void PrepareUniformBuffers();
-		void UpdateUniformBuffers(FrameInfo& frameInfo);
+		void UpdateUniformBuffers();
 		void LoadModel(std::string& filename);
-		void SetScene(const Ref<Scene> scene) { this->scene = scene; }
+		void SetScene() { this->scene = Application::GetScene(); }
 		void LoadAssets();
 		void GenerateBRDFLUT();
 		void GenerateCubemaps();
@@ -76,10 +77,10 @@ namespace Nyxis
 		void SetupNodeDescriptorSet(const Node* node);
 		void SetupDescriptorSets();
 		void FreeDescriptorSets();
-		void RenderNode(Node* node, FrameInfo& frameInfo, Material::AlphaMode alphaMode);
-		void RenderNodeImproved(Node* node, FrameInfo& frameInfo, Material::AlphaMode alphaMode, Model& model);
+		void RenderNode(Node* node, Material::AlphaMode alphaMode);
+		void RenderNodeImproved(Node* node, Material::AlphaMode alphaMode, Model& model);
 
-		Device& device = Device::get();
+		Device& device = Device::Get();
 		Ref<Scene> scene;
 
 		enum PBRWorkflows { PBR_WORKFLOW_METALLIC_ROUGHNESS = 0, PBR_WORKFLOW_SPECULAR_GLOSINESS = 1 };

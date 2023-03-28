@@ -11,12 +11,13 @@ namespace Nyxis
 		Viewport();
 		~Viewport();
 
-		void OnUpdate(FrameInfo& frameInfo, VkImageView imageView);
+		void OnUpdate();
+		void OnEvent();
 		VkExtent2D GetExtent() const { return m_Extent; }
 
 	private:
 		std::vector<VkDescriptorSet> m_DescriptorSets;
-		VkSampler m_Sampler;
+		VkSampler m_Sampler = VK_NULL_HANDLE;
 		VkExtent2D m_Extent{};
 
 	};

@@ -1,4 +1,6 @@
 #include "Core/GLTFRenderer.hpp"
+
+#include "Application.hpp"
 #include "Core/Log.hpp"
 #include "Core/SwapChain.hpp"
 #include "Scene/Components.hpp"
@@ -33,8 +35,9 @@ namespace Nyxis
 
 	}
 
-	void GLTFRenderer::OnUpdate(Scene& scene)
+	void GLTFRenderer::OnUpdate()
 	{
+		auto scene = Application::GetScene();
 		if (SceneUpdated)
 		{
 			vkDeviceWaitIdle(device.device());
@@ -42,10 +45,10 @@ namespace Nyxis
 			FreeDescriptorSets();
 			SetupDescriptorSets();
 
-			auto modelView = scene.getComponentView<Model>();
+			auto modelView = scene->GetComponentView<Model>();
 			for(auto entity : modelView)
 			{
-				auto& model = scene.getComponent<Model>(entity);
+				auto& model = scene->GetComponent<Model>(entity);
 				model.setupDescriptorSet(sceneInfo, uniformBuffersParams);
 			}
 
@@ -53,58 +56,63 @@ namespace Nyxis
 		}
 	}
 
-	void GLTFRenderer::Render(FrameInfo& frameInfo)
+	void GLTFRenderer::Render()
 	{
-		UpdateUniformBuffers(frameInfo);
-		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[frameInfo.frameIndex].skybox, 0, nullptr);
-		vkCmdBindPipeline(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
-		models.skybox->draw(frameInfo.commandBuffer);
+		auto frameInfo = Application::GetFrameInfo();
+		auto scene = Application::GetScene();
+
+		UpdateUniformBuffers();
+		vkCmdBindDescriptorSets(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[frameInfo->frameIndex].skybox, 0, nullptr);
+		vkCmdBindPipeline(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
+		models.skybox->draw(frameInfo->commandBuffer);
 
 
 		// TODO: make mousePos with respect to viewport
 		glm::vec2 mousePos = Input::getMousePosition();
 
-		auto modelView = frameInfo.scene.m_Registry.view<Model>();
+		auto modelView = scene->m_Registry.view<Model>();
 		for (auto& model : modelView)
 		{
-			auto& gltfModel = frameInfo.scene.getComponent<Model>(model);
-			auto& rigidBody = frameInfo.scene.getComponent<RigidBody>(model);
+			auto& gltfModel = scene->GetComponent<Model>(model);
+			auto& rigidBody = scene->GetComponent<RigidBody>(model);
 			gltfModel.updateModelMatrix(rigidBody);
 			shaderValuesScene.model = gltfModel.modelMatrix;
 			shaderValuesScene.mousePos = mousePos;
 			shaderValuesScene.entityID = static_cast<uint32_t>(model);
 
-			gltfModel.updateUniformBuffer(frameInfo.frameIndex, &shaderValuesScene);
+			gltfModel.updateUniformBuffer(frameInfo->frameIndex, &shaderValuesScene);
 
 			VkDeviceSize offsets[] = { 0 };
 
-			vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, &gltfModel.vertices.buffer, offsets);
+			vkCmdBindVertexBuffers(frameInfo->commandBuffer, 0, 1, &gltfModel.vertices.buffer, offsets);
 
 			if (gltfModel.indices.buffer != VK_NULL_HANDLE)
-				vkCmdBindIndexBuffer(frameInfo.commandBuffer, gltfModel.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+				vkCmdBindIndexBuffer(frameInfo->commandBuffer, gltfModel.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
 
 			boundPipeline = VK_NULL_HANDLE;
 
 			for (auto node : gltfModel.nodes)
-				RenderNodeImproved(node, frameInfo, Material::ALPHAMODE_OPAQUE, gltfModel);
+				RenderNodeImproved(node, Material::ALPHAMODE_OPAQUE, gltfModel);
 			// Alpha masked primitives
 			for (auto node : gltfModel.nodes)
-				RenderNodeImproved(node, frameInfo, Material::ALPHAMODE_MASK, gltfModel);
+				RenderNodeImproved(node, Material::ALPHAMODE_MASK, gltfModel);
 			// Transparent primitives
 			// TODO: Correct depth sorting
 			for (auto node : gltfModel.nodes)
-				RenderNodeImproved(node, frameInfo, Material::ALPHAMODE_BLEND, gltfModel);
+				RenderNodeImproved(node, Material::ALPHAMODE_BLEND, gltfModel);
 		}
 	}
 	
-	void GLTFRenderer::UpdateAnimation(FrameInfo& frameInfo)
+	void GLTFRenderer::UpdateAnimation(double dt)
 	{
+		auto scene = Application::GetScene();
+
 		if (animate) {
-			auto view = frameInfo.scene.getComponentView<Model>();
+			auto view = scene->GetComponentView<Model>();
 			for (auto model : view)
 			{
-				auto& gltfModel = frameInfo.scene.getComponent<Model>(model);
-				gltfModel.updateAnimation(frameInfo.frameTime);
+				auto& gltfModel = scene->GetComponent<Model>(model);
+				gltfModel.updateAnimation(dt);
 			}
 		}
 	}
@@ -123,13 +131,15 @@ namespace Nyxis
 			depthBuffers[i]->map();
 		}
 	}
-	void GLTFRenderer::UpdateUniformBuffers(FrameInfo& frameInfo)
+	void GLTFRenderer::UpdateUniformBuffers()
 	{
+		auto frameInfo = Application::GetFrameInfo();
+		auto scene = Application::GetScene();
 		// Scene
-		shaderValuesScene.projection = frameInfo.scene.m_Camera->getProjectionMatrix();
-		shaderValuesScene.view = frameInfo.scene.m_Camera->getViewMatrix();
+		shaderValuesScene.projection = scene->m_Camera->getProjectionMatrix();
+		shaderValuesScene.view = scene->m_Camera->getViewMatrix();
 
-		auto& rigidBody = frameInfo.scene.m_Registry.get<RigidBody>(frameInfo.scene.m_CameraEntity);
+		auto& rigidBody = scene->m_Registry.get<RigidBody>(scene->m_CameraEntity);
 		
 		shaderValuesScene.camPos = glm::vec3(
 			-rigidBody.translation.z * sin(glm::radians(rigidBody.translation.y)) * cos(glm::radians(rigidBody.translation.x)),
@@ -138,18 +148,18 @@ namespace Nyxis
 		);
 
 		// Skybox
-		shaderValuesSkybox.projection = frameInfo.scene.m_Camera->getProjectionMatrix();
-		shaderValuesSkybox.view = frameInfo.scene.m_Camera->getViewMatrix();
+		shaderValuesSkybox.projection = scene->m_Camera->getProjectionMatrix();
+		shaderValuesSkybox.view = scene->m_Camera->getViewMatrix();
 		shaderValuesSkybox.model = glm::mat4(glm::mat3(shaderValuesSkybox.view));
 
-		uniformBuffersParams[frameInfo.frameIndex]->writeToBuffer(&sceneInfo.shaderValuesParams);
-		uniformBuffers[frameInfo.frameIndex].skybox->writeToBuffer(&shaderValuesSkybox);
+		uniformBuffersParams[frameInfo->frameIndex]->writeToBuffer(&sceneInfo.shaderValuesParams);
+		uniformBuffers[frameInfo->frameIndex].skybox->writeToBuffer(&shaderValuesSkybox);
 
-		uniformBuffersParams[frameInfo.frameIndex]->flush();
-		uniformBuffers[frameInfo.frameIndex].skybox->flush();
+		uniformBuffersParams[frameInfo->frameIndex]->flush();
+		uniformBuffers[frameInfo->frameIndex].skybox->flush();
 
-		depthBuffers[frameInfo.frameIndex]->writeToBuffer(&depthBufferObject);
-		depthBuffers[frameInfo.frameIndex]->flush();
+		depthBuffers[frameInfo->frameIndex]->writeToBuffer(&depthBufferObject);
+		depthBuffers[frameInfo->frameIndex]->flush();
 	}
 
 	void GLTFRenderer::LoadEnvironment(std::string& filename)
@@ -157,8 +167,8 @@ namespace Nyxis
 		LOG_INFO("Loading environment from {}", filename);
 		if (sceneInfo.textures.environmentCube.m_Image) {
 			sceneInfo.textures.environmentCube.Destroy();
-			sceneInfo.textures.irradianceCube->Destroy();
-			sceneInfo.textures.prefilteredCube->Destroy();
+			sceneInfo.textures.irradianceCube.Destroy();
+			sceneInfo.textures.prefilteredCube.Destroy();
 		}
 		sceneInfo.textures.environmentCube.LoadFromFile(filename, VK_FORMAT_R16G16B16A16_SFLOAT);
 		GenerateCubemaps();
@@ -369,14 +379,16 @@ namespace Nyxis
 			writeDescriptorSets[2].descriptorCount = 1;
 			writeDescriptorSets[2].dstSet = descriptorSets[i].skybox;
 			writeDescriptorSets[2].dstBinding = 2;
-			writeDescriptorSets[2].pImageInfo = &sceneInfo.textures.prefilteredCube->m_Descriptor;
+			writeDescriptorSets[2].pImageInfo = &sceneInfo.textures.prefilteredCube.m_Descriptor;
 
 			vkUpdateDescriptorSets(device.device(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 		}
 	}
 
-	void GLTFRenderer::RenderNode(Node* node, FrameInfo& frameInfo, Material::AlphaMode alphaMode)
+	void GLTFRenderer::RenderNode(Node* node, Material::AlphaMode alphaMode)
 	{
+		auto frameInfo = Application::GetFrameInfo();
+
 		if (node->mesh) {
 			// Render mesh primitives
 			for (Primitive* primitive : node->mesh->primitives) {
@@ -394,16 +406,16 @@ namespace Nyxis
 					}
 
 					if (pipeline != boundPipeline) {
-						vkCmdBindPipeline(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+						vkCmdBindPipeline(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 						boundPipeline = pipeline;
 					}
 
 					const std::vector<VkDescriptorSet> descriptorsets = {
-						models.scene->getDescriptorSet(frameInfo.frameIndex),
+						models.scene->getDescriptorSet(frameInfo->frameIndex),
 						primitive->material.descriptorSet,
 						node->mesh->uniformBuffer.descriptorSet,
 					};
-					vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, static_cast<uint32_t>(descriptorsets.size()), descriptorsets.data(), 0, NULL);
+					vkCmdBindDescriptorSets(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, static_cast<uint32_t>(descriptorsets.size()), descriptorsets.data(), 0, NULL);
 
 					// Pass material parameters as push constants
 					PushConstBlockMaterial pushConstBlockMaterial{};
@@ -438,25 +450,26 @@ namespace Nyxis
 						pushConstBlockMaterial.specularFactor = glm::vec4(primitive->material.extension.specularFactor, 1.0f);
 					}
 
-					vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstBlockMaterial), &pushConstBlockMaterial);
+					vkCmdPushConstants(frameInfo->commandBuffer, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstBlockMaterial), &pushConstBlockMaterial);
 
 					if (primitive->hasIndices) {
-						vkCmdDrawIndexed(frameInfo.commandBuffer, primitive->indexCount, 1, primitive->firstIndex, 0, 0);
+						vkCmdDrawIndexed(frameInfo->commandBuffer, primitive->indexCount, 1, primitive->firstIndex, 0, 0);
 					}
 					else {
-						vkCmdDraw(frameInfo.commandBuffer, primitive->vertexCount, 1, 0, 0);
+						vkCmdDraw(frameInfo->commandBuffer, primitive->vertexCount, 1, 0, 0);
 					}
 				}
 			}
 
 		}
 		for (auto child : node->children) {
-			RenderNode(child, frameInfo, alphaMode);
+			RenderNode(child, alphaMode);
 		}
 	}
 
-	void GLTFRenderer::RenderNodeImproved(Node* node, FrameInfo& frameInfo, Material::AlphaMode alphaMode, Model& model)
+	void GLTFRenderer::RenderNodeImproved(Node* node, Material::AlphaMode alphaMode, Model& model)
 	{
+		auto frameInfo = Application::GetFrameInfo();
 		if (node->mesh) {
 			// Render mesh primitives
 			for (Primitive* primitive : node->mesh->primitives) {
@@ -474,17 +487,17 @@ namespace Nyxis
 					}
 
 					if (pipeline != boundPipeline) {
-						vkCmdBindPipeline(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+						vkCmdBindPipeline(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 						boundPipeline = pipeline;
 					}
 
 					const std::vector<VkDescriptorSet> descriptorsets = {
-						model.getDescriptorSet(frameInfo.frameIndex),
+						model.getDescriptorSet(frameInfo->frameIndex),
 						primitive->material.descriptorSet,
 						node->mesh->uniformBuffer.descriptorSet,
-						depthBufferDescriptorSets[frameInfo.frameIndex]
+						depthBufferDescriptorSets[frameInfo->frameIndex]
 					};
-					vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, static_cast<uint32_t>(descriptorsets.size()), descriptorsets.data(), 0, NULL);
+					vkCmdBindDescriptorSets(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, static_cast<uint32_t>(descriptorsets.size()), descriptorsets.data(), 0, NULL);
 
 					// Pass material parameters as push constants
 					PushConstBlockMaterial pushConstBlockMaterial{};
@@ -519,20 +532,20 @@ namespace Nyxis
 						pushConstBlockMaterial.specularFactor = glm::vec4(primitive->material.extension.specularFactor, 1.0f);
 					}
 
-					vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstBlockMaterial), &pushConstBlockMaterial);
+					vkCmdPushConstants(frameInfo->commandBuffer, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstBlockMaterial), &pushConstBlockMaterial);
 
 					if (primitive->hasIndices) {
-						vkCmdDrawIndexed(frameInfo.commandBuffer, primitive->indexCount, 1, primitive->firstIndex, 0, 0);
+						vkCmdDrawIndexed(frameInfo->commandBuffer, primitive->indexCount, 1, primitive->firstIndex, 0, 0);
 					}
 					else {
-						vkCmdDraw(frameInfo.commandBuffer, primitive->vertexCount, 1, 0, 0);
+						vkCmdDraw(frameInfo->commandBuffer, primitive->vertexCount, 1, 0, 0);
 					}
 				}
 			}
 
 		}
 		for (auto child : node->children) {
-			RenderNodeImproved(child, frameInfo, alphaMode, model);
+			RenderNodeImproved(child, alphaMode, model);
 		}
 	}
 
@@ -995,7 +1008,7 @@ namespace Nyxis
 
 		for (uint32_t target = 0; target < PREFILTEREDENV + 1; target++) {
 
-			Ref<TextureCubeMap> cubemap = std::make_shared<TextureCubeMap>();
+			TextureCubeMap cubemap{};
 
 			auto tStart = std::chrono::high_resolution_clock::now();
 
@@ -1031,16 +1044,16 @@ namespace Nyxis
 				imageCI.tiling = VK_IMAGE_TILING_OPTIMAL;
 				imageCI.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 				imageCI.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-				NYXIS_ASSERT(vkCreateImage(device.device(), &imageCI, nullptr, &cubemap->m_Image) == VK_SUCCESS, "Failed to create cubemap m_Image!");
+				NYXIS_ASSERT(vkCreateImage(device.device(), &imageCI, nullptr, &cubemap.m_Image) == VK_SUCCESS, "Failed to create cubemap m_Image!");
 
 				VkMemoryRequirements memReqs;
-				vkGetImageMemoryRequirements(device.device(), cubemap->m_Image, &memReqs);
+				vkGetImageMemoryRequirements(device.device(), cubemap.m_Image, &memReqs);
 				VkMemoryAllocateInfo memAllocInfo{};
 				memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 				memAllocInfo.allocationSize = memReqs.size;
 				memAllocInfo.memoryTypeIndex = device.findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-				vkAllocateMemory(device.device(), &memAllocInfo, nullptr, &cubemap->m_DeviceMemory);
-				vkBindImageMemory(device.device(), cubemap->m_Image, cubemap->m_DeviceMemory, 0);
+				vkAllocateMemory(device.device(), &memAllocInfo, nullptr, &cubemap.m_DeviceMemory);
+				vkBindImageMemory(device.device(), cubemap.m_Image, cubemap.m_DeviceMemory, 0);
 
 				// View
 				VkImageViewCreateInfo viewCI{};
@@ -1051,8 +1064,8 @@ namespace Nyxis
 				viewCI.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 				viewCI.subresourceRange.levelCount = numMips;
 				viewCI.subresourceRange.layerCount = 6;
-				viewCI.image = cubemap->m_Image;
-				vkCreateImageView(device.device(), &viewCI, nullptr, &cubemap->m_View);
+				viewCI.image = cubemap.m_Image;
+				vkCreateImageView(device.device(), &viewCI, nullptr, &cubemap.m_View);
 
 				// Sampler
 				VkSamplerCreateInfo samplerCI{};
@@ -1067,7 +1080,7 @@ namespace Nyxis
 				samplerCI.maxLod = static_cast<float>(numMips);
 				samplerCI.maxAnisotropy = 1.0f;
 				samplerCI.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-				vkCreateSampler(device.device(), &samplerCI, nullptr, &cubemap->m_Sampler);
+				vkCreateSampler(device.device(), &samplerCI, nullptr, &cubemap.m_Sampler);
 			}
 
 			// FB, Att, RP, Pipe, etc.
@@ -1392,7 +1405,7 @@ namespace Nyxis
 			{
 				VkImageMemoryBarrier imageMemoryBarrier{};
 				imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-				imageMemoryBarrier.image = cubemap->m_Image;
+				imageMemoryBarrier.image = cubemap.m_Image;
 				imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 				imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 				imageMemoryBarrier.srcAccessMask = 0;
@@ -1479,7 +1492,7 @@ namespace Nyxis
 						cmdBuf,
 						offscreen.image,
 						VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-						cubemap->m_Image,
+						cubemap.m_Image,
 						VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 						1,
 						&copyRegion);
@@ -1504,7 +1517,7 @@ namespace Nyxis
 				cmdBuf = device.beginSingleTimeCommands();
 				VkImageMemoryBarrier imageMemoryBarrier{};
 				imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-				imageMemoryBarrier.image = cubemap->m_Image;
+				imageMemoryBarrier.image = cubemap.m_Image;
 				imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 				imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 				imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -1525,9 +1538,9 @@ namespace Nyxis
 			vkDestroyPipeline(device.device(), pipeline, nullptr);
 			vkDestroyPipelineLayout(device.device(), pipelinelayout, nullptr);
 
-			cubemap->m_Descriptor.imageView = cubemap->m_View;
-			cubemap->m_Descriptor.sampler = cubemap->m_Sampler;
-			cubemap->m_Descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			cubemap.m_Descriptor.imageView = cubemap.m_View;
+			cubemap.m_Descriptor.sampler = cubemap.m_Sampler;
+			cubemap.m_Descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 			switch (target) {
 			case IRRADIANCE:

@@ -2,10 +2,10 @@
 
 int main()
 {
-    Nyxis::App* app = Nyxis::App::getInstance();
+    Nyxis::Application* app = Nyxis::Application::GetInstance();
     try
     {
-        app->run();
+        app->Run();
     }
     catch (const std::exception &e)
     {

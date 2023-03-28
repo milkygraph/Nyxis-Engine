@@ -1,4 +1,5 @@
 #include "NyxisUI/EditorLayer.hpp"
+#include "Core/Application.hpp"
 #include "Core/SwapChain.hpp"
 #include "Events/MouseEvents.hpp"
 
@@ -162,23 +163,23 @@ namespace Nyxis
 		return modelNames;
 	}
 
-	EditorLayer::EditorLayer(Scene& scene) : m_ActiveScene(scene)
+	void EditorLayer::OnAttach()
 	{
 		imguiPool = DescriptorPool::Builder()
-		            .addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000)
-		            .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
-		            .addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000)
-		            .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000)
-		            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000)
-		            .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000)
-		            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
-		            .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000)
-		            .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000)
-		            .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000)
-		            .addPoolSize(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000)
-		            .setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
-		            .setMaxSets(1000)
-		            .build();
+			.addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000)
+			.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
+			.setMaxSets(1000)
+			.build();
 
 		ImGui::CreateContext();
 		ImGuiIO* IO = &ImGui::GetIO();
@@ -211,25 +212,27 @@ namespace Nyxis
 		samplerInfo.minLod = 0.0f;
 		samplerInfo.maxLod = 0.0f;
 
-		if (vkCreateSampler(Device::get().device(), &samplerInfo, nullptr, &m_Sampler) != VK_SUCCESS)
+		if (vkCreateSampler(Device::Get().device(), &samplerInfo, nullptr, &m_Sampler) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create texture sampler!");
 		}
 	}
 
 
-	EditorLayer::~EditorLayer()
+	void EditorLayer::OnDetach()
 	{
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
+		// TODO: delete all the stuff
+		vkDestroySampler(Device::Get().device(), m_Sampler, nullptr);
 	}
 
 	void EditorLayer::Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer)
 	{
-		ImGui_ImplGlfw_InitForVulkan(Window::getGLFWwindow(), true);
+		ImGui_ImplGlfw_InitForVulkan(Window::GetGLFWwindow(), true);
 		ImGui_ImplVulkan_InitInfo init_info = {};
-		Device::get().createImGuiInitInfo(init_info);
+		Device::Get().createImGuiInitInfo(init_info);
 		init_info.DescriptorPool = imguiPool->getDescriptorPool();
 		ImGui_ImplVulkan_Init(&init_info, RenderPass);
 		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
@@ -250,9 +253,9 @@ namespace Nyxis
 		functions.push_back(function);
 	}
 
-	void EditorLayer::OnUpdate(FrameInfo& frameInfo, VkImageView imageView)
+	void EditorLayer::OnUpdate()
 	{
-		m_Viewport.OnUpdate(frameInfo, imageView);
+		m_Viewport.OnUpdate();
 		AddSceneHierarchy();
 		AddComponentView();
 		AddMenuBar();
@@ -260,7 +263,8 @@ namespace Nyxis
 		for (auto& function : functions)
 			function();
 
-		this->commandBuffer = frameInfo.commandBuffer;
+		auto frameInfo = Application::GetFrameInfo();
+		this->commandBuffer = frameInfo->commandBuffer;
 	}
 
 	void EditorLayer::End()
@@ -279,11 +283,11 @@ namespace Nyxis
 			}
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
 			{
-				m_ActiveScene.LoadSceneFlag = true;
+				m_ActiveScene->LoadSceneFlag = true;
 			}
 			if (ImGui::MenuItem("Save", "Ctrl+S"))
 			{
-				m_ActiveScene.SaveSceneFlag = true;
+				m_ActiveScene->SaveSceneFlag = true;
 			}
 			ImGui::Separator();
 			ImGui::EndMenu();
@@ -318,11 +322,11 @@ namespace Nyxis
 		{
 			if (m_ShowEntityLoader)
 			{
-				if (m_ActiveScene.m_Registry.valid(m_SelectedEntity))
+				if (m_ActiveScene->m_Registry.valid(m_SelectedEntity))
 				{
-					if (m_ActiveScene.m_Registry.all_of<TagComponent>(m_SelectedEntity))
+					if (m_ActiveScene->m_Registry.all_of<TagComponent>(m_SelectedEntity))
 					{
-						auto& tag = m_ActiveScene.getComponent<TagComponent>(m_SelectedEntity);
+						auto& tag = m_ActiveScene->GetComponent<TagComponent>(m_SelectedEntity);
 						char buffer[256];
 						memset(buffer, 0, sizeof(buffer));
 						strcpy(buffer, tag.Tag.c_str());
@@ -332,9 +336,9 @@ namespace Nyxis
 						}
 					}
 
-					if (m_ActiveScene.m_Registry.all_of<RigidBody>(m_SelectedEntity))
+					if (m_ActiveScene->m_Registry.all_of<RigidBody>(m_SelectedEntity))
 					{
-						auto& rigidBody = m_ActiveScene.getComponent<RigidBody>(
+						auto& rigidBody = m_ActiveScene->GetComponent<RigidBody>(
 							m_SelectedEntity); // TODO! Fix load scene bug
 						ImGui::Text("Rigid Body");
 						ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f, 0, 0, "%.1f");
@@ -346,9 +350,9 @@ namespace Nyxis
 
 						ImGui::DragFloat("Roughness", &rigidBody.roughness, 0.1f);
 						// check if entity has a collider component
-						if (m_ActiveScene.m_Registry.all_of<Collider>(m_SelectedEntity))
+						if (m_ActiveScene->m_Registry.all_of<Collider>(m_SelectedEntity))
 						{
-							auto& collider = m_ActiveScene.getComponent<Collider>(m_SelectedEntity);
+							auto& collider = m_ActiveScene->GetComponent<Collider>(m_SelectedEntity);
 
 							ImGui::Text("Collider");
 							auto preview = Nyxis::collider_name[collider.type];
@@ -383,15 +387,15 @@ namespace Nyxis
 		if (ImGui::BeginPopupContextWindow())
 		{
 			if (ImGui::MenuItem("Create Empty Entity"))
-				m_SelectedEntity = m_ActiveScene.createEntity("Empty Entity");
+				m_SelectedEntity = m_ActiveScene->createEntity("Empty Entity");
 
 			if (ImGui::MenuItem("Clear Scene"))
-				m_ActiveScene.ClearScene();
+				m_ActiveScene->ClearScene();
 
 			ImGui::EndPopup();
 		}
 
-		m_ActiveScene.m_Registry.each([&](auto entityID)
+		m_ActiveScene->m_Registry.each([&](auto entityID)
 		{
 			DrawEntityNode(entityID);
 		});
@@ -401,7 +405,7 @@ namespace Nyxis
 
 	void EditorLayer::DrawEntityNode(Entity entity)
 	{
-		auto& tag = m_ActiveScene.getComponent<TagComponent>(entity).Tag;
+		auto& tag = m_ActiveScene->GetComponent<TagComponent>(entity).Tag;
 
 		ImGuiTreeNodeFlags flags = ((m_SelectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) |
 			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -415,48 +419,48 @@ namespace Nyxis
 		{
 			if (ImGui::MenuItem("Delete Entity"))
 			{
-				m_ActiveScene.destroyEntity(entity);
+				m_ActiveScene->destroyEntity(entity);
 			}
 			// add component tree with all components that can be added to entity
 			if (ImGui::BeginMenu("Add Component"))
 			{
 				if (ImGui::MenuItem("RigidBody"))
-					if (!m_ActiveScene.m_Registry.all_of<RigidBody>(entity))
-						m_ActiveScene.addComponent<RigidBody>(entity);
+					if (!m_ActiveScene->m_Registry.all_of<RigidBody>(entity))
+						m_ActiveScene->addComponent<RigidBody>(entity);
 
 				if (ImGui::MenuItem("Mesh"))
-					if (!m_ActiveScene.m_Registry.all_of<MeshComponent>(entity))
-						m_ActiveScene.addComponent<MeshComponent>(entity, "../models/sphere.obj");
+					if (!m_ActiveScene->m_Registry.all_of<MeshComponent>(entity))
+						m_ActiveScene->addComponent<MeshComponent>(entity, "../models/sphere.obj");
 
 				if (ImGui::MenuItem("Collider"))
-					if (!m_ActiveScene.m_Registry.all_of<Collider>(entity))
-						m_ActiveScene.addComponent<Collider>(entity, ColliderType::Sphere, glm::vec3{0.2, 0.2, 0.2},
+					if (!m_ActiveScene->m_Registry.all_of<Collider>(entity))
+						m_ActiveScene->addComponent<Collider>(entity, ColliderType::Sphere, glm::vec3{0.2, 0.2, 0.2},
 						                                     0.05);
 
 				if (ImGui::MenuItem("Gravity"))
-					if (!m_ActiveScene.m_Registry.all_of<Gravity>(entity))
-						m_ActiveScene.addComponent<Gravity>(entity);
+					if (!m_ActiveScene->m_Registry.all_of<Gravity>(entity))
+						m_ActiveScene->addComponent<Gravity>(entity);
 
 				ImGui::EndMenu();
 			}
 
 			if (ImGui::BeginMenu("Remove Component"))
 			{
-				if (m_ActiveScene.m_Registry.all_of<RigidBody>(entity))
+				if (m_ActiveScene->m_Registry.all_of<RigidBody>(entity))
 					if (ImGui::MenuItem("RigidBody"))
-						m_ActiveScene.m_Registry.remove<RigidBody>(entity);
+						m_ActiveScene->m_Registry.remove<RigidBody>(entity);
 
-				if (m_ActiveScene.m_Registry.all_of<MeshComponent>(entity))
+				if (m_ActiveScene->m_Registry.all_of<MeshComponent>(entity))
 					if (ImGui::MenuItem("Mesh"))
-						m_ActiveScene.m_Registry.remove<MeshComponent>(entity);
+						m_ActiveScene->m_Registry.remove<MeshComponent>(entity);
 
-				if (m_ActiveScene.m_Registry.all_of<Collider>(entity))
+				if (m_ActiveScene->m_Registry.all_of<Collider>(entity))
 					if (ImGui::MenuItem("Collider"))
-						m_ActiveScene.m_Registry.remove<Collider>(entity);
+						m_ActiveScene->m_Registry.remove<Collider>(entity);
 
-				if (m_ActiveScene.m_Registry.all_of<Gravity>(entity))
+				if (m_ActiveScene->m_Registry.all_of<Gravity>(entity))
 					if (ImGui::MenuItem("Gravity"))
-						m_ActiveScene.m_Registry.remove<Gravity>(entity);
+						m_ActiveScene->m_Registry.remove<Gravity>(entity);
 
 				ImGui::EndMenu();
 			}
@@ -470,4 +474,20 @@ namespace Nyxis
 			m_ShowEntityLoader = true;
 		}
 	}
+
+	void EditorLayer::OnImGuiRender()
+	{
+		
+	}
+
+	void EditorLayer::OnEvent()
+	{
+
+	}
+
+	void EditorLayer::SetScene(Ref<Scene> scene)
+	{
+		m_ActiveScene = scene;
+	}
+
 }

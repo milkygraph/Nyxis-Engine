@@ -21,7 +21,7 @@ namespace Nyxis
             Ref<DescriptorSetLayout> build() const;
 
         private:
-          Device &device = Device::get();
+          Device &device = Device::Get();
             std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings{};
         };
 
@@ -34,7 +34,7 @@ namespace Nyxis
         VkDescriptorSetLayout getDescriptorSetLayout() const { return descriptorSetLayout; }
 
     private:
-      Device &device = Device::get();
+      Device &device = Device::Get();
         VkDescriptorSetLayout descriptorSetLayout;
         std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
 
@@ -56,7 +56,7 @@ namespace Nyxis
             Ref<DescriptorPool> build() const;
 
         private:
-          Device &device = Device::get();
+          Device &device = Device::Get();
             std::vector<VkDescriptorPoolSize> poolSizes{};
             uint32_t maxSets = 1000;
             VkDescriptorPoolCreateFlags poolFlags = 0;
@@ -78,7 +78,7 @@ namespace Nyxis
         void resetPool();
 
     private:
-      Device &device = Device::get();
+      Device &device = Device::Get();
         VkDescriptorPool descriptorPool;
 
         friend class DescriptorWriter;

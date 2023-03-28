@@ -6,29 +6,37 @@ namespace Nyxis
 {
     class Window {
     public:
-      Window(int width, int height, const std::string &name);
+		Window(int width, int height, const std::string &name);
         ~Window();
 
         Window(const Window &) = delete;
         Window &operator=(const Window &) = delete;
 
-        VkExtent2D getExtent() { return {static_cast<uint32_t>(pData.pWidth), static_cast<uint32_t>(pData.pHeight)}; }
-        bool shouldClose() { return glfwWindowShouldClose(pData.window); }
+        VkExtent2D GetExtent() { return {static_cast<uint32_t>(m_Data.pWidth), static_cast<uint32_t>(m_Data.pHeight)}; }
+        bool ShouldClose() { return glfwWindowShouldClose(m_Data.window); }
         void CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
-        bool windowResized() { return pData.framebufferResized; }
-        void resetWindowResizedFlag() { pData.framebufferResized = false; };
+        bool WindowResized() { return m_Data.framebufferResized; }
+        void ResetWindowResizedFlag() { m_Data.framebufferResized = false; };
 
-        static GLFWwindow* getGLFWwindow() { return pInstance->pData.window; }
-		static Window & get(int width, int height, const std::string& name)
+        static GLFWwindow* GetGLFWwindow() { return s_Instance->m_Data.window; }
+		static Window & Get(int width, int height, const std::string& name)
 		{
-			pInstance = new Window(width, height, name);
-			return *pInstance;
+			s_Instance = new Window(width, height, name);
+			return *s_Instance;
 		}
 
-		static Window & get() { return *pInstance; }
-
+		static Window & Get()
+        {
+			return *s_Instance;
+        }
 
 		using EventCallbackFn = std::function<void(Event&)>;
+	    void SetEventCallback(const EventCallbackFn& func){ m_Data.callback = func; }
+
+	private:
+		static inline Window* s_Instance = nullptr;
+        static void frameBufferResizedCallback(GLFWwindow *window, int width, int height);
+
 		struct GLFWData
 		{
 			GLFWwindow* window;
@@ -40,16 +48,9 @@ namespace Nyxis
 			EventCallbackFn callback;
 		};
 
-	    void SetEventCallback(const EventCallbackFn& func){ pData.callback = func; }
-	    EventCallbackFn callback;
 
-	private:
-		static Window * pInstance;
-        void initveWindow();
-        static void frameBufferResizedCallback(GLFWwindow *window, int width, int height);
+    	EventCallbackFn callback;
 
-        std::string pTitle;
-
-		GLFWData pData;
+		GLFWData m_Data;
     };
 }

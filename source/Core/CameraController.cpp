@@ -42,7 +42,7 @@ namespace Nyxis
 		else
 		{
 			if (Input::isKeyPressed(KeyCodes::W))
-				moveDir += glm::vec3{ 0.f, -1.f, 0.f };
+				moveDir += glm::vec3{ 0.f,1.f, 0.f };
 			if (Input::isKeyPressed(KeyCodes::S))
 				moveDir -= glm::vec3{ 0.f, -1.f, 0.f };
 			if (Input::isKeyPressed(KeyCodes::D))

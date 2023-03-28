@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Camera.hpp"
 #include "Graphics/GameObject.hpp"
-#include "Scene/Scene.hpp"
 #include "Scene/Components.hpp"
 
 namespace Nyxis
@@ -28,11 +27,10 @@ namespace Nyxis
 
     struct FrameInfo
     {
-        int frameIndex;
-        float frameTime;
-        VkCommandBuffer commandBuffer;
-        VkDescriptorSet globalDescriptorSet;
-        GameObject::Map &gameObjects;
-        Scene& scene;
+        int frameIndex = 0;
+        float frameTime = 0;
+		VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
+		VkDescriptorSet globalDescriptorSet = VK_NULL_HANDLE;
+        GameObject::Map gameObjects;
     };
 }

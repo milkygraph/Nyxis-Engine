@@ -24,7 +24,7 @@ namespace Nyxis
 		void CreatePipelineLayout(VkDescriptorSetLayout globalSetLayout);
 		void CreatePipeline(VkRenderPass renderPass);
 
-		Device& m_Device = Device::get();
+		Device& m_Device = Device::Get();
 		
 		std::shared_ptr<OBJModel> model;
 		std::vector<Particle> m_Particles;

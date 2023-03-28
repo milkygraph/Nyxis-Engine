@@ -9,66 +9,46 @@ namespace Nyxis
     class Renderer
     {
     public:
-        Renderer(Scene &scene);
-        ~Renderer();
+        static void Init(Window* window, Device* device);
+        static void Shutdown();
 
-        // copy constructor and destructors
+    	static [[nodiscard]] VkImageView GetWorldImageView(int index);
+    	static [[nodiscard]] VkRenderPass GetSwapChainRenderPass() { return m_SwapChain->GetMainRenderPass(); }
+        static [[nodiscard]] VkRenderPass GetUIRenderPass() { return m_SwapChain->GetUIRenderPass(); }
+        static [[nodiscard]] VkExtent2D GetAspectRatio() { return m_WorldImageSize; }
+        static [[nodiscard]] VkCommandBuffer GetMainCommandBuffer();
+        static [[nodiscard]] VkCommandBuffer GetUICommandBuffer();
+        static [[nodiscard]] int GetFrameIndex() { return m_CurrentImageIndex; }
+        static [[nodiscard]] bool IsFrameInProgress() { return m_IsFrameStarted; }
+		static void SetWorldImageSize(VkExtent2D extent) { m_WorldImageSize = extent; }
 
-        Renderer(const Renderer &) = delete;
-        Renderer &operator=(const Renderer &) = delete;
+        static [[nodiscard]] VkCommandBuffer BeginWorldFrame() ;
+        static void EndWorldFrame();
 
-        [[nodiscard]] VkImageView GetWorldImageView(int index) const;
-    	[[nodiscard]] VkRenderPass GetSwapChainRenderPass() const { return pSwapChain->GetMainRenderPass(); }
-        [[nodiscard]] VkRenderPass GetUIRenderPass() const { return pSwapChain->GetUIRenderPass(); }
-        [[nodiscard]] VkExtent2D GetAspectRatio() const { return m_WorldImageSize; }
-        [[nodiscard]] bool IsFrameInProgress() const { return m_IsFrameStarted; }
+        static [[nodiscard]] VkCommandBuffer BeginUIFrame() ;
+		static void EndUIRenderPass(VkCommandBuffer commandBuffer);
 
-        [[nodiscard]] VkCommandBuffer GetMainCommandBuffer() const
-        {
-            assert(m_IsFrameStarted && "Cannot get command buffer when frame not in progress");
-            return m_MainCommandBuffers[m_CurrentImageIndex];
-        }
-
-        [[nodiscard]] VkCommandBuffer GetUICommandBuffer() const
-        {
-            assert(m_IsFrameStarted && "Cannot get command buffer when frame not in progress");
-            return m_UICommandBuffers[m_CurrentImageIndex];
-        }
-
-        [[nodiscard]] int GetFrameIndex() const
-        {
-            // assert(m_IsFrameStarted && "Cannot get frame index when frame not in progress");
-            return m_CurrentImageIndex;
-        }
-
-        VkCommandBuffer BeginWorldFrame() ;
-        void EndWorldFrame();
-
-        VkCommandBuffer BeginUIFrame() ;
-		void EndUIRenderPass(VkCommandBuffer commandBuffer);
-
-    	void BeginMainRenderPass(VkCommandBuffer commandBuffer);
-        void EndMainRenderPass(VkCommandBuffer commandBuffer);
-
-        std::unique_ptr<SwapChain> pSwapChain;
-		VkExtent2D m_WorldImageSize;
+    	static void BeginMainRenderPass(VkCommandBuffer commandBuffer);
+        static void EndMainRenderPass(VkCommandBuffer commandBuffer);
 
     private:
-        void CreateCommandBuffers();
-        void FreeCommandBuffers();
-        void RecreateSwapChain();
+        static void CreateCommandBuffers();
+        static void FreeCommandBuffers();
+        static void RecreateSwapChain();
 
-        Window &window = Window::get();
-        Device &device = Device::get();
-        Scene *scene = nullptr;
+		static inline Window* m_Window = nullptr;
+        static inline Device *m_Device = nullptr;
+        static inline Ref<Scene> m_Scene = nullptr;
+        static inline Ref<SwapChain> m_SwapChain = nullptr;
 
-        std::vector<VkCommandBuffer> m_MainCommandBuffers;
-        std::vector<VkCommandBuffer> m_UICommandBuffers;
+    	static inline uint32_t m_CurrentImageIndex{};
+        static inline int m_CurrentFrameIndex{};
+        static inline bool m_IsFrameStarted{ false };
 
-        uint32_t m_CurrentImageIndex;
-        int m_CurrentFrameIndex{0};
-        bool m_IsFrameStarted{false};
+        static inline std::vector<VkCommandBuffer> m_MainCommandBuffers;
+        static inline std::vector<VkCommandBuffer> m_UICommandBuffers;
 
-		VkExtent2D m_OldWorldImageSize;
+        static inline VkExtent2D m_WorldImageSize;
+		static inline VkExtent2D m_OldWorldImageSize;
     }; // class Renderer
 } // namespace Nyxis

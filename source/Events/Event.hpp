@@ -7,9 +7,10 @@ namespace Nyxis
 	enum class EventType
 	{
 		None = 0,
-		WindowClose, WindowResize, WindowFocus, WindowLostFocus, WindowMoved, // I am not sure if we have to keep these since we already have them implemented
+		WindowClose, WindowResize, WindowFocus, WindowLostFocus, WindowMoved,
 		KeyPressed, KeyReleased,
-		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled
+		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled,
+		OpenGLError
 	};
 
 	enum EventCategory
@@ -55,6 +56,7 @@ namespace Nyxis
 		{
 			if (pEvent.getEventType() == T::getStaticType())
 			{
+				std::cout << pEvent.toString() << std::endl;
 				pEvent.mHandled = func(*(T*)&pEvent);
 				return true;
 			}

@@ -34,14 +34,14 @@ namespace Nyxis
         const bool enableValidationLayers = true;
 #endif
 
-		static Device & get()
+		static Device & Get()
 		{
-			if(pInstance == nullptr)
-				pInstance = new Device();
-			return *pInstance;
+			if(s_Instance == nullptr)
+				s_Instance = new Device();
+			return *s_Instance;
 		}
 
-                Device();
+        Device();
         ~Device();
         // Not copyable or movable
         Device(const Device &) = delete;
@@ -92,7 +92,7 @@ namespace Nyxis
 		void createImGuiInitInfo(ImGui_ImplVulkan_InitInfo &init_info);
 
     private:
-		static Device * pInstance;
+		static inline Device* s_Instance = nullptr;
         void createInstance();
         void setupDebugMessenger();
         void createSurface();
@@ -114,7 +114,7 @@ namespace Nyxis
 
 		std::mutex deviceGuard;
 
-                Window &pWindow = Window::get();
+        Window &pWindow = Window::Get();
         VkCommandPool mainCommandPool;
         VkCommandPool finalCommandPool;
         VkDevice device_;

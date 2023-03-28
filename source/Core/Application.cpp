@@ -1,54 +1,53 @@
 #include "Core/Application.hpp"
-#include "Core/FrameInfo.hpp"
+#include "Core/Renderer.hpp"
 #include "Core/GLTFRenderer.hpp"
+#include "Core/FrameInfo.hpp"
+#include "Events/MouseEvents.hpp"
 #include "Scene/Components.hpp"
-#include "imgui/misc/cpp/imgui_stdlib.h"
 
 namespace Nyxis
 {
-    App* App::pInstance = nullptr;
-
-    App::App()
+    Application::Application()
 	{
-        Setup();
-        loadGameObjects();
-        pScene.LoadModels();
-        pWindow.SetEventCallback(std::bind(&App::OnEvent, this, std::placeholders::_1));
-        pInstance = this;
-    }
+        Renderer::Init(&m_Window, &m_Device);
+        m_FrameInfo = std::make_shared<FrameInfo>();
+        m_EditorLayer.OnAttach();
+    	auto commandBuffer = m_Device.beginSingleTimeCommands();
+        m_EditorLayer.Init(Renderer::GetUIRenderPass(), commandBuffer);
+        m_Device.endSingleTimeCommands(commandBuffer);
+    	m_Scene = std::make_shared<Scene>();
+        m_EditorLayer.SetScene(m_Scene);
+    	s_Instance = this;
+        m_Window.SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
+	}
 
-    App::~App() = default;
-
-    void App::OnEvent(Event& e)
-	{
-#ifdef LOGGING
-#if LOGGING_LEVEL == 1
-        std::string event_name = e.toString();
-        LOG_INFO(event_name);
-#endif // LOGGING_LEVEL
-#endif // LOGGING
-    }
-
-    void App::Setup()
+    Application::~Application()
     {
-        auto commandBuffer = pDevice.beginSingleTimeCommands();
-        m_EditorLayer.Init(pRenderer.GetUIRenderPass(), commandBuffer);
-        pDevice.endSingleTimeCommands(commandBuffer);
+        m_EditorLayer.OnDetach();
+        Renderer::Shutdown();
     }
 
-    void App::run() {
+    void Application::OnEvent(Event& e)
+	{
+#if 1
+		LOG_INFO(e.toString());
+#endif
+	}
+
+    void Application::Run()
+	{
 
         std::thread animationThread;
         bool animationThreadActive = true;
 
         // create systems
-        GLTFRenderer gltfRenderer{ pRenderer.GetSwapChainRenderPass() }; // gltfRenderer - gltfRenderer
+        GLTFRenderer gltfRenderer{ Renderer::GetSwapChainRenderPass() };
 
-        // add functions to imgui layer
+        // add functions to editor layer
         {
             m_EditorLayer.AddFunction([&]() {
                 ImGui::Begin("Statistics");
-                ImGui::Text("Entity Count: %d", pScene.getEntityCount());
+                ImGui::Text("Entity Count: %d", m_Scene->getEntityCount());
                 ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
                 ImGui::End();
             });
@@ -56,8 +55,8 @@ namespace Nyxis
             m_EditorLayer.AddFunction([&]() {
                 ImGui::Begin("Physics");
                 ImGui::Checkbox("Enable Physics", &PhysicsEnabled);
-                ImGui::DragFloat2("BoxEdges", &physicsEngine.edges.x);
-                ImGui::DragFloat("Gravity", &physicsEngine.gravity, 0.1, -1.0f, 1.0f);
+                ImGui::DragFloat2("BoxEdges", &m_PhysicsEngine.edges.x);
+                ImGui::DragFloat("Gravity", &m_PhysicsEngine.gravity, 0.1, -1.0f, 1.0f);
                 ImGui::End();
             });
             m_EditorLayer.AddFunction([&] {
@@ -95,56 +94,48 @@ namespace Nyxis
             });
         }
 
-        auto currentTime = std::chrono::high_resolution_clock::now();
+    	auto currentTime = std::chrono::high_resolution_clock::now();
 
-        GameObject::Map map;
+        auto model2 = m_Scene->createEntity("Microphone");
+        m_Scene->addComponent<Model>(model2, "../models/microphone/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
+        m_Scene->addComponent<RigidBody>(model2);
 
-        auto model2 = pScene.createEntity("Microphone");
-        pScene.addComponent<Model>(model2, "../models/microphone/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
-        pScene.addComponent<RigidBody>(model2);
-
-		auto model3 = pScene.createEntity("Cute Robot");
-        pScene.addComponent<Model>(model3, "../models/roboto/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
-        pScene.addComponent<RigidBody>(model3);
-
-    	while (!pWindow.shouldClose()) {
+    	while (!m_Window.ShouldClose()) {
             glfwPollEvents();
             auto newTime = std::chrono::high_resolution_clock::now();
-            float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+            auto frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
             currentTime = newTime;
 
-        	auto worldExtent = pRenderer.GetAspectRatio();
+        	auto worldExtent = Renderer::GetAspectRatio();
 			float aspect = static_cast<float>(worldExtent.width) / static_cast<float>(worldExtent.height);
-        	auto worldCommandBuffer = pRenderer.BeginWorldFrame();
-        	int frameIndex = pRenderer.GetFrameIndex();
+        	auto worldCommandBuffer = Renderer::BeginWorldFrame();
 
-            FrameInfo frameInfo
-            { frameIndex, frameTime, VK_NULL_HANDLE, VK_NULL_HANDLE, gameObjects, pScene };
+			m_FrameInfo->frameTime = frameTime;
+			m_FrameInfo->frameIndex = Renderer::GetFrameIndex();
+    		m_FrameInfo->commandBuffer = worldCommandBuffer;
 
-			frameInfo.commandBuffer = worldCommandBuffer;
-
-            pRenderer.BeginMainRenderPass(frameInfo.commandBuffer);
-            gltfRenderer.Render(frameInfo);
+            Renderer::BeginMainRenderPass(m_FrameInfo->commandBuffer);
+            gltfRenderer.Render();
 
             if (PhysicsEnabled)
-                physicsEngine.OnUpdate(pScene, frameInfo.frameTime);
-            pRenderer.EndMainRenderPass(worldCommandBuffer);
+                m_PhysicsEngine.OnUpdate(m_FrameInfo->frameTime);
+            Renderer::EndMainRenderPass(worldCommandBuffer);
             
-        	auto commandBuffer = pRenderer.BeginUIFrame();
-			frameInfo.commandBuffer = commandBuffer;
+        	auto commandBuffer = Renderer::BeginUIFrame();
+			m_FrameInfo->commandBuffer = commandBuffer;
 
             m_EditorLayer.Begin();
-    		m_EditorLayer.OnUpdate(frameInfo, pRenderer.GetWorldImageView(frameInfo.frameIndex));
+    		m_EditorLayer.OnUpdate();
             m_EditorLayer.End();
-    		pRenderer.EndUIRenderPass(commandBuffer);
-			pRenderer.m_WorldImageSize = m_EditorLayer.GetViewportExtent();
+    		Renderer::EndUIRenderPass(commandBuffer);
+			Renderer::SetWorldImageSize(m_EditorLayer.GetViewportExtent());
 
-            pScene.OnUpdate(frameInfo.frameTime, aspect);
+            m_Scene->OnUpdate(m_FrameInfo->frameTime, aspect);
 
-    		gltfRenderer.OnUpdate(frameInfo.scene);
+    		gltfRenderer.OnUpdate();
             if (animationThreadActive) {
-                animationThread = std::thread([&gltfRenderer, &frameInfo]() {
-					gltfRenderer.UpdateAnimation(frameInfo);
+                animationThread = std::thread([&]{
+					gltfRenderer.UpdateAnimation(m_FrameInfo->frameTime);
                     });
                 animationThread.detach();
             }
@@ -155,10 +146,6 @@ namespace Nyxis
             animationThread.join();
         }
 
-    	vkDeviceWaitIdle(pDevice.device());
-    }
-
-    void App::loadGameObjects()
-    {
+    	vkDeviceWaitIdle(m_Device.device());
     }
 } // namespace Nyxis

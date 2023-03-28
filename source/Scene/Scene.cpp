@@ -45,26 +45,11 @@ namespace Nyxis
         auto entity = createEntity(name);
         addComponent<TransformComponent>(entity, glm::vec3(0.f, 0.f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.f, 1.f, 1.f), 0.0f);
         addComponent<MeshComponent>(entity, model_path + filename);
-        auto &model = getComponent<MeshComponent>(entity);
+        auto &model = GetComponent<MeshComponent>(entity);
         model.model->loadModel();
         return {name, entity};
     }
 
-    void Scene::LoadModels()
-    {
-        auto &models = OBJModel::GetModels();
-
-        if (models.empty())
-            return;
-
-        ThreadPool pool;
-
-        for (auto &model : models)
-        {
-            pool.enqueue([&]()
-                         { model.second->loadModel(); });
-        }
-    }
     void Scene::OnUpdate(float dt, float aspect)
     {
         if (SaveSceneFlag)
@@ -94,12 +79,10 @@ namespace Nyxis
             m_Camera->setMousePosition(Input::getMousePosition());
         }
 
-        if (this->m_CameraControl)
-        {
-            m_Camera->OnUpdate(dt);
-        }
+        if(m_CameraControl)
+			m_Camera->OnUpdate(dt);
 
-    	getComponentView<Player, RigidBody>().each([&](auto entity, auto &player, auto &rigidBody)
+    	GetComponentView<Player, RigidBody>().each([&](auto entity, auto &player, auto &rigidBody)
         {
 	        player.OnUpdate(dt, rigidBody);
         });
@@ -219,7 +202,6 @@ namespace Nyxis
         }
 
         file.close();
-        LoadModels();
         LOG_INFO("Scene {} loaded", SceneName);
     }
 } // namespace Nyxis

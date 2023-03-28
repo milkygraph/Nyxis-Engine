@@ -71,7 +71,7 @@ namespace Nyxis
         bool hasIndexBuffer = false;
 
 		Builder* builder = nullptr;
-                Device &device = Device::get();
+                Device &device = Device::Get();
         std::unique_ptr<Buffer> vertexBuffer;
         uint32_t vertexCount;
 

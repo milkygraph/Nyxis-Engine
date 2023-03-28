@@ -1,4 +1,5 @@
 #include "RenderSystems/SimpleRenderSystem.hpp"
+#include "Core/Application.hpp"
 #include "Core/Nyxispch.hpp"
 #include "Scene/Components.hpp"
 #include "Utils/Path.hpp"
@@ -70,7 +71,7 @@ namespace Nyxis
                                 0, 1,
                                 &frameInfo.globalDescriptorSet, 0, nullptr);
 
-        frameInfo.scene.m_Registry.view<RigidBody, MeshComponent>().each([&](auto entity, auto& rigidBody, auto& mesh)
+        Application::GetScene()->m_Registry.view<RigidBody, MeshComponent>().each([&](auto entity, auto& rigidBody, auto& mesh)
 		{
 			auto& model = *mesh.model;
 			if(model.loaded)
