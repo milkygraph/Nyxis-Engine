@@ -19,6 +19,7 @@ namespace Nyxis
         void OnImGuiRender() override;
         void OnEvent() override;
         void SetScene(Ref<Scene> scene);
+		void SetSelectedEntity(Entity entity);
 
     	void Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer);
 		void Begin();
@@ -38,7 +39,7 @@ namespace Nyxis
 
     	Ref<Scene> m_ActiveScene;
         Entity m_SelectedEntity;
-		bool m_ShowEntityLoader = false;
+		bool m_ShowEntityComponents = false;
         std::vector<std::function<void()>> functions;
     	Ref<DescriptorPool> imguiPool{};
 

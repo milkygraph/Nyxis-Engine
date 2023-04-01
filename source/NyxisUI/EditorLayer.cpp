@@ -320,7 +320,7 @@ namespace Nyxis
 		ImGui::Begin("Component");
 		// Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 		{
-			if (m_ShowEntityLoader)
+			if (m_ShowEntityComponents)
 			{
 				if (m_ActiveScene->m_Registry.valid(m_SelectedEntity))
 				{
@@ -410,10 +410,17 @@ namespace Nyxis
 		ImGuiTreeNodeFlags flags = ((m_SelectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) |
 			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
 		bool expanded = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, "%s", tag.c_str());
+
+		if (m_SelectedEntity == entity) {
+			ImGui::SetNextItemOpen(true);
+		}
+
 		if (ImGui::IsItemClicked())
 		{
 			m_SelectedEntity = entity;
 		}
+
+		
 		// right click context menu
 		if (ImGui::BeginPopupContextItem())
 		{
@@ -471,7 +478,7 @@ namespace Nyxis
 		if (expanded)
 		{
 			ImGui::TreePop();
-			m_ShowEntityLoader = true;
+			m_ShowEntityComponents = true;
 		}
 	}
 
@@ -490,4 +497,8 @@ namespace Nyxis
 		m_ActiveScene = scene;
 	}
 
+	void EditorLayer::SetSelectedEntity(Entity entity)
+	{
+		m_SelectedEntity = entity;
+	}
 }

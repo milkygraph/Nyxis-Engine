@@ -18,8 +18,9 @@ layout (set = 0, binding = 0) uniform UBO {
 	mat4 model;
 	mat4 view;
 	vec3 camPos;
-	vec2 mousePos;
-	uint entitiyID;
+	float mousePosX;
+	float mousePosY;
+	int entityID;
 } ubo;
 
 layout (set = 0, binding = 1) uniform UBOParams {
@@ -425,11 +426,13 @@ void main()
 		}
 	}
 	
+	vec2 mousePos = { ubo.mousePosX, ubo.mousePosY };
+
 	uint zIndex = uint(gl_FragCoord.z * DEPTH_ARRAY_SCALE);
-	debugPrintfEXT("length: %f", length( ubo.mousePos - gl_FragCoord.xy));
-	if( length( ubo.mousePos - gl_FragCoord.xy) < 1)
+	debugPrintfEXT("Distance: %f", mousePos - gl_FragCoord.xy);
+	if( sqrt((mousePos.x - gl_FragCoord.x) * (mousePos.x - gl_FragCoord.x) + (mousePos.y - gl_FragCoord.y) * (mousePos.y - gl_FragCoord.y)) < 1)
 	{
 		debugPrintfEXT("zIndex = %d", zIndex);
-	    mouseBuffer.objectData[zIndex] = 0;
+	    mouseBuffer.objectData[zIndex] = ubo.entityID;
 	}
 }

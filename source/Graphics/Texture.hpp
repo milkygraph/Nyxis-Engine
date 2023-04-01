@@ -71,9 +71,6 @@ namespace Nyxis{
 		 		return *this;
 		 	}
 
-		 	// Destroy the current resources of this object
-		 	Destroy();
-
 		 	// Copy the resources from the other object
 		 	m_Image = other.m_Image;
 		 	m_ImageLayout = other.m_ImageLayout;

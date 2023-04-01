@@ -8,14 +8,14 @@ layout (location = 4) in vec4 inJoint0;
 layout (location = 5) in vec4 inWeight0;
 layout (location = 6) in vec4 inColor0;
 
-layout (set = 0, binding = 0) uniform UBO
-{
+layout (set = 0, binding = 0) uniform UBO {
 	mat4 projection;
 	mat4 model;
 	mat4 view;
 	vec3 camPos;
-	vec2 mousePos;
-	uint entitiyID;
+	float mousePosX;
+	float mousePosY;
+	int entityID;
 } ubo;
 
 #define MAX_NUM_JOINTS 128

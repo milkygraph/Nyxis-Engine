@@ -22,43 +22,24 @@ namespace Nyxis
 			Ref<Model> skybox;
 		} models;
 
-		struct PushConstBlockMaterial {
-			glm::vec4 baseColorFactor;
-			glm::vec4 emissiveFactor;
-			glm::vec4 diffuseFactor;
-			glm::vec4 specularFactor;
-			float workflow;
-			int colorTextureSet;
-			int PhysicalDescriptorTextureSet;
-			int normalTextureSet;
-			int occlusionTextureSet;
-			int emissiveTextureSet;
-			float metallicFactor;
-			float roughnessFactor;
-			float alphaMask;
-			float alphaMaskCutoff;
-		} pushConstBlockMaterial;
+		PushConstBlockMaterial pushConstBlockMaterial;
 
-		UBOMatrices shaderValuesScene{}, shaderValuesSkybox{};
+		UBOMatrix shaderValuesScene{}, shaderValuesSkybox{};
 
 		GLTFRenderer(VkRenderPass renderPass);
 		~GLTFRenderer();
 
 		void OnUpdate();
 		void Render();
-		void UpdateAnimation(double dt);
+		void UpdateAnimation(float dt);
 		void LoadEnvironment(std::string& filename);
 		void UpdateSkyboxDescriptorSets();
 
-		std::string envMapFile = "";
-		bool SceneUpdated = false;
-		bool animate = true;
+		std::string m_EnvMapFile = "";
+		bool m_SceneUpdated = false;
+		bool m_Animate = false;
 
-		RigidBody rigidBody{};
-		struct UniformBufferSet {
-			Ref<Buffer> skybox = nullptr;
-		};
-		std::vector<UniformBufferSet> uniformBuffers;
+		std::vector<Ref<Buffer>> skyboxBuffers;
 		std::vector<Ref<Buffer>> uniformBuffersParams;
 		std::vector<Ref<Buffer>> depthBuffers;
 
@@ -67,18 +48,15 @@ namespace Nyxis
 	private:
 		void PrepareUniformBuffers();
 		void UpdateUniformBuffers();
-		void LoadModel(std::string& filename);
 		void SetScene() { this->scene = Application::GetScene(); }
 		void LoadAssets();
 		void GenerateBRDFLUT();
 		void GenerateCubemaps();
 		void PreparePipelines(VkRenderPass renderPass);
 		void SetupDescriptorPool();
-		void SetupNodeDescriptorSet(const Node* node);
 		void SetupDescriptorSets();
 		void FreeDescriptorSets();
-		void RenderNode(Node* node, Material::AlphaMode alphaMode);
-		void RenderNodeImproved(Node* node, Material::AlphaMode alphaMode, Model& model);
+		void RenderNode(Node* node, Material::AlphaMode alphaMode, Model& model);
 
 		Device& device = Device::Get();
 		Ref<Scene> scene;
@@ -120,8 +98,5 @@ namespace Nyxis
 			glm::vec3 color = glm::vec3(1.0f, 0.2f, 0.5f);
 			glm::vec3 rotation = glm::vec3(75.0f, 40.0f, 0.0f);
 		} lightSource;
-
-		int32_t animationIndex = 0;
-		float animationTimer = 0.0f;
 	};
 }

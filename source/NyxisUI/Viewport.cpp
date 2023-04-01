@@ -89,7 +89,22 @@ namespace Nyxis
 
 		ImGui::End();
 		ImGui::PopStyleVar();
-		m_Extent = {static_cast<uint32_t>(windowWidth), static_cast<uint32_t>(windowHeight)};
+
+		m_Extent = { static_cast<uint32_t>(windowWidth), static_cast<uint32_t>(windowHeight) };
+		// get mouse position relative to the window
+		glm::vec2 mousePos = Input::getMousePosition();
+
+		mousePos.x -= windowPos.x;
+		mousePos.y -= windowPos.y;
+
+		if (mousePos.x < 0 || mousePos.x > windowWidth)
+			mousePos.x = -1;
+		if (mousePos.y < 0 || mousePos.y > windowHeight)
+			mousePos.y = -1;
+
+		glm::vec2 extent = { windowWidth, windowHeight };
+
+		frameInfo->mousePosition = mousePos;
 	}
 
 	void Viewport::OnEvent()

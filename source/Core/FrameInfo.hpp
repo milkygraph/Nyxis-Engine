@@ -29,6 +29,7 @@ namespace Nyxis
     {
         int frameIndex = 0;
         float frameTime = 0;
+		glm::vec2 mousePosition = { 0, 0 };
 		VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 		VkDescriptorSet globalDescriptorSet = VK_NULL_HANDLE;
         GameObject::Map gameObjects;

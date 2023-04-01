@@ -24,13 +24,31 @@ namespace Nyxis
 		float debugViewEquation = 0;
 	};
 
-	struct UBOMatrices {
+	struct PushConstBlockMaterial {
+		glm::vec4 baseColorFactor;
+		glm::vec4 emissiveFactor;
+		glm::vec4 diffuseFactor;
+		glm::vec4 specularFactor;
+		float workflow;
+		int colorTextureSet;
+		int PhysicalDescriptorTextureSet;
+		int normalTextureSet;
+		int occlusionTextureSet;
+		int emissiveTextureSet;
+		float metallicFactor;
+		float roughnessFactor;
+		float alphaMask;
+		float alphaMaskCutoff;
+	};
+
+	struct UBOMatrix {
 		glm::mat4 projection;
 		glm::mat4 model;
 		glm::mat4 view;
 		glm::vec3 camPos;
-		glm::vec2 mousePos;
-		uint32_t entityID;
+		float mousePosX;
+		float mousePosY;
+		int entityID;
 	};
 
 	struct Textures {
@@ -256,6 +274,7 @@ namespace Nyxis
 
 		Model();
 		Model(const std::string& filename, SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValueBuffers);
+		~Model();
 
 		void destroy();
 		void loadNode(Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& model, LoaderInfo& loaderInfo, float globalscale);
@@ -278,7 +297,7 @@ namespace Nyxis
 		void updateModelMatrix(RigidBody& rigidBody);
 		void setupDescriptorSet(SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValuesBuffer);
 		void setupNodeDescriptorSet(const Node* node);
-		void updateUniformBuffer(uint32_t index, UBOMatrices* ubo);
+		void updateUniformBuffer(uint32_t index, UBOMatrix* ubo);
 		VkDescriptorSet getDescriptorSet(uint32_t index) { return descriptorSets[index]; }
 	};
 

@@ -29,7 +29,7 @@ namespace Nyxis
 
     void Application::OnEvent(Event& e)
 	{
-#if 1
+#if 0
 		LOG_INFO(e.toString());
 #endif
 	}
@@ -39,6 +39,7 @@ namespace Nyxis
 
         std::thread animationThread;
         bool animationThreadActive = true;
+		Entity selected_entity;
 
         // create systems
         GLTFRenderer gltfRenderer{ Renderer::GetSwapChainRenderPass() };
@@ -49,8 +50,9 @@ namespace Nyxis
                 ImGui::Begin("Statistics");
                 ImGui::Text("Entity Count: %d", m_Scene->getEntityCount());
                 ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+				ImGui::Text("Selected Entity: %d", selected_entity);
                 ImGui::End();
-            });
+                });
 
             m_EditorLayer.AddFunction([&]() {
                 ImGui::Begin("Physics");
@@ -58,47 +60,49 @@ namespace Nyxis
                 ImGui::DragFloat2("BoxEdges", &m_PhysicsEngine.edges.x);
                 ImGui::DragFloat("Gravity", &m_PhysicsEngine.gravity, 0.1, -1.0f, 1.0f);
                 ImGui::End();
-            });
-            m_EditorLayer.AddFunction([&] {
-            });
+                });
 
-			m_EditorLayer.AddFunction([&]() {
-				ImGui::Begin("Physics");
-				ImGui::Checkbox("Enable Animations", &animationThreadActive);
-				ImGui::End();
-			});
+        	m_EditorLayer.AddFunction([&]() {
+                ImGui::Begin("Physics");
+                ImGui::Checkbox("Enable Animations", &animationThreadActive);
+                ImGui::End();
+                });
 
-            m_EditorLayer.AddFunction([&]()
-            {
-                ImGui::Begin("Scene Settings");
-            	ImGui::Text("SkyMap");
-				ImGui::DragFloat("Exposure", &gltfRenderer.sceneInfo.shaderValuesParams.exposure, 0.1, 0.0f, 10.0f);
-				ImGui::DragFloat("Gamma", &gltfRenderer.sceneInfo.shaderValuesParams.gamma, 0.1, 0.0f, 10.0f);
-				ImGui::DragFloat3("Light Direction", &gltfRenderer.sceneInfo.shaderValuesParams.lightDir.x);
-                if (ImGui::InputText("Path", &gltfRenderer.envMapFile, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Reload", ImVec2(75, 25)))
-                {
-                    gltfRenderer.SceneUpdated = true;
-                }
+        	m_EditorLayer.AddFunction([&]() {
+                    ImGui::Begin("Scene Settings");
+                    ImGui::Text("SkyMap");
+                    ImGui::DragFloat("Exposure", &gltfRenderer.sceneInfo.shaderValuesParams.exposure, 0.1f, 0.0f, 10.0f);
+                    ImGui::DragFloat("Gamma", &gltfRenderer.sceneInfo.shaderValuesParams.gamma, 0.1f, 0.0f, 10.0f);
+                    ImGui::DragFloat3("Light Direction", &gltfRenderer.sceneInfo.shaderValuesParams.lightDir.x);
+                    if (ImGui::InputText("Path", &gltfRenderer.m_EnvMapFile, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Reload", ImVec2(75, 25)))
+                    {
+                        gltfRenderer.m_SceneUpdated = true;
+                    }
 
-				static std::vector<const char *> debugViews = { "None", "Base color", "Normal", "Occlusion", "Emissive", "Metallic", "Roughness" };
-            	static int debugViewIndex = 0;
-                if (ImGui::Combo("Debug View", &debugViewIndex, &debugViews[0], debugViews.size(), debugViews.size()))
-                    gltfRenderer.sceneInfo.shaderValuesParams.debugViewInputs = static_cast<float>(debugViewIndex);
+                    static std::vector<const char*> debugViews = { "None", "Base color", "Normal", "Occlusion", "Emissive", "Metallic", "Roughness" };
+                    static int debugViewIndex = 0;
+                    if (ImGui::Combo("Debug View", &debugViewIndex, &debugViews[0], debugViews.size(), debugViews.size()))
+                        gltfRenderer.sceneInfo.shaderValuesParams.debugViewInputs = static_cast<float>(debugViewIndex);
 
-                static std::vector<const char*> pbrEquations = { "None", "Diff (l,n)", "F (l,h)", "G (l,v,h)", "D (h)", "Specular" };
-                static int pbrIndex = 0;
-                if (ImGui::Combo("PBR Equation", &pbrIndex, &pbrEquations[0], pbrEquations.size(), pbrEquations.size()))
-                    gltfRenderer.sceneInfo.shaderValuesParams.debugViewEquation = static_cast<float>(pbrIndex);
+                    static std::vector<const char*> pbrEquations = { "None", "Diff (l,n)", "F (l,h)", "G (l,v,h)", "D (h)", "Specular" };
+                    static int pbrIndex = 0;
+                    if (ImGui::Combo("PBR Equation", &pbrIndex, &pbrEquations[0], pbrEquations.size(), pbrEquations.size()))
+                        gltfRenderer.sceneInfo.shaderValuesParams.debugViewEquation = static_cast<float>(pbrIndex);
 
-            	ImGui::End();
-            });
+                    ImGui::End();
+                });
         }
 
     	auto currentTime = std::chrono::high_resolution_clock::now();
 
-        auto model2 = m_Scene->createEntity("Microphone");
-        m_Scene->addComponent<Model>(model2, "../models/microphone/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
-        m_Scene->addComponent<RigidBody>(model2);
+#if 1
+        for(int i = 0; i < 5; i++)
+        {
+			auto model = m_Scene->createEntity("Model");
+            m_Scene->addComponent<Model>(model, "../models/microphone/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
+            m_Scene->addComponent<RigidBody>(model);
+        }
+#endif
 
     	while (!m_Window.ShouldClose()) {
             glfwPollEvents();
@@ -138,6 +142,19 @@ namespace Nyxis
 					gltfRenderer.UpdateAnimation(m_FrameInfo->frameTime);
                     });
                 animationThread.detach();
+            }
+
+            if (Input::isMouseButtonPressed(MouseButtonLeft))
+            {
+                auto buffer = static_cast<uint32_t*>(gltfRenderer.depthBuffers[m_FrameInfo->frameIndex]->getMappedMemory());
+            	for(int i = 0; i < DEPTH_ARRAY_SCALE; i++)
+                {
+                    if(buffer[i] != 0)
+                    {
+						m_EditorLayer.SetSelectedEntity(static_cast<Entity>(buffer[i]));
+                        break;
+                    }
+                }
             }
         }
 

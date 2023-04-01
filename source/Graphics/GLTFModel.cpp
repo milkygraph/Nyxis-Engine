@@ -403,11 +403,12 @@ namespace Nyxis
 			delete child;
 	}
 
+	// Model
 	Model::Model()
 	{
 		uniformBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
-			uniformBuffers[i] = std::make_shared<Buffer>(sizeof(UBOMatrices), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			uniformBuffers[i] = std::make_shared<Buffer>(sizeof(UBOMatrix), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			uniformBuffers[i]->map();
 		}
 
@@ -426,7 +427,7 @@ namespace Nyxis
 
 		uniformBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
-			uniformBuffers[i] = std::make_shared<Buffer>(sizeof(UBOMatrices), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			uniformBuffers[i] = std::make_shared<Buffer>(sizeof(UBOMatrix), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			uniformBuffers[i]->map();
 		}
 
@@ -434,7 +435,12 @@ namespace Nyxis
 		setupDescriptorSet(sceneInfo, shaderValuesBuffer);
 	}
 
-	// Model
+	Model::~Model()
+	{
+		destroy();
+		ModelManager::GetDescriptorPool()->freeDescriptors(descriptorSets);
+	}
+
 	void Model::destroy()
 	{
 		if (vertices.buffer != VK_NULL_HANDLE) {
@@ -1077,8 +1083,7 @@ namespace Nyxis
 			}
 		}
 		else {
-			// TODO: throw
-			std::cerr << "Could not load gltf file: " << error << std::endl;
+			LOG_ERROR("Could not load gltf file: ", error);
 			return;
 		}
 
@@ -1158,7 +1163,6 @@ namespace Nyxis
 		delete[] loaderInfo.indexBuffer;
 
 		getSceneDimensions();
-
 	}
 
 	void Model::drawNode(Node* node, VkCommandBuffer commandBuffer)
@@ -1511,7 +1515,7 @@ namespace Nyxis
 		}
 	}
 
-	void Model::updateUniformBuffer(uint32_t index, UBOMatrices* ubo)
+	void Model::updateUniformBuffer(uint32_t index, UBOMatrix* ubo)
 	{
 		uniformBuffers[index]->writeToBuffer(ubo);
 		uniformBuffers[index]->flush();
