@@ -9,6 +9,26 @@
 
 namespace Nyxis
 {
+	bool DecomposeTransform(const glm::mat4& transform, glm::vec3& translation, glm::vec3& rotation, glm::vec3& scale)
+	{
+		if(glm::epsilonEqual(transform[3][3], 0.0f, glm::epsilon<float>()))
+			return false;
+
+		glm::mat4 flipY = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
+
+		// Convert right-handed matrix to left-handed
+		glm::mat4 leftTransform = flipY * transform * flipY;
+
+		// Extract position, rotation, and scale vectors
+		translation = glm::vec3(leftTransform[3]);
+		rotation = glm::degrees(glm::eulerAngles(glm::toQuat(leftTransform)));
+		scale.x = glm::length(glm::vec3(leftTransform[0]));
+		scale.y = glm::length(glm::vec3(leftTransform[1]));
+		scale.z = glm::length(glm::vec3(leftTransform[2]));
+
+		return true;
+	}
+
 	Viewport::Viewport()
 	{
 		m_DescriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -117,18 +137,22 @@ namespace Nyxis
 			auto selected_entity = EditorLayer::GetSelectedEntity();
 			auto& rigidBodyEntity = scene->GetComponent<RigidBody>(selected_entity);
 
-			auto modelMatrix = rigidBodyEntity.mat4();
+			auto modelMatrix = rigidBodyEntity.mat4(true);
 
 			ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
 				m_CurrentGizmoOperation, m_CurrentGizmoMode, glm::value_ptr(modelMatrix));
 
 			if (ImGuizmo::IsUsing())
 			{
+				glm::vec3 translation, rotation, scale;
+				DecomposeTransform(glm::mat4(modelMatrix), translation, rotation, scale);
 
+				glm::vec3 deltaRotation = rotation - rigidBodyEntity.rotation;
+				rigidBodyEntity.translation = translation;
+				rigidBodyEntity.rotation += deltaRotation;
+				rigidBodyEntity.scale = scale;
 			}
 		}
-
-
 
 		ImGui::End();
 		ImGui::PopStyleVar();
