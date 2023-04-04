@@ -31,14 +31,14 @@ namespace Nyxis
         void AddMenuBar();
 
     	VkExtent2D GetViewportExtent() { return m_Viewport.GetExtent(); }
-
+        static Entity GetSelectedEntity() { return m_SelectedEntity; }
     private:
         void DrawEntityNode(Entity entity);
 
         Viewport m_Viewport;
 
     	Ref<Scene> m_ActiveScene;
-        Entity m_SelectedEntity;
+		static inline Entity m_SelectedEntity = entt::null;
 		bool m_ShowEntityComponents = false;
         std::vector<std::function<void()>> functions;
     	Ref<DescriptorPool> imguiPool{};

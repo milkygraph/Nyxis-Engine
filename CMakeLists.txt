@@ -8,10 +8,10 @@ find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(assimp REQUIRED)
 
-
 file (GLOB_RECURSE SOURCES source/*.cpp libs/entt/*.cpp libs/stbimage/*.cpp libs/tinyobjloader/*.cpp libs/imgui/imgui.cpp 
         libs/imgui/imgui_demo.cpp libs/imgui/imgui_draw.cpp libs/imgui/imgui_tables.cpp libs/imgui/imgui_widgets.cpp 
-        libs/imgui/misc/cpp/imgui_stdlib.cpp libs/imgui/imgui libs/imgui/backends/imgui_impl_glfw.cpp libs/imgui/backends/imgui_impl_vulkan.cpp)
+        libs/imgui/misc/cpp/imgui_stdlib.cpp libs/imgui/imgui libs/imgui/backends/imgui_impl_glfw.cpp libs/imgui/backends/imgui_impl_vulkan.cpp
+        libs/ImGuizmo/*/*.cpp libs/ImGuizmo/*.cpp) 
 file (GLOB_RECURSE HEADERS source/*/*.hpp )
 file (GLOB_RECURSE VENDOR )
 

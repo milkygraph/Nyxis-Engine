@@ -5,7 +5,6 @@
 #include "Core/FrameInfo.hpp"
 #include "Core/Layer.hpp"
 #include "Core/Log.hpp"
-#include "Graphics/GameObject.hpp"
 #include "Graphics/PhysicsEngine.hpp"
 #include "Scene/Scene.hpp"
 #include "NyxisUI/EditorLayer.hpp"
@@ -29,13 +28,10 @@ namespace Nyxis
         Application(const Application &) = delete;
         Application &operator=(const Application &) = delete;
 
-        static constexpr int HEIGHT = 1280;
-        static constexpr int WIDTH = 720;
+        static constexpr int WIDTH = 1280;
+        static constexpr int HEIGHT = 720;
 
         void Run();
-		static Window& GetWindow() { return s_Instance->m_Window; }
-	    static Device& GetDevice() { return s_Instance->m_Device; }
-		static GLFWwindow* GetGLFWwindow() { return s_Instance->m_Window.GetGLFWwindow(); }
 		static Ref<Scene> GetScene() { return s_Instance->m_Scene; }
 		static Ref<FrameInfo> GetFrameInfo() { return s_Instance->m_FrameInfo; }
 
@@ -46,15 +42,11 @@ namespace Nyxis
 
     	Window& m_Window = Window::Get(WIDTH, HEIGHT, "Nyxis Engine");
         Device& m_Device = Device::Get();
-        Ref<FrameInfo> m_FrameInfo;
-
-    	EditorLayer m_EditorLayer{};
-		bool PhysicsEnabled = false;
-
-    	GameObject::Map gameObjects;
-
+        Ref<FrameInfo> m_FrameInfo = nullptr;
         Ref<Scene> m_Scene = nullptr;
-        PhysicsEngine m_PhysicsEngine{};
+
         LayerStack m_LayerStack{};
+        EditorLayer m_EditorLayer{};
+        PhysicsEngine m_PhysicsEngine{};
     }; // class Application
 } // namespace Nyxis

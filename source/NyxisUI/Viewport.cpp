@@ -1,12 +1,11 @@
 #include "NyxisUI/Viewport.hpp"
-#include "Core/SwapChain.hpp"
+#include "Core/Application.hpp"
+#include "Core/Renderer.hpp"
 #include "Events/MouseEvents.hpp"
 
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_vulkan.h>
-
-#include "Core/Application.hpp"
-#include "Core/Renderer.hpp"
+#include <ImGuizmo/ImGuizmo.h>
 
 namespace Nyxis
 {
@@ -87,9 +86,6 @@ namespace Nyxis
 			Application::GetScene()->SetCameraControl(true);
 		}
 
-		ImGui::End();
-		ImGui::PopStyleVar();
-
 		m_Extent = { static_cast<uint32_t>(windowWidth), static_cast<uint32_t>(windowHeight) };
 		// get mouse position relative to the window
 		glm::vec2 mousePos = Input::getMousePosition();
@@ -102,7 +98,63 @@ namespace Nyxis
 		if (mousePos.y < 0 || mousePos.y > windowHeight)
 			mousePos.y = -1;
 
-		glm::vec2 extent = { windowWidth, windowHeight };
+		// draw gizmos
+		if (static_cast<uint32_t>(EditorLayer::GetSelectedEntity()) != entt::null)
+		{
+			auto scene = Application::GetScene();
+
+			ImGuizmo::SetOrthographic(false);
+			ImGuizmo::AllowAxisFlip(true);
+			ImGuizmo::SetDrawlist();
+
+			ImGuizmo::SetRect(windowPos.x, windowPos.y, windowWidth, windowHeight);
+
+			auto camera = scene->GetCamera();
+			auto view = camera->getViewMatrix();
+			auto projection = camera->getProjectionMatrix();
+			projection[1][1] *= -1.0f;
+
+			auto selected_entity = EditorLayer::GetSelectedEntity();
+			auto& rigidBodyEntity = scene->GetComponent<RigidBody>(selected_entity);
+
+			auto modelMatrix = rigidBodyEntity.mat4();
+
+			ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
+				m_CurrentGizmoOperation, m_CurrentGizmoMode, glm::value_ptr(modelMatrix));
+
+			if (ImGuizmo::IsUsing())
+			{
+
+			}
+		}
+
+
+
+		ImGui::End();
+		ImGui::PopStyleVar();
+
+		ImGui::Begin("control");
+		// controls for gizmo
+		if (ImGui::RadioButton("Translate", m_CurrentGizmoOperation == ImGuizmo::TRANSLATE))
+			m_CurrentGizmoOperation = ImGuizmo::TRANSLATE;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Rotate", m_CurrentGizmoOperation == ImGuizmo::ROTATE))
+			m_CurrentGizmoOperation = ImGuizmo::ROTATE;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Scale", m_CurrentGizmoOperation == ImGuizmo::SCALE))
+			m_CurrentGizmoOperation = ImGuizmo::SCALE;
+		if (ImGui::RadioButton("World", m_CurrentGizmoMode == ImGuizmo::WORLD))
+			m_CurrentGizmoMode = ImGuizmo::WORLD;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Local", m_CurrentGizmoMode == ImGuizmo::LOCAL))
+			m_CurrentGizmoMode = ImGuizmo::LOCAL;
+
+		if (m_CurrentGizmoOperation != m_LastGizmoOperation)
+		{
+			m_CurrentGizmoMode = ImGuizmo::LOCAL;
+			m_LastGizmoOperation = m_CurrentGizmoOperation;
+		}
+		ImGui::End();
 
 		frameInfo->mousePosition = mousePos;
 	}

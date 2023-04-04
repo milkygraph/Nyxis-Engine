@@ -3,7 +3,6 @@
 // Supports both metallic roughness and specular glossiness inputs
 
 #version 450
-#extension GL_EXT_debug_printf : enable
 
 layout (location = 0) in vec3 inWorldPos;
 layout (location = 1) in vec3 inNormal;
@@ -47,10 +46,10 @@ layout (set = 1, binding = 4) uniform sampler2D emissiveMap;
 
 #define DEPTH_ARRAY_SCALE 32
 
-layout(set = 3, binding = 0) buffer writeonly MouseBuffer
+layout(set = 3, binding = 0) buffer writeonly DepthBuffer
 {
     uint objectData[DEPTH_ARRAY_SCALE];
-} mouseBuffer;
+} objectDepthBuffer;
 
 layout (push_constant) uniform Material {
 	vec4 baseColorFactor;
@@ -429,10 +428,8 @@ void main()
 	vec2 mousePos = { ubo.mousePosX, ubo.mousePosY };
 
 	uint zIndex = uint(gl_FragCoord.z * DEPTH_ARRAY_SCALE);
-	debugPrintfEXT("Distance: %f", mousePos - gl_FragCoord.xy);
 	if( sqrt((mousePos.x - gl_FragCoord.x) * (mousePos.x - gl_FragCoord.x) + (mousePos.y - gl_FragCoord.y) * (mousePos.y - gl_FragCoord.y)) < 1)
 	{
-		debugPrintfEXT("zIndex = %d", zIndex);
-	    mouseBuffer.objectData[zIndex] = ubo.entityID;
+	    objectDepthBuffer.objectData[zIndex] = ubo.entityID;
 	}
 }

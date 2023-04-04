@@ -20,7 +20,6 @@ namespace Nyxis
 		glfwSetFramebufferSizeCallback(m_Data.window, frameBufferResizedCallback);
 
 	    glfwSetWindowUserPointer(m_Data.window, &m_Data);
-        glfwSetWindowAspectRatio(m_Data.window, 16, 9);
 
 	    glfwSetErrorCallback([](int error, const char* description)
 	    {

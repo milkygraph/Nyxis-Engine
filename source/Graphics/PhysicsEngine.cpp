@@ -6,6 +6,9 @@ namespace Nyxis
 {
 	void PhysicsEngine::OnUpdate(float deltaTime)
 	{
+        if (!enable)
+            return;
+
         auto scene = Application::GetScene();
 		auto view = scene->m_Registry.view<Collider>();
 		

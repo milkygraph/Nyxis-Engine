@@ -26,7 +26,7 @@ namespace Nyxis
         bool isKinematic{ false };
         bool isTrigger{ false };
 
-        glm::mat4 mat4();
+        glm::mat4 mat4(bool flipY = false);
         glm::mat3 normalMatrix();
     };
 

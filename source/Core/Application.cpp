@@ -56,7 +56,7 @@ namespace Nyxis
 
             m_EditorLayer.AddFunction([&]() {
                 ImGui::Begin("Physics");
-                ImGui::Checkbox("Enable Physics", &PhysicsEnabled);
+                ImGui::Checkbox("Enable Physics", &m_PhysicsEngine.enable);
                 ImGui::DragFloat2("BoxEdges", &m_PhysicsEngine.edges.x);
                 ImGui::DragFloat("Gravity", &m_PhysicsEngine.gravity, 0.1, -1.0f, 1.0f);
                 ImGui::End();
@@ -96,7 +96,7 @@ namespace Nyxis
     	auto currentTime = std::chrono::high_resolution_clock::now();
 
 #if 1
-        for(int i = 0; i < 5; i++)
+        for(int i = 0; i < 1; i++)
         {
 			auto model = m_Scene->createEntity("Model");
             m_Scene->addComponent<Model>(model, "../models/microphone/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
@@ -121,8 +121,7 @@ namespace Nyxis
             Renderer::BeginMainRenderPass(m_FrameInfo->commandBuffer);
             gltfRenderer.Render();
 
-            if (PhysicsEnabled)
-                m_PhysicsEngine.OnUpdate(m_FrameInfo->frameTime);
+            m_PhysicsEngine.OnUpdate(m_FrameInfo->frameTime);
             Renderer::EndMainRenderPass(worldCommandBuffer);
             
         	auto commandBuffer = Renderer::BeginUIFrame();

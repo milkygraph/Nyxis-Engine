@@ -1,0 +1,10 @@
+^D:\SOURCE\NYXIS-ENGINE\LIBS\SPDLOG\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/source/Nyxis-Engine "-BD:/source/Nyxis-Engine/Visual Studio" --check-stamp-file "D:/source/Nyxis-Engine/Visual Studio/libs/spdlog/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

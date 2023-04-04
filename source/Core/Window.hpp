@@ -47,8 +47,6 @@ namespace Nyxis
 
 			EventCallbackFn callback;
 		};
-
-
     	EventCallbackFn callback;
 
 		GLFWData m_Data;

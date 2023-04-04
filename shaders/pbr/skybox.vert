@@ -2,7 +2,6 @@
 
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
-#extension GL_EXT_debug_printf : enable
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec3 inNormal;
@@ -24,6 +23,5 @@ out gl_PerVertex
 void main() 
 {
 	outUVW = inPos;
-	debugPrintfEXT("outUVW: %f %f %f", outUVW.x, outUVW.y, outUVW.z);
 	gl_Position = ubo.projection * ubo.model * vec4(inPos.xyz, 1.0);
 }
