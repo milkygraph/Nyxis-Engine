@@ -342,7 +342,9 @@ namespace Nyxis
 							m_SelectedEntity); // TODO! Fix load scene bug
 						ImGui::Text("Rigid Body");
 						ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f, 0, 0, "%.1f");
-						ImGui::DragFloat3("Rotation", &rigidBody.rotation.x, 0.1f, 0, 0, "%.1f");
+						glm::vec3 rotationDeg = glm::degrees(rigidBody.rotation);
+						ImGui::DragFloat3("Rotation", &rotationDeg.x, 0.1f, 0, 0, "%.1f");
+						rigidBody.rotation = glm::radians(rotationDeg);
 						ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f, 0, 0, "%.2f");
 
 						ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);

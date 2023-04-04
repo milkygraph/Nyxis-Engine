@@ -13,7 +13,6 @@ namespace Nyxis
     {
         glm::vec3 translation{ 0.0f };
         glm::vec3 rotation{ 0.0f };
-        glm::quat rotationQuat;
         glm::vec3 scale{ 1.0f };
 
         glm::vec3 velocity{ 0.0f };

@@ -71,9 +71,8 @@ namespace Nyxis
 		{
 			auto& gltfModel = scene->GetComponent<Model>(model);
 			auto& rigidBody = scene->GetComponent<RigidBody>(model);
-			gltfModel.updateModelMatrix(rigidBody);
 
-			shaderValuesScene.model = gltfModel.modelMatrix;
+			shaderValuesScene.model = rigidBody.mat4();
 			shaderValuesScene.mousePosX = mousePos.x;
 			shaderValuesScene.mousePosY = mousePos.y;
 			shaderValuesScene.entityID = static_cast<int>(model);

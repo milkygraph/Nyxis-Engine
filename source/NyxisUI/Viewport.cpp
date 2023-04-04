@@ -21,10 +21,17 @@ namespace Nyxis
 
 		// Extract position, rotation, and scale vectors
 		translation = glm::vec3(leftTransform[3]);
-		rotation = glm::degrees(glm::eulerAngles(glm::toQuat(leftTransform)));
 		scale.x = glm::length(glm::vec3(leftTransform[0]));
 		scale.y = glm::length(glm::vec3(leftTransform[1]));
 		scale.z = glm::length(glm::vec3(leftTransform[2]));
+
+		glm::mat3 rotationMatrix;
+		rotationMatrix[0] = glm::vec3(leftTransform[0]) / scale.x;
+		rotationMatrix[1] = glm::vec3(leftTransform[1]) / scale.y;
+		rotationMatrix[2] = glm::vec3(leftTransform[2]) / scale.z;
+
+		auto rotationQuat = glm::quat_cast(rotationMatrix);
+		rotation = glm::eulerAngles(rotationQuat);
 
 		return true;
 	}
