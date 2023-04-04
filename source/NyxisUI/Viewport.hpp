@@ -18,10 +18,12 @@ namespace Nyxis
 	private:
 		ImGuizmo::OPERATION m_CurrentGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
 		ImGuizmo::OPERATION m_LastGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
-		ImGuizmo::MODE m_CurrentGizmoMode = ImGuizmo::MODE::WORLD;
+		ImGuizmo::MODE m_CurrentGizmoMode = ImGuizmo::MODE::LOCAL;
 
 		std::vector<VkDescriptorSet> m_DescriptorSets;
 		VkSampler m_Sampler = VK_NULL_HANDLE;
 		VkExtent2D m_Extent{};
+		bool m_DrawGizmos = true;
+		bool m_Snap = false;
 	};
 }

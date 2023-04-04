@@ -9,6 +9,11 @@
 
 namespace Nyxis
 {
+	// snap values
+	static const float TRANSLATE_SNAP_VALUES[3] = { 0.1f, 0.1f, 0.1f };
+	static const float ROTATE_SNAP_VALUES[3] = { 45.0f, 45.0f, 45.0f };
+	static const float SCALE_SNAP_VALUES[3] = { 0.1f, 0.1f, 0.1f };
+
 	bool DecomposeTransform(const glm::mat4& transform, glm::vec3& translation, glm::vec3& rotation, glm::vec3& scale)
 	{
 		if(glm::epsilonEqual(transform[3][3], 0.0f, glm::epsilon<float>()))
@@ -117,16 +122,38 @@ namespace Nyxis
 		// get mouse position relative to the window
 		glm::vec2 mousePos = Input::getMousePosition();
 
-		mousePos.x -= windowPos.x;
-		mousePos.y -= windowPos.y;
-
-		if (mousePos.x < 0 || mousePos.x > windowWidth)
-			mousePos.x = -1;
-		if (mousePos.y < 0 || mousePos.y > windowHeight)
-			mousePos.y = -1;
-
+		float snapValue = 0.1f;
 		// draw gizmos
-		if (static_cast<uint32_t>(EditorLayer::GetSelectedEntity()) != entt::null)
+		if(!Input::isMouseButtonPressed(MouseCodes::MouseButtonRight))
+		{
+ 			if(Input::isKeyPressed(KeyCodes::S))
+				m_CurrentGizmoOperation = ImGuizmo::OPERATION::SCALE;
+			if(Input::isKeyPressed(KeyCodes::R))
+				m_CurrentGizmoOperation = ImGuizmo::OPERATION::ROTATE;
+			if(Input::isKeyPressed(KeyCodes::T))
+				m_CurrentGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
+			if(Input::isKeyPressed(KeyCodes::W))
+				m_CurrentGizmoMode = ImGuizmo::MODE::WORLD;
+			if(Input::isKeyPressed(KeyCodes::L))
+				m_CurrentGizmoMode = ImGuizmo::MODE::LOCAL;
+			if(Input::isKeyPressed(KeyCodes::LeftControl))
+			{
+				m_Snap = true;
+				if (m_CurrentGizmoOperation == ImGuizmo::OPERATION::TRANSLATE || m_CurrentGizmoOperation == ImGuizmo::OPERATION::SCALE)
+				{
+					snapValue = 0.1f;
+				}
+				else
+				{
+					snapValue = 15.0f;
+				}
+			}
+			else
+				m_Snap = false;
+		}
+
+		auto selected_entity = EditorLayer::GetSelectedEntity();
+		if(selected_entity != entt::null)
 		{
 			auto scene = Application::GetScene();
 
@@ -141,14 +168,16 @@ namespace Nyxis
 			auto projection = camera->getProjectionMatrix();
 			projection[1][1] *= -1.0f;
 
-			auto selected_entity = EditorLayer::GetSelectedEntity();
 			auto& rigidBodyEntity = scene->GetComponent<RigidBody>(selected_entity);
-
 			auto modelMatrix = rigidBodyEntity.mat4(true);
 
-			ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-				m_CurrentGizmoOperation, m_CurrentGizmoMode, glm::value_ptr(modelMatrix));
-
+			if (m_DrawGizmos)
+			{
+				const float snapValues[3] = { snapValue, snapValue, snapValue };
+				ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
+					m_CurrentGizmoOperation, m_CurrentGizmoMode, glm::value_ptr(modelMatrix), nullptr, m_Snap ? snapValues: nullptr);
+			}
+				
 			if (ImGuizmo::IsUsing())
 			{
 				glm::vec3 translation, rotation, scale;
@@ -158,34 +187,20 @@ namespace Nyxis
 				rigidBodyEntity.translation = translation;
 				rigidBodyEntity.rotation += deltaRotation;
 				rigidBodyEntity.scale = scale;
+				mousePos = { -1, -1 };
 			}
 		}
 
 		ImGui::End();
 		ImGui::PopStyleVar();
 
-		ImGui::Begin("control");
-		// controls for gizmo
-		if (ImGui::RadioButton("Translate", m_CurrentGizmoOperation == ImGuizmo::TRANSLATE))
-			m_CurrentGizmoOperation = ImGuizmo::TRANSLATE;
-		ImGui::SameLine();
-		if (ImGui::RadioButton("Rotate", m_CurrentGizmoOperation == ImGuizmo::ROTATE))
-			m_CurrentGizmoOperation = ImGuizmo::ROTATE;
-		ImGui::SameLine();
-		if (ImGui::RadioButton("Scale", m_CurrentGizmoOperation == ImGuizmo::SCALE))
-			m_CurrentGizmoOperation = ImGuizmo::SCALE;
-		if (ImGui::RadioButton("World", m_CurrentGizmoMode == ImGuizmo::WORLD))
-			m_CurrentGizmoMode = ImGuizmo::WORLD;
-		ImGui::SameLine();
-		if (ImGui::RadioButton("Local", m_CurrentGizmoMode == ImGuizmo::LOCAL))
-			m_CurrentGizmoMode = ImGuizmo::LOCAL;
+		mousePos.x -= windowPos.x;
+		mousePos.y -= windowPos.y;
 
-		if (m_CurrentGizmoOperation != m_LastGizmoOperation)
-		{
-			m_CurrentGizmoMode = ImGuizmo::LOCAL;
-			m_LastGizmoOperation = m_CurrentGizmoOperation;
-		}
-		ImGui::End();
+		if (mousePos.x < 0 || mousePos.x > windowWidth)
+			mousePos.x = -1;
+		if (mousePos.y < 0 || mousePos.y > windowHeight)
+			mousePos.y = -1;
 
 		frameInfo->mousePosition = mousePos;
 	}
