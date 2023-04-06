@@ -19,7 +19,6 @@ namespace Nyxis
         void OnImGuiRender() override;
         void OnEvent() override;
         void SetScene(Ref<Scene> scene);
-		void SetSelectedEntity(Entity entity);
 
     	void Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer);
 		void Begin();
@@ -30,8 +29,9 @@ namespace Nyxis
         void AddSceneHierarchy();
         void AddMenuBar();
 
-    	VkExtent2D GetViewportExtent() { return m_Viewport.GetExtent(); }
+        static void SetSelectedEntity(Entity entity);
         static Entity GetSelectedEntity() { return m_SelectedEntity; }
+        VkExtent2D GetViewportExtent() { return m_Viewport.GetExtent(); }
     private:
         void DrawEntityNode(Entity entity);
 

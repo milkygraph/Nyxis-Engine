@@ -39,7 +39,6 @@ namespace Nyxis
 
         std::thread animationThread;
         bool animationThreadActive = true;
-		Entity selected_entity;
 
         // create systems
         GLTFRenderer gltfRenderer{ Renderer::GetSwapChainRenderPass() };
@@ -50,7 +49,6 @@ namespace Nyxis
                 ImGui::Begin("Statistics");
                 ImGui::Text("Entity Count: %d", m_Scene->getEntityCount());
                 ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-				ImGui::Text("Selected Entity: %d", selected_entity);
                 ImGui::End();
                 });
 
@@ -96,7 +94,7 @@ namespace Nyxis
     	auto currentTime = std::chrono::high_resolution_clock::now();
 
 #if 1
-        for(int i = 0; i < 1; i++)
+        for(int i = 0; i < 2; i++)
         {
 			auto model = m_Scene->createEntity("Model");
             m_Scene->addComponent<Model>(model, "../models/microphone/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
@@ -142,20 +140,7 @@ namespace Nyxis
                     });
                 animationThread.detach();
             }
-
-            if (Input::isMouseButtonPressed(MouseButtonLeft))
-            {
-                auto buffer = static_cast<uint32_t*>(gltfRenderer.depthBuffers[m_FrameInfo->frameIndex]->getMappedMemory());
-            	for(int i = 0; i < DEPTH_ARRAY_SCALE; i++)
-                {
-                    if(buffer[i] != 0)
-                    {
-						m_EditorLayer.SetSelectedEntity(static_cast<Entity>(buffer[i]));
-                        break;
-                    }
-                }
-            }
-        }
+    	}
 
         animationThreadActive = false;
         if (animationThread.joinable()) {

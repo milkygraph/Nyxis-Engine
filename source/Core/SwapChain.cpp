@@ -180,6 +180,9 @@ namespace Nyxis
 		return result;
 	}
 
+	/**
+	 * \brief 
+	 */
 	void SwapChain::CreateSwapChain()
 	{
 		SwapChainSupportDetails swapChainSupport = device.getSwapChainSupport();

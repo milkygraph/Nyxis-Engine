@@ -4,6 +4,9 @@
 
 #version 450
 
+// debug printf support
+#extension GL_EXT_debug_printf : enable
+
 layout (location = 0) in vec3 inWorldPos;
 layout (location = 1) in vec3 inNormal;
 layout (location = 2) in vec2 inUV0;
@@ -46,9 +49,10 @@ layout (set = 1, binding = 4) uniform sampler2D emissiveMap;
 
 #define DEPTH_ARRAY_SCALE 32
 
-layout(set = 3, binding = 0) buffer writeonly DepthBuffer
+layout(set = 3, binding = 0) buffer DepthBuffer
 {
     uint objectData[DEPTH_ARRAY_SCALE];
+	uint selectedObject;
 } objectDepthBuffer;
 
 layout (push_constant) uniform Material {
@@ -425,11 +429,16 @@ void main()
 		}
 	}
 	
+
+	// if the object is selected tint it with an orange color
+	if(objectDepthBuffer.selectedObject == ubo.entityID){
+		outColor.rgb = mix(outColor.rgb, vec3(1.0, 0.5, 0.0), 0.5);
+	}
+
 	vec2 mousePos = { ubo.mousePosX, ubo.mousePosY };
 
-	uint zIndex = uint(gl_FragCoord.z * DEPTH_ARRAY_SCALE);
-	if( sqrt((mousePos.x - gl_FragCoord.x) * (mousePos.x - gl_FragCoord.x) + (mousePos.y - gl_FragCoord.y) * (mousePos.y - gl_FragCoord.y)) < 1)
-	{
+	uint zIndex = uint(gl_FragCoord.z * DEPTH_ARRAY_SCALE);	
+	if( sqrt((mousePos.x - gl_FragCoord.x) * (mousePos.x - gl_FragCoord.x) + (mousePos.y - gl_FragCoord.y) * (mousePos.y - gl_FragCoord.y)) < 1){
 	    objectDepthBuffer.objectData[zIndex] = ubo.entityID;
 	}
 }

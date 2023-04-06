@@ -245,7 +245,6 @@ namespace Nyxis
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		ShowExampleAppDockSpace();
-		ImGui::ShowDemoWindow();
 	}
 
 	void EditorLayer::AddFunction(const std::function<void()>& function)
@@ -262,6 +261,9 @@ namespace Nyxis
 
 		for (auto& function : functions)
 			function();
+
+		if (Input::isKeyPressed(LeftControl) && Input::isKeyPressed(D))
+			m_SelectedEntity = entt::null;
 
 		auto frameInfo = Application::GetFrameInfo();
 		this->commandBuffer = frameInfo->commandBuffer;
@@ -309,6 +311,10 @@ namespace Nyxis
 			}
 			if (ImGui::MenuItem("Paste", "CTRL+V"))
 			{
+			}
+			if (ImGui::MenuItem("Deselect", "CTRL+D"))
+			{
+				m_SelectedEntity = entt::null;
 			}
 			ImGui::EndMenu();
 		}

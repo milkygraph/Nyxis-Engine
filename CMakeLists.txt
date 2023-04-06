@@ -13,9 +13,12 @@ file (GLOB_RECURSE SOURCES source/*.cpp libs/entt/*.cpp libs/stbimage/*.cpp libs
         libs/imgui/misc/cpp/imgui_stdlib.cpp libs/imgui/imgui libs/imgui/backends/imgui_impl_glfw.cpp libs/imgui/backends/imgui_impl_vulkan.cpp
         libs/ImGuizmo/*/*.cpp libs/ImGuizmo/*.cpp) 
 file (GLOB_RECURSE HEADERS source/*/*.hpp )
-file (GLOB_RECURSE VENDOR )
 
-add_executable(${PROJECT} ${SOURCES} ${HEADERS})
+# set filter for shaders in shaders folder
+file(GLOB_RECURSE SHADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*/*.vert" "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.frag")
+source_group("Shaders" FILES ${SHADER_FILES})
+    
+add_executable(${PROJECT} ${SOURCES} ${HEADERS} ${SHADER_FILES})
 
 target_include_directories(${PROJECT} PUBLIC source libs libs/imgui libs/imgui/backends)
 target_link_directories(${PROJECT} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs)

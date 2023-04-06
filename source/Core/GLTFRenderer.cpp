@@ -3,6 +3,7 @@
 #include "Application.hpp"
 #include "Core/Log.hpp"
 #include "Core/SwapChain.hpp"
+#include "Events/MouseEvents.hpp"
 #include "Scene/Components.hpp"
 
 namespace Nyxis
@@ -19,7 +20,7 @@ namespace Nyxis
 
 		// Initialize depth buffer array
 		for (int i = 0; i < DEPTH_ARRAY_SCALE; i++)
-			depthBufferObject[i] = 0;
+			objectPicking.depthBufferObject[i] = 0;
 
 		LoadAssets();
 		GenerateBRDFLUT();
@@ -37,6 +38,22 @@ namespace Nyxis
 	void GLTFRenderer::OnUpdate()
 	{
 		auto scene = Application::GetScene();
+		auto frameInfo = Application::GetFrameInfo();
+
+		if (Input::isMouseButtonPressed(MouseButtonLeft) && Viewport::IsFocused())
+		{
+			auto buffer = static_cast<ObjectPicking*>(objectPickingBuffer[frameInfo->frameIndex]->getMappedMemory());
+			auto depthBuffer = buffer->depthBufferObject;
+			for (int i = 0; i < DEPTH_ARRAY_SCALE; i++)
+			{
+				if (depthBuffer[i] != 0)
+				{
+					EditorLayer::SetSelectedEntity(static_cast<Entity>(depthBuffer[i]));
+					break;
+				}
+			}
+		}
+
 		if (m_SceneUpdated)
 		{
 			vkDeviceWaitIdle(device.device());
@@ -61,7 +78,7 @@ namespace Nyxis
 		auto scene = Application::GetScene();
 
 		glm::vec2 mousePos = frameInfo->mousePosition;
-		UpdateUniformBuffers();
+		UpdateBuffers();
 		vkCmdBindDescriptorSets(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[frameInfo->frameIndex].skybox, 0, nullptr);
 		vkCmdBindPipeline(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
 		models.skybox->draw(frameInfo->commandBuffer);
@@ -120,7 +137,7 @@ namespace Nyxis
 		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		skyboxBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		uniformBuffersParams.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-		depthBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		objectPickingBuffer.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
 		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++)
 		{
@@ -130,12 +147,12 @@ namespace Nyxis
 			uniformBuffersParams[i] = std::make_shared<Buffer>(sizeof(sceneInfo.shaderValuesParams), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			uniformBuffersParams[i]->map();
 
-			depthBuffers[i] = std::make_shared<Buffer>(sizeof(uint32_t) * DEPTH_ARRAY_SCALE, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			depthBuffers[i]->map();
+			objectPickingBuffer[i] = std::make_shared<Buffer>(sizeof(ObjectPicking), 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			objectPickingBuffer[i]->map();
 		}
 	}
 
-	void GLTFRenderer::UpdateUniformBuffers()
+	void GLTFRenderer::UpdateBuffers()
 	{
 		auto frameInfo = Application::GetFrameInfo();
 		auto scene = Application::GetScene();
@@ -162,8 +179,9 @@ namespace Nyxis
 		uniformBuffersParams[frameInfo->frameIndex]->flush();
 		skyboxBuffers[frameInfo->frameIndex]->flush();
 
-		depthBuffers[frameInfo->frameIndex]->writeToBuffer(&depthBufferObject);
-		depthBuffers[frameInfo->frameIndex]->flush();
+		objectPicking.selectedEntity = static_cast<uint32_t>(EditorLayer::GetSelectedEntity());
+		objectPickingBuffer[frameInfo->frameIndex]->writeToBuffer(&objectPicking);
+		objectPickingBuffer[frameInfo->frameIndex]->flush();
 	}
 
 	void GLTFRenderer::LoadEnvironment(std::string& filename)
@@ -277,9 +295,9 @@ namespace Nyxis
 			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.depthBufferLayout);
 		}
 
-		depthBufferDescriptorSets.resize(depthBuffers.size());
+		depthBufferDescriptorSets.resize(objectPickingBuffer.size());
 
-		for(auto i = 0; i < depthBuffers.size(); i++)
+		for(auto i = 0; i < objectPickingBuffer.size(); i++)
 		{
 			VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
 			descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -294,7 +312,7 @@ namespace Nyxis
 			writeDescriptor.descriptorCount = 1;
 			writeDescriptor.dstSet = depthBufferDescriptorSets[i];
 			writeDescriptor.dstBinding = 0;
-			writeDescriptor.pBufferInfo = depthBuffers[i]->getDescriptorInfo();
+			writeDescriptor.pBufferInfo = objectPickingBuffer[i]->getDescriptorInfo();
 
 			vkUpdateDescriptorSets(device.device(), 1, &writeDescriptor, 0, nullptr);
 		}

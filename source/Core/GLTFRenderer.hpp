@@ -41,13 +41,17 @@ namespace Nyxis
 
 		std::vector<Ref<Buffer>> skyboxBuffers;
 		std::vector<Ref<Buffer>> uniformBuffersParams;
-		std::vector<Ref<Buffer>> depthBuffers;
+		std::vector<Ref<Buffer>> objectPickingBuffer;
 
-		uint32_t depthBufferObject[DEPTH_ARRAY_SCALE];
+		struct ObjectPicking
+		{
+			uint32_t depthBufferObject[DEPTH_ARRAY_SCALE];
+			uint32_t selectedEntity = 0;
+		} objectPicking;
 
 	private:
 		void PrepareUniformBuffers();
-		void UpdateUniformBuffers();
+		void UpdateBuffers();
 		void SetScene() { this->scene = Application::GetScene(); }
 		void LoadAssets();
 		void GenerateBRDFLUT();

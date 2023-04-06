@@ -13,6 +13,7 @@ namespace Nyxis
 
 		void OnUpdate();
 		void OnEvent();
+		static bool IsFocused() { return m_IsFocused; }
 		VkExtent2D GetExtent() const { return m_Extent; }
 
 	private:
@@ -25,5 +26,6 @@ namespace Nyxis
 		VkExtent2D m_Extent{};
 		bool m_DrawGizmos = true;
 		bool m_Snap = false;
+		static inline bool m_IsFocused = false;
 	};
 }
