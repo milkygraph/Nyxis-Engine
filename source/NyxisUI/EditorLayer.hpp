@@ -5,6 +5,9 @@
 #include "Core/Layer.hpp"
 #include "Scene/Scene.hpp"
 #include "NyxisUI/Viewport.hpp"
+#include "NyxisUI/MenuBar.hpp"
+#include "NyxisUI/SceneHierarchy.hpp"
+#include "NyxisUI/ComponentViewPanel.hpp"
 
 namespace Nyxis
 {
@@ -16,7 +19,6 @@ namespace Nyxis
 
         void OnAttach() override;
         void OnDetach() override;
-        void OnImGuiRender() override;
         void OnEvent() override;
         void SetScene(Ref<Scene> scene);
 
@@ -24,27 +26,25 @@ namespace Nyxis
 		void Begin();
         void OnUpdate();
         void End();
-    	void AddFunction(const std::function<void()>& function);
-    	void AddComponentView();
-        void AddSceneHierarchy();
-        void AddMenuBar();
 
+        static void AddFunction(const std::function<void()>& function);
         static void SetSelectedEntity(Entity entity);
+        static void DeselectEntity();
         static Entity GetSelectedEntity() { return m_SelectedEntity; }
-        VkExtent2D GetViewportExtent() { return m_Viewport.GetExtent(); }
+
+    	VkExtent2D GetViewportExtent() const { return m_Viewport.GetExtent(); }
     private:
-        void DrawEntityNode(Entity entity);
+        Ref<DescriptorPool> imguiPool{};
+        Ref<Scene> m_ActiveScene;
 
-        Viewport m_Viewport;
+    	Viewport m_Viewport;
+        MenuBar m_MenuBar;
+        SceneHierarchyPanel m_SceneHierarchy;
+        ComponentViewPanel m_ComponentView;
 
-    	Ref<Scene> m_ActiveScene;
 		static inline Entity m_SelectedEntity = entt::null;
-		bool m_ShowEntityComponents = false;
-        std::vector<std::function<void()>> functions;
-    	Ref<DescriptorPool> imguiPool{};
+        static inline std::vector<std::function<void()>> functions;
 
-        VkCommandBuffer commandBuffer;
-    	VkSampler m_Sampler;
-		std::vector<VkDescriptorSet> dst;
+    	bool m_ShowEntityComponents = false;
     };
 }

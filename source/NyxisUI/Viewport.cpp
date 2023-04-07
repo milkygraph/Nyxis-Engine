@@ -138,7 +138,7 @@ namespace Nyxis
 				m_CurrentGizmoMode = ImGuizmo::MODE::LOCAL;
 			if(Input::isKeyPressed(KeyCodes::LeftControl))
 			{
-				m_Snap = true;
+				m_GizmoSnapping = true;
 				if (m_CurrentGizmoOperation == ImGuizmo::OPERATION::TRANSLATE || m_CurrentGizmoOperation == ImGuizmo::OPERATION::SCALE)
 				{
 					snapValue = 0.1f;
@@ -149,7 +149,7 @@ namespace Nyxis
 				}
 			}
 			else
-				m_Snap = false;
+				m_GizmoSnapping = false;
 		}
 
 		auto selected_entity = EditorLayer::GetSelectedEntity();
@@ -175,7 +175,7 @@ namespace Nyxis
 			{
 				const float snapValues[3] = { snapValue, snapValue, snapValue };
 				ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-					m_CurrentGizmoOperation, m_CurrentGizmoMode, glm::value_ptr(modelMatrix), nullptr, m_Snap ? snapValues: nullptr);
+					m_CurrentGizmoOperation, m_CurrentGizmoMode, glm::value_ptr(modelMatrix), nullptr, m_GizmoSnapping ? snapValues: nullptr);
 			}
 				
 			if (ImGuizmo::IsUsing())

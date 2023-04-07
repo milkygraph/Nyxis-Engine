@@ -192,30 +192,6 @@ namespace Nyxis
 		IO->Fonts->AddFontFromFileTTF("../assets/fonts/OpenSans-Regular.ttf", 18.0f);
 
 		SetupImGuiStyle();
-
-		// create sampler
-		VkSamplerCreateInfo samplerInfo = {};
-		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerInfo.magFilter = VK_FILTER_LINEAR;
-		samplerInfo.minFilter = VK_FILTER_LINEAR;
-		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.anisotropyEnable = VK_FALSE;
-		samplerInfo.maxAnisotropy = 1;
-		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-		samplerInfo.unnormalizedCoordinates = VK_FALSE;
-		samplerInfo.compareEnable = VK_FALSE;
-		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		samplerInfo.mipLodBias = 0.0f;
-		samplerInfo.minLod = 0.0f;
-		samplerInfo.maxLod = 0.0f;
-
-		if (vkCreateSampler(Device::Get().device(), &samplerInfo, nullptr, &m_Sampler) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create texture sampler!");
-		}
 	}
 
 
@@ -224,8 +200,6 @@ namespace Nyxis
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
-		// TODO: delete all the stuff
-		vkDestroySampler(Device::Get().device(), m_Sampler, nullptr);
 	}
 
 	void EditorLayer::Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer)
@@ -236,7 +210,6 @@ namespace Nyxis
 		init_info.DescriptorPool = imguiPool->getDescriptorPool();
 		ImGui_ImplVulkan_Init(&init_info, RenderPass);
 		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-		dst.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 	}
 
 	void EditorLayer::Begin()
@@ -255,244 +228,22 @@ namespace Nyxis
 	void EditorLayer::OnUpdate()
 	{
 		m_Viewport.OnUpdate();
-		AddSceneHierarchy();
-		AddComponentView();
-		AddMenuBar();
+		m_MenuBar.OnUpdate();
+		m_SceneHierarchy.OnUpdate();
+		m_ComponentView.OnUpdate();
+		ImGui::ShowDemoWindow();
 
 		for (auto& function : functions)
 			function();
 
 		if (Input::isKeyPressed(LeftControl) && Input::isKeyPressed(D))
 			m_SelectedEntity = entt::null;
-
-		auto frameInfo = Application::GetFrameInfo();
-		this->commandBuffer = frameInfo->commandBuffer;
 	}
 
 	void EditorLayer::End()
 	{
 		ImGui::Render();
-		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
-	}
-
-	void EditorLayer::AddMenuBar()
-	{
-		ImGui::BeginMainMenuBar();
-		if (ImGui::BeginMenu("File"))
-		{
-			if (ImGui::MenuItem("New"))
-			{
-			}
-			if (ImGui::MenuItem("Open", "Ctrl+O"))
-			{
-				m_ActiveScene->LoadSceneFlag = true;
-			}
-			if (ImGui::MenuItem("Save", "Ctrl+S"))
-			{
-				m_ActiveScene->SaveSceneFlag = true;
-			}
-			ImGui::Separator();
-			ImGui::EndMenu();
-		}
-		if (ImGui::BeginMenu("Edit"))
-		{
-			if (ImGui::MenuItem("Undo", "CTRL+Z"))
-			{
-			}
-			if (ImGui::MenuItem("Redo", "CTRL+Y", false, false))
-			{
-			} // Disabled item
-			ImGui::Separator();
-			if (ImGui::MenuItem("Cut", "CTRL+X"))
-			{
-			}
-			if (ImGui::MenuItem("Copy", "CTRL+C"))
-			{
-			}
-			if (ImGui::MenuItem("Paste", "CTRL+V"))
-			{
-			}
-			if (ImGui::MenuItem("Deselect", "CTRL+D"))
-			{
-				m_SelectedEntity = entt::null;
-			}
-			ImGui::EndMenu();
-		}
-		ImGui::EndMainMenuBar();
-	}
-
-	void EditorLayer::AddComponentView()
-	{
-		ImGui::Begin("Component");
-		// Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-		{
-			if (m_ShowEntityComponents)
-			{
-				if (m_ActiveScene->m_Registry.valid(m_SelectedEntity))
-				{
-					if (m_ActiveScene->m_Registry.all_of<TagComponent>(m_SelectedEntity))
-					{
-						auto& tag = m_ActiveScene->GetComponent<TagComponent>(m_SelectedEntity);
-						char buffer[256];
-						memset(buffer, 0, sizeof(buffer));
-						strcpy(buffer, tag.Tag.c_str());
-						if (ImGui::InputText("##Tag", buffer, sizeof(buffer)))
-						{
-							tag.Tag = std::string(buffer);
-						}
-					}
-
-					if (m_ActiveScene->m_Registry.all_of<RigidBody>(m_SelectedEntity))
-					{
-						auto& rigidBody = m_ActiveScene->GetComponent<RigidBody>(
-							m_SelectedEntity); // TODO! Fix load scene bug
-						ImGui::Text("Rigid Body");
-						ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f, 0, 0, "%.1f");
-						glm::vec3 rotationDeg = glm::degrees(rigidBody.rotation);
-						ImGui::DragFloat3("Rotation", &rotationDeg.x, 0.1f, 0, 0, "%.1f");
-						rigidBody.rotation = glm::radians(rotationDeg);
-						ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f, 0, 0, "%.2f");
-
-						ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);
-						ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0.0f, 1.0f);
-
-						ImGui::DragFloat("Roughness", &rigidBody.roughness, 0.1f);
-						// check if entity has a collider component
-						if (m_ActiveScene->m_Registry.all_of<Collider>(m_SelectedEntity))
-						{
-							auto& collider = m_ActiveScene->GetComponent<Collider>(m_SelectedEntity);
-
-							ImGui::Text("Collider");
-							auto preview = Nyxis::collider_name[collider.type];
-
-							if (ImGui::BeginCombo("Collider Type", preview.c_str(), ImGuiComboFlags_NoArrowButton))
-							{
-								if (ImGui::Selectable("Box"))
-									collider.type = ColliderType::Box;
-
-								if (ImGui::Selectable("Sphere"))
-									collider.type = ColliderType::Sphere;
-
-								ImGui::EndCombo();
-							}
-
-							if (collider.type == ColliderType::Box)
-								ImGui::DragFloat3("Collider Size", &collider.size.x, 0.05f);
-
-							else if (collider.type == ColliderType::Sphere)
-								ImGui::DragFloat("Collider Radius", &collider.radius, 0.05f);
-						}
-					}
-				}
-			}
-		}
-		ImGui::End();
-	}
-
-	void EditorLayer::AddSceneHierarchy()
-	{
-		ImGui::Begin("Scene Hierarchy");
-		if (ImGui::BeginPopupContextWindow())
-		{
-			if (ImGui::MenuItem("Create Empty Entity"))
-				m_SelectedEntity = m_ActiveScene->createEntity("Empty Entity");
-
-			if (ImGui::MenuItem("Clear Scene"))
-				m_ActiveScene->ClearScene();
-
-			ImGui::EndPopup();
-		}
-
-		m_ActiveScene->m_Registry.each([&](auto entityID)
-		{
-			DrawEntityNode(entityID);
-		});
-
-		ImGui::End();
-	}
-
-	void EditorLayer::DrawEntityNode(Entity entity)
-	{
-		auto& tag = m_ActiveScene->GetComponent<TagComponent>(entity).Tag;
-
-		ImGuiTreeNodeFlags flags = ((m_SelectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) |
-			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-		bool expanded = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entity, flags, "%s", tag.c_str());
-
-		if (m_SelectedEntity == entity) {
-			ImGui::SetNextItemOpen(true);
-		}
-
-		if (ImGui::IsItemClicked())
-		{
-			m_SelectedEntity = entity;
-		}
-
-		
-		// right click context menu
-		if (ImGui::BeginPopupContextItem())
-		{
-			if (ImGui::MenuItem("Delete Entity"))
-			{
-				m_ActiveScene->destroyEntity(entity);
-			}
-			// add component tree with all components that can be added to entity
-			if (ImGui::BeginMenu("Add Component"))
-			{
-				if (ImGui::MenuItem("RigidBody"))
-					if (!m_ActiveScene->m_Registry.all_of<RigidBody>(entity))
-						m_ActiveScene->addComponent<RigidBody>(entity);
-
-				if (ImGui::MenuItem("Mesh"))
-					if (!m_ActiveScene->m_Registry.all_of<MeshComponent>(entity))
-						m_ActiveScene->addComponent<MeshComponent>(entity, "../models/sphere.obj");
-
-				if (ImGui::MenuItem("Collider"))
-					if (!m_ActiveScene->m_Registry.all_of<Collider>(entity))
-						m_ActiveScene->addComponent<Collider>(entity, ColliderType::Sphere, glm::vec3{0.2, 0.2, 0.2},
-						                                     0.05);
-
-				if (ImGui::MenuItem("Gravity"))
-					if (!m_ActiveScene->m_Registry.all_of<Gravity>(entity))
-						m_ActiveScene->addComponent<Gravity>(entity);
-
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("Remove Component"))
-			{
-				if (m_ActiveScene->m_Registry.all_of<RigidBody>(entity))
-					if (ImGui::MenuItem("RigidBody"))
-						m_ActiveScene->m_Registry.remove<RigidBody>(entity);
-
-				if (m_ActiveScene->m_Registry.all_of<MeshComponent>(entity))
-					if (ImGui::MenuItem("Mesh"))
-						m_ActiveScene->m_Registry.remove<MeshComponent>(entity);
-
-				if (m_ActiveScene->m_Registry.all_of<Collider>(entity))
-					if (ImGui::MenuItem("Collider"))
-						m_ActiveScene->m_Registry.remove<Collider>(entity);
-
-				if (m_ActiveScene->m_Registry.all_of<Gravity>(entity))
-					if (ImGui::MenuItem("Gravity"))
-						m_ActiveScene->m_Registry.remove<Gravity>(entity);
-
-				ImGui::EndMenu();
-			}
-
-			ImGui::EndPopup();
-		}
-
-		if (expanded)
-		{
-			ImGui::TreePop();
-			m_ShowEntityComponents = true;
-		}
-	}
-
-	void EditorLayer::OnImGuiRender()
-	{
-		
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), Application::GetFrameInfo()->commandBuffer);
 	}
 
 	void EditorLayer::OnEvent()
@@ -508,5 +259,10 @@ namespace Nyxis
 	void EditorLayer::SetSelectedEntity(Entity entity)
 	{
 		m_SelectedEntity = entity;
+	}
+
+	void EditorLayer::DeselectEntity()
+	{
+		m_SelectedEntity = entt::null;
 	}
 }
