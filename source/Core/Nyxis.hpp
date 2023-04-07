@@ -17,7 +17,7 @@
 #define NYXIS_ASSERT(condition, message) \
     if (!(condition))              \
     {                              \
-		LOG_ERROR(message); \
+		LOG_CRITICAL("{}", message); \
     }
 
 #define BIT(x) (1 << x)

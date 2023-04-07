@@ -14,7 +14,7 @@ namespace Nyxis
     {
         // std::cerr << "[Debug]: " << pCallbackData->pMessage << std::endl;
 #ifdef LOGGING
-        LOG_ERROR(pCallbackData->pMessage);
+        LOG_ERROR("{}", pCallbackData->pMessage);
 #endif // LOGGING
 
         return VK_FALSE;

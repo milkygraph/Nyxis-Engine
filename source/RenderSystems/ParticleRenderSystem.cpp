@@ -1,4 +1,5 @@
 #include "RenderSystems\ParticleRenderSystem.hpp"
+#include "Core/Nyxispch.hpp"
 #include "Core/SwapChain.hpp"
 
 namespace Nyxis
@@ -120,7 +121,7 @@ namespace Nyxis
 		stagingBuffer.map();
 		stagingBuffer.writeToBuffer(m_Particles.data());
 
-		m_ParticleBuffer = std::make_unique<Buffer>(sizeof(m_Particles[0]), m_Particles.size(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		m_ParticleBuffer = std::make_unique<Buffer>(sizeof(m_Particles[0]), static_cast<uint32_t>(m_Particles.size()), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		
 		m_Device.copyBuffer(stagingBuffer.getBuffer(), m_ParticleBuffer->getBuffer(), sizeof(m_Particles[0]) * m_Particles.size());
 	}

@@ -25,12 +25,13 @@ namespace Nyxis
     {
         m_EditorLayer.OnDetach();
         Renderer::Shutdown();
+        Log::Shutdown();
     }
 
     void Application::OnEvent(Event& e)
 	{
 #if 0
-		LOG_INFO(e.toString());
+        LOG_INFO("{}", e.toString());
 #endif
 	}
 
