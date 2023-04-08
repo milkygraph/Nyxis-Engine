@@ -40,7 +40,7 @@ namespace Nyxis
 		auto scene = Application::GetScene();
 		auto frameInfo = Application::GetFrameInfo();
 
-		if (Input::isMouseButtonPressed(MouseButtonLeft) && Viewport::IsFocused())
+		if (Viewport::IsClicked())
 		{
 			auto buffer = static_cast<ObjectPicking*>(objectPickingBuffer[frameInfo->frameIndex]->getMappedMemory());
 			auto depthBuffer = buffer->depthBufferObject;

@@ -14,6 +14,7 @@ namespace Nyxis
 		void OnUpdate();
 		void OnEvent();
 		static bool IsFocused() { return m_IsFocused; }
+		static bool IsClicked() { return ImGui::IsMouseClicked(ImGuiMouseButton_Left) && IsFocused(); }
 		VkExtent2D GetExtent() const { return m_Extent; }
 
 	private:
