@@ -76,6 +76,7 @@ namespace Nyxis
 		CreateSwapChainFramebuffers();
 		CreateWorldFramebuffers();
 		CreateSyncObjects();
+    	LOG_INFO("Successfully created swap chain.");
 	}
 
 	VkResult SwapChain::AcquireNextImage(uint32_t* imageIndex)
@@ -180,9 +181,6 @@ namespace Nyxis
 		return result;
 	}
 
-	/**
-	 * \brief 
-	 */
 	void SwapChain::CreateSwapChain()
 	{
 		SwapChainSupportDetails swapChainSupport = device.getSwapChainSupport();
@@ -246,8 +244,6 @@ namespace Nyxis
 
 		m_SwapChainImageFormat = surfaceFormat.format;
 		m_SwapChainExtent = extent;
-
-		LOG_INFO("Successfully created swap chain.");
 	}
 
 	void insertImageMemoryBarrier(VkCommandBuffer cmdbuffer,
@@ -339,8 +335,6 @@ namespace Nyxis
 			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 			device.endSingleTimeCommands(commandBuffer);
 		}
-
-		LOG_INFO("Successfully created world images.");
 	}
 
 	void SwapChain::CreateSwapChainImageViews()
@@ -367,8 +361,6 @@ namespace Nyxis
 				throw std::runtime_error("failed to create swap chain image image view!");
 			}
 		}
-
-		LOG_INFO("Successfully created swap chain image views.");
 	}
 
 	void SwapChain::CreateWorldImageViews()
@@ -394,8 +386,6 @@ namespace Nyxis
 				throw std::runtime_error("failed to create world image view!");
 			}
 		}
-
-		LOG_INFO("Successfully created world image views.");
 	}
 
 	void SwapChain::CreateRenderPass()
@@ -508,8 +498,6 @@ namespace Nyxis
 				throw std::runtime_error("failed to create swap chain framebuffer!");
 			}
 		}
-
-		LOG_INFO("Successfully created swap chain framebuffers");
 	}
 
 	void SwapChain::CreateWorldFramebuffers()
@@ -538,8 +526,6 @@ namespace Nyxis
 				throw std::runtime_error("failed to create world framebuffer!");
 			}
 		}
-
-		LOG_INFO("Successfully created world framebuffers");
     }
 
 	void SwapChain::CreateDepthResources()
@@ -651,15 +637,15 @@ namespace Nyxis
 	VkPresentModeKHR SwapChain::ChooseSwapPresentMode(
 		const std::vector<VkPresentModeKHR>& availablePresentModes)
 	{
-		//        for (const auto &availablePresentMode : availablePresentModes)
-		//        {
-		//            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-		//            {
+		for (const auto &availablePresentMode : availablePresentModes)
+		{
+		    if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+		    {
 
-		//                LOG_INFO("Present mode : Mailbox");
-		//                return availablePresentMode;
-		//            }
-		//        }
+		        LOG_INFO("Present mode : Mailbox");
+		        return availablePresentMode;
+		    }
+		}
 		
 		for (const auto &availablePresentMode : availablePresentModes)
 		{
@@ -696,7 +682,6 @@ namespace Nyxis
 
 	void SwapChain::RecreateWorldImages()
 	{
-		LOG_TRACE("Recreating world images");
 		vkDeviceWaitIdle(device.device());
 		// destroy old images and image views
 

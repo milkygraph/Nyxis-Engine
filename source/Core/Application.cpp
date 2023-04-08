@@ -46,14 +46,14 @@ namespace Nyxis
 
         // add functions to editor layer
         {
-            m_EditorLayer.AddFunction([&]() {
+ 			EditorLayer::AddFunction([&]() {
                 ImGui::Begin("Statistics");
                 ImGui::Text("Entity Count: %d", m_Scene->getEntityCount());
                 ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
                 ImGui::End();
                 });
 
-            m_EditorLayer.AddFunction([&]() {
+            EditorLayer::AddFunction([&]() {
                 ImGui::Begin("Physics");
                 ImGui::Checkbox("Enable Physics", &m_PhysicsEngine.enable);
                 ImGui::DragFloat2("BoxEdges", &m_PhysicsEngine.edges.x);
@@ -61,13 +61,13 @@ namespace Nyxis
                 ImGui::End();
                 });
 
-        	m_EditorLayer.AddFunction([&]() {
+            EditorLayer::AddFunction([&]() {
                 ImGui::Begin("Physics");
                 ImGui::Checkbox("Enable Animations", &animationThreadActive);
                 ImGui::End();
                 });
 
-        	m_EditorLayer.AddFunction([&]() {
+            EditorLayer::AddFunction([&]() {
                     ImGui::Begin("Scene Settings");
                     ImGui::Text("SkyMap");
                     ImGui::DragFloat("Exposure", &gltfRenderer.sceneInfo.shaderValuesParams.exposure, 0.1f, 0.0f, 10.0f);

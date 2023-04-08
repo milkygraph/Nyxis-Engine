@@ -141,9 +141,6 @@ namespace Nyxis
             throw std::runtime_error("failed to find GPUs with Vulkan support!");
         }
         
-#ifndef NDEBUG
-    	std::cout << "Device count: " << deviceCount << std::endl;
-#endif
         std::vector<VkPhysicalDevice> devices(deviceCount);
         vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
@@ -340,28 +337,15 @@ namespace Nyxis
         std::vector<VkExtensionProperties> extensions(extensionCount);
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-#ifndef NDEBUG
-    	std::cout << "available extensions:" << std::endl;
-#endif
     	std::unordered_set<std::string> available;
         for (const auto &extension : extensions)
         {
-#ifndef NDEBUG 
-		std::cout << "\t" << extension.extensionName << std::endl;
-#endif
         	available.insert(extension.extensionName);
         }
-        
-#ifndef NDEBUG
-        std::cout << "required extensions:" << std::endl;
-#endif
 
     	auto requiredExtensions = getRequiredExtensions();
         for (const auto &required : requiredExtensions)
         {
-#ifndef NDEBUG
-        	std::cout << "\t" << required << std::endl;
-#endif
         	if (available.find(required) == available.end())
             {
                 throw std::runtime_error("Missing required glfw extension");

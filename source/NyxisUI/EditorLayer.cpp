@@ -231,13 +231,11 @@ namespace Nyxis
 		m_MenuBar.OnUpdate();
 		m_SceneHierarchy.OnUpdate();
 		m_ComponentView.OnUpdate();
-		ImGui::ShowDemoWindow();
 
 		for (auto& function : functions)
 			function();
 
-		if (Input::isKeyPressed(LeftControl) && Input::isKeyPressed(D))
-			m_SelectedEntity = entt::null;
+		OnEvent();
 	}
 
 	void EditorLayer::End()
@@ -248,7 +246,8 @@ namespace Nyxis
 
 	void EditorLayer::OnEvent()
 	{
-
+		if (Input::isKeyPressed(LeftControl) && Input::isKeyPressed(D))
+			m_SelectedEntity = entt::null;
 	}
 
 	void EditorLayer::SetScene(Ref<Scene> scene)
