@@ -329,15 +329,10 @@ namespace Nyxis
 	Mesh::Mesh(glm::mat4 matrix)
 	{
 		this->uniformBlock.matrix = matrix;
-		device.createBufferWithData(
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			sizeof(uniformBlock),
-			&uniformBuffer.buffer,
-			&uniformBuffer.memory,
-			&uniformBlock);
-		vkMapMemory(device.device(), uniformBuffer.memory, 0, sizeof(uniformBlock), 0, &uniformBuffer.mapped);
-		uniformBuffer.descriptor = { uniformBuffer.buffer, 0, sizeof(uniformBlock) };
+		uniformBuffer.meshBuffer = std::make_unique<Buffer>(sizeof(uniformBlock), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniformBlock);
+		uniformBuffer.meshBuffer->map();
+		uniformBuffer.descriptor = { uniformBuffer.meshBuffer->getBuffer(), 0, sizeof(uniformBlock) };
 	}
 
 	Mesh::~Mesh()
@@ -384,10 +379,10 @@ namespace Nyxis
 					mesh->uniformBlock.jointMatrix[i] = jointMat;
 				}
 				mesh->uniformBlock.jointcount = (float)numJoints;
-				memcpy(mesh->uniformBuffer.mapped, &mesh->uniformBlock, sizeof(mesh->uniformBlock));
+				memcpy(mesh->uniformBuffer.meshBuffer->getMappedMemory(), &mesh->uniformBlock, sizeof(mesh->uniformBlock));
 			}
 			else {
-				memcpy(mesh->uniformBuffer.mapped, &m, sizeof(glm::mat4));
+				memcpy(mesh->uniformBuffer.meshBuffer->getMappedMemory(), &m, sizeof(glm::mat4));
 			}
 		}
 
@@ -447,24 +442,13 @@ namespace Nyxis
 
 	void Model::destroy()
 	{
-		if (vertices.buffer != VK_NULL_HANDLE) {
-			vkDestroyBuffer(Device::Get().device(), vertices.buffer, nullptr);
-			vkFreeMemory(Device::Get().device(), vertices.memory, nullptr);
-			vertices.buffer = VK_NULL_HANDLE;
-		}
-		if (indices.buffer != VK_NULL_HANDLE) {
-			vkDestroyBuffer(Device::Get().device(), indices.buffer, nullptr);
-			vkFreeMemory(Device::Get().device(), indices.memory, nullptr);
-			indices.buffer = VK_NULL_HANDLE;
-		}
 		for (auto texture : textures) {
 			texture.destroy();
 		}
 		textures.resize(0);
 		textureSamplers.resize(0);
-		for (auto node : nodes) {
-			//if(node != nullptr)
-			//	delete node;
+		for (const auto node : nodes) {
+			delete node;
 		}
 		materials.resize(0);
 		animations.resize(0);
@@ -1100,71 +1084,26 @@ namespace Nyxis
 
 		assert(vertexBufferSize > 0);
 
-		struct {
-			VkBuffer buffer;
-			VkDeviceMemory memory;
-		} vertexStaging, indexStaging;
+		// create vertex and index buffers
+		Buffer vertexStagingBuffer(sizeof(Vertex), vertexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, loaderInfo.vertexBuffer);
+		vertexStagingBuffer.map();
 
-		// Create staging buffers
-		// Vertex data
-		device.createBufferWithData(
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			vertexBufferSize,
-			&vertexStaging.buffer,
-			&vertexStaging.memory,
-			loaderInfo.vertexBuffer);
-		// Index data
-		if (indexBufferSize > 0) {
-			device.createBufferWithData(
-				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				indexBufferSize,
-				&indexStaging.buffer,
-				&indexStaging.memory,
-				loaderInfo.indexBuffer);
-		}
+		vertexBuffer = std::make_unique<Buffer>(sizeof(Vertex), vertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		device.copyBuffer(vertexStagingBuffer.getBuffer(), vertexBuffer->getBuffer(), vertexBufferSize);
 
-		// Create device local buffers
-		// Vertex buffer
-		device.createBufferWithData(
-			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			vertexBufferSize,
-			&vertices.buffer,
-			&vertices.memory);
-		// Index buffer
 		if (indexBufferSize > 0) {
-			device.createBufferWithData(
-				VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				indexBufferSize,
-				&indices.buffer,
-				&indices.memory);
+			Buffer indexStagingBuffer(sizeof(uint32_t), indexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, loaderInfo.indexBuffer);
+			indexStagingBuffer.map();
+
+			indexBuffer = std::make_unique<Buffer>(sizeof(uint32_t), indexCount, 
+				VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+			device.copyBuffer(indexStagingBuffer.getBuffer(), indexBuffer->getBuffer(), indexBufferSize);
 		}
 
 		// Copy from staging buffers
-		auto copyCmd = device.beginSingleTimeCommands();
-
-		VkBufferCopy copyRegion = {};
-
-		copyRegion.size = vertexBufferSize;
-		vkCmdCopyBuffer(copyCmd, vertexStaging.buffer, vertices.buffer, 1, &copyRegion);
-
-		if (indexBufferSize > 0) {
-			copyRegion.size = indexBufferSize;
-			vkCmdCopyBuffer(copyCmd, indexStaging.buffer, indices.buffer, 1, &copyRegion);
-		}
-
-		device.endSingleTimeCommands(copyCmd);
-
-		vkDestroyBuffer(device.device(), vertexStaging.buffer, nullptr);
-		vkFreeMemory(device.device(), vertexStaging.memory, nullptr);
-		if (indexBufferSize > 0) {
-			vkDestroyBuffer(device.device(), indexStaging.buffer, nullptr);
-			vkFreeMemory(device.device(), indexStaging.memory, nullptr);
-		}
-
 		delete[] loaderInfo.vertexBuffer;
 		delete[] loaderInfo.indexBuffer;
 
@@ -1183,11 +1122,18 @@ namespace Nyxis
 		}
 	}
 
-	void Model::draw(VkCommandBuffer commandBuffer)
+	void Model::bind(VkCommandBuffer commandBuffer)
 	{
 		const VkDeviceSize offsets[1] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.buffer, offsets);
-		vkCmdBindIndexBuffer(commandBuffer, indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+		const auto buffer = vertexBuffer->getBuffer();
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &buffer, offsets);
+		if(indexBuffer != nullptr)
+			vkCmdBindIndexBuffer(commandBuffer, indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
+	}
+
+	void Model::draw(VkCommandBuffer commandBuffer)
+	{
+		bind(commandBuffer);
 		for (auto& node : nodes) {
 			drawNode(node, commandBuffer);
 		}

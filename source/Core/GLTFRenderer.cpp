@@ -97,13 +97,7 @@ namespace Nyxis
 			shaderValuesScene.entityID = static_cast<int>(model);
 
 			gltfModel.updateUniformBuffer(frameInfo->frameIndex, &shaderValuesScene);
-
-			VkDeviceSize offsets[] = { 0 };
-
-			vkCmdBindVertexBuffers(frameInfo->commandBuffer, 0, 1, &gltfModel.vertices.buffer, offsets);
-
-			if (gltfModel.indices.buffer != VK_NULL_HANDLE)
-				vkCmdBindIndexBuffer(frameInfo->commandBuffer, gltfModel.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+			gltfModel.bind(frameInfo->commandBuffer);
 
 			boundPipeline = VK_NULL_HANDLE;
 

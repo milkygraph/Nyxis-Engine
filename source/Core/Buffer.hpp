@@ -9,9 +9,10 @@ namespace Nyxis
     public:
         Buffer(
             VkDeviceSize instanceSize,
-            uint32_t instanceCount,
+            size_t instanceCount,
             VkBufferUsageFlags usageFlags,
             VkMemoryPropertyFlags memoryPropertyFlags,
+            const void* data = nullptr,
             VkDeviceSize minOffsetAlignment = 1);
         ~Buffer();
 
@@ -50,7 +51,7 @@ namespace Nyxis
         VkDeviceMemory memory = VK_NULL_HANDLE;
 
         VkDeviceSize bufferSize;
-        uint32_t instanceCount;
+        size_t instanceCount;
         VkDeviceSize instanceSize;
         VkDeviceSize alignmentSize;
         VkBufferUsageFlags usageFlags;

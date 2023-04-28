@@ -150,11 +150,9 @@ namespace Nyxis
 		BoundingBox aabb;
 		std::unique_ptr<Buffer> buffer = nullptr;
 		struct UniformBuffer {
-			VkBuffer buffer;
-			VkDeviceMemory memory;
+			Scope<Buffer> meshBuffer;
 			VkDescriptorBufferInfo descriptor;
 			VkDescriptorSet descriptorSet;
-			void* mapped;
 		} uniformBuffer;
 		struct UniformBlock {
 			glm::mat4 matrix;
@@ -230,15 +228,8 @@ namespace Nyxis
 			glm::vec4 color;
 		};
 
-		struct Vertices {
-			VkBuffer buffer = VK_NULL_HANDLE;
-			VkDeviceMemory memory;
-		} vertices;
-
-		struct Indices {
-			VkBuffer buffer = VK_NULL_HANDLE;
-			VkDeviceMemory memory;
-		} indices;
+		Scope<Buffer> vertexBuffer = nullptr;
+		Scope<Buffer> indexBuffer = nullptr;
 
 		glm::mat4 aabb;
 		glm::mat4 modelMatrix{ 1.0f };
@@ -287,6 +278,7 @@ namespace Nyxis
 		void loadMaterials(tinygltf::Model& gltfModel);
 		void loadAnimations(tinygltf::Model& gltfModel);
 		void loadFromFile(std::string filename, float scale = 1.0f);
+		void bind(VkCommandBuffer commandBuffer);
 		void drawNode(Node* node, VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
 		void calculateBoundingBox(Node* node, Node* parent);

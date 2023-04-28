@@ -34,18 +34,19 @@ namespace Nyxis
 
     Buffer::Buffer(
         VkDeviceSize instanceSize,
-        uint32_t instanceCount,
+        size_t instanceCount,
         VkBufferUsageFlags usageFlags,
         VkMemoryPropertyFlags memoryPropertyFlags,
+		const void* data,
         VkDeviceSize minOffsetAlignment)
-        : instanceSize{instanceSize},
-          instanceCount{instanceCount},
-          usageFlags{usageFlags},
-          memoryPropertyFlags{memoryPropertyFlags}
+	    : instanceCount{instanceCount},
+	      instanceSize{instanceSize},
+	      usageFlags{usageFlags},
+	      memoryPropertyFlags{memoryPropertyFlags}, descriptorInfo()
     {
-        alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
-        bufferSize = alignmentSize * instanceCount;
-        device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, memory);
+	    alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
+	    bufferSize = alignmentSize * instanceCount;
+	    device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, memory, data);
     }
 
     Buffer::~Buffer()

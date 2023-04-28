@@ -67,12 +67,8 @@ namespace Nyxis
             VkBufferUsageFlags usage,
             VkMemoryPropertyFlags properties,
             VkBuffer &buffer,
-            VkDeviceMemory &bufferMemory);
-		VkResult createBufferWithData(
-            VkBufferUsageFlags usageFlags, 
-            VkMemoryPropertyFlags memoryPropertyFlags, 
-            VkDeviceSize size, VkBuffer* buffer, 
-            VkDeviceMemory* memory, void* data = nullptr);
+            VkDeviceMemory &bufferMemory,
+			const void* data = nullptr);
 
         VkCommandBuffer beginSingleTimeCommands();
         void endSingleTimeCommands(VkCommandBuffer commandBuffer);
