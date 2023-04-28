@@ -5,19 +5,14 @@
 #include <gli/texture_cube.hpp>
 #include <stbimage/stb_image.h>
 
+#include "Core/Buffer.hpp"
+
 namespace Nyxis
 {
-	Texture2D::Texture2D()
-	{
-	}
-
-	Texture2D::Texture2D(const Texture2D& other): Texture(other)
-	{
-	}
-
 	void Texture2D::LoadFromFile(std::string filename, VkFormat format, VkImageUsageFlags imageUsageFlags,
 		VkImageLayout imageLayout)
 	{
+		auto& device = Device::Get();
 		gli::texture2d tex2D(gli::load(filename.c_str()));
 		assert(!tex2D.empty());
 
@@ -33,33 +28,10 @@ namespace Nyxis
 		auto copyCmd = device.beginSingleTimeCommands();
 
 		// Create a host-visible staging buffer that contains the raw image data
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingMemory;
-
-		VkBufferCreateInfo bufferCreateInfo{};
-		bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferCreateInfo.size = tex2D.size();
-		// This buffer is used as a transfer source for the buffer copy
-		bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		vkCreateBuffer(device.device(), &bufferCreateInfo, nullptr, &stagingBuffer);
-
-		// Get memory requirements for the staging buffer (alignment, memory type bits)
-		vkGetBufferMemoryRequirements(device.device(), stagingBuffer, &memReqs);
-
-		memAllocInfo.allocationSize = memReqs.size;
-		// Get memory type index for a host visible buffer
-		memAllocInfo.memoryTypeIndex = device.findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-		vkAllocateMemory(device.device(), &memAllocInfo, nullptr, &stagingMemory);
-		vkBindBufferMemory(device.device(), stagingBuffer, stagingMemory, 0);
-
-		// Copy texture data into staging buffer
-		uint8_t* data;
-		vkMapMemory(device.device(), stagingMemory, 0, memReqs.size, 0, (void**)&data);
-		memcpy(data, tex2D.data(), tex2D.size());
-		vkUnmapMemory(device.device(), stagingMemory);
+		Buffer stagingBuffer(tex2D.size(), 1, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		stagingBuffer.map();
+		stagingBuffer.writeToBuffer(tex2D.data(), tex2D.size());
 
 		// Setup buffer copy regions for each mip level
 		std::vector<VkBufferImageCopy> bufferCopyRegions;
@@ -133,7 +105,7 @@ namespace Nyxis
 		// Copy mip levels from staging buffer
 		vkCmdCopyBufferToImage(
 			copyCmd,
-			stagingBuffer,
+			stagingBuffer.getBuffer(),
 			m_Image,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			static_cast<uint32_t>(bufferCopyRegions.size()),
@@ -155,10 +127,6 @@ namespace Nyxis
 		}
 
 		device.endSingleTimeCommands(copyCmd);
-
-		// Clean up staging resources
-		vkFreeMemory(device.device(), stagingMemory, nullptr);
-		vkDestroyBuffer(device.device(), stagingBuffer, nullptr);
 
 		VkSamplerCreateInfo samplerCreateInfo{};
 		samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -193,10 +161,11 @@ namespace Nyxis
 	void Texture2D::LoadFromBuffer(void* buffer, VkDeviceSize bufferSize, VkFormat format, uint32_t width,
 		uint32_t height, VkFilter filter, VkImageUsageFlags imageUsageFlags, VkImageLayout imageLayout)
 	{
+		auto& device = Device::Get();
 		assert(buffer);
 
-		width = width;
-		height = height;
+		m_Width = width;
+		m_Height = height;
 		m_MipLevels = 1;
 
 		VkMemoryAllocateInfo memAllocInfo{};
@@ -206,33 +175,10 @@ namespace Nyxis
 		auto copyCmd = device.beginSingleTimeCommands();
 
 		// Create a host-visible staging buffer that contains the raw image data
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingMemory;
-
-		VkBufferCreateInfo bufferCreateInfo{};
-		bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferCreateInfo.size = bufferSize;
-		// This buffer is used as a transfer source for the buffer copy
-		bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		vkCreateBuffer(device.device(), &bufferCreateInfo, nullptr, &stagingBuffer);
-
-		// Get memory requirements for the staging buffer (alignment, memory type bits)
-		vkGetBufferMemoryRequirements(device.device(), stagingBuffer, &memReqs);
-
-		memAllocInfo.allocationSize = memReqs.size;
-		// Get memory type index for a host visible buffer
-		memAllocInfo.memoryTypeIndex = device.findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-		vkAllocateMemory(device.device(), &memAllocInfo, nullptr, &stagingMemory);
-		vkBindBufferMemory(device.device(), stagingBuffer, stagingMemory, 0);
-
-		// Copy texture data into staging buffer
-		uint8_t* data;
-		vkMapMemory(device.device(), stagingMemory, 0, memReqs.size, 0, (void**)&data);
-		memcpy(data, buffer, bufferSize);
-		vkUnmapMemory(device.device(), stagingMemory);
+		Buffer stagingBuffer(bufferSize, 1, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		stagingBuffer.map();
+		stagingBuffer.writeToBuffer(buffer, bufferSize);
 
 		VkBufferImageCopy bufferCopyRegion = {};
 		bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -292,7 +238,7 @@ namespace Nyxis
 
 		vkCmdCopyBufferToImage(
 			copyCmd,
-			stagingBuffer,
+			stagingBuffer.getBuffer(),
 			m_Image,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1,
@@ -313,10 +259,6 @@ namespace Nyxis
 		}
 
 		device.endSingleTimeCommands(copyCmd);
-
-		// Clean up staging resources
-		vkFreeMemory(device.device(), stagingMemory, nullptr);
-		vkDestroyBuffer(device.device(), stagingBuffer, nullptr);
 
 		// Create sampler
 		VkSamplerCreateInfo samplerCreateInfo = {};
@@ -353,6 +295,7 @@ namespace Nyxis
 	void TextureCubeMap::LoadFromFile(std::string filename, VkFormat format, VkImageUsageFlags imageUsageFlags,
 		VkImageLayout imageLayout)
 	{
+		auto& device = Device::Get();
 		gli::texture_cube texCube(gli::load(filename));
 		assert(!texCube.empty());
 
@@ -365,33 +308,10 @@ namespace Nyxis
 		VkMemoryRequirements memReqs;
 
 		// Create a host-visible staging buffer that contains the raw image data
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingMemory;
-
-		VkBufferCreateInfo bufferCreateInfo{};
-		bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferCreateInfo.size = texCube.size();
-		// This buffer is used as a transfer source for the buffer copy
-		bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		vkCreateBuffer(device.device(), &bufferCreateInfo, nullptr, &stagingBuffer);
-
-		// Get memory requirements for the staging buffer (alignment, memory type bits)
-		vkGetBufferMemoryRequirements(device.device(), stagingBuffer, &memReqs);
-
-		memAllocInfo.allocationSize = memReqs.size;
-		// Get memory type index for a host visible buffer
-		memAllocInfo.memoryTypeIndex = device.findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-		vkAllocateMemory(device.device(), &memAllocInfo, nullptr, &stagingMemory);
-		vkBindBufferMemory(device.device(), stagingBuffer, stagingMemory, 0);
-
-		// Copy texture data into staging buffer
-		uint8_t* data;
-		vkMapMemory(device.device(), stagingMemory, 0, memReqs.size, 0, (void**)&data);
-		memcpy(data, texCube.data(), texCube.size());
-		vkUnmapMemory(device.device(), stagingMemory);
+		Buffer stagingBuffer(texCube.size(), 1, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		stagingBuffer.map();
+		stagingBuffer.writeToBuffer(texCube.data(), texCube.size());
 
 		// Setup buffer copy regions for each face including all of it's miplevels
 		std::vector<VkBufferImageCopy> bufferCopyRegions;
@@ -474,7 +394,7 @@ namespace Nyxis
 		// Copy the cube map faces from the staging buffer to the optimal tiled image
 		vkCmdCopyBufferToImage(
 			copyCmd,
-			stagingBuffer,
+			stagingBuffer.getBuffer(),
 			m_Image,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			static_cast<uint32_t>(bufferCopyRegions.size()),
@@ -525,10 +445,6 @@ namespace Nyxis
 		viewCreateInfo.subresourceRange.levelCount = m_MipLevels;
 		viewCreateInfo.image = m_Image;
 		vkCreateImageView(device.device(), &viewCreateInfo, nullptr, &m_View);
-
-		// Clean up staging resources
-		vkFreeMemory(device.device(), stagingMemory, nullptr);
-		vkDestroyBuffer(device.device(), stagingBuffer, nullptr);
 
 		// Update descriptor image info member that can be used for setting up descriptor sets
 		UpdateDescriptor();
