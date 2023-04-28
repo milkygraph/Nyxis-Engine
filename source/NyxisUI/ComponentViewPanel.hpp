@@ -1,6 +1,4 @@
 #pragma once
-#include "Core/Nyxispch.hpp"
-#include "Core/Nyxis.hpp"
 
 namespace Nyxis
 {

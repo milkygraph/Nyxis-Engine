@@ -82,7 +82,6 @@ namespace Nyxis
 	};
 
 	struct ModelTexture {
-		Device& device = Device::Get();
 		VkImage image;
 		VkImageLayout imageLayout;
 		VkDeviceMemory deviceMemory;
@@ -218,7 +217,8 @@ namespace Nyxis
 	};
 
 	struct Model {
-		Device& device = Device::Get();
+		std::string path;
+		bool animate = true;
 
 		struct Vertex {
 			glm::vec3 pos;
@@ -301,14 +301,16 @@ namespace Nyxis
 		VkDescriptorSet getDescriptorSet(uint32_t index) { return descriptorSets[index]; }
 	};
 
-	class ModelManager
+	class ModelDescriptorManager
 	{
-		friend struct Model;
-		friend class GLTFRenderer;
-		static Ref<DescriptorPool> GetDescriptorPool();
+	public:
 		static Ref<DescriptorSetLayout> GetModelDescriptorSetLayout();
 		static Ref<DescriptorSetLayout> GetMaterialDescriptorSetLayout();
 		static Ref<DescriptorSetLayout> GetNodeDescriptorSetLayout();
+	private:
+		friend struct Model;
+		friend class GLTFRenderer;
+		static Ref<DescriptorPool> GetDescriptorPool();
 		static void Setup();
 
 		inline static Ref<DescriptorPool> m_DescriptorPool = nullptr;

@@ -57,6 +57,7 @@ namespace Nyxis
 
 	void ModelTexture::destroy()
 	{
+		auto& device = Device::Get();
 		vkDestroyImageView(device.device(), view, nullptr);
 		vkDestroyImage(device.device(), image, nullptr);
 		vkFreeMemory(device.device(), deviceMemory, nullptr);
@@ -65,6 +66,8 @@ namespace Nyxis
 
 	void ModelTexture::fromglTFImage(tinygltf::Image& gltfimage, TextureSampler textureSampler)
 	{
+		auto& device = Device::Get();
+
 		unsigned char* buffer = nullptr;
 		VkDeviceSize bufferSize = 0;
 
@@ -339,8 +342,7 @@ namespace Nyxis
 
 	Mesh::~Mesh()
 	{
-		for (auto& primitive : primitives)
-			delete primitive;
+
 	}
 
 	void Mesh::setBoundingBox(glm::vec3 min, glm::vec3 max)
@@ -396,11 +398,12 @@ namespace Nyxis
 
 	Node::~Node()
 	{
-		if (mesh)
-			delete mesh;
+		// if (mesh != nullptr)
+		// 	delete mesh;
 
-		for (auto& child : children)
-			delete child;
+		// for (auto& child : children)
+		// 	if(child != nullptr)
+		// 		delete child;
 	}
 
 	// Model
@@ -418,6 +421,7 @@ namespace Nyxis
 	Model::Model(const std::string& filename, SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValuesBuffer)
 	{
 		LOG_INFO("Loading model from {}", filename);
+		path = filename;
 		animationIndex = 0;
 		animationTimer = 0.0f;
 		auto tStart = std::chrono::high_resolution_clock::now();
@@ -438,19 +442,19 @@ namespace Nyxis
 	Model::~Model()
 	{
 		destroy();
-		ModelManager::GetDescriptorPool()->freeDescriptors(descriptorSets);
+		// ModelDescriptorManager::GetDescriptorPool()->freeDescriptors(descriptorSets);
 	}
 
 	void Model::destroy()
 	{
 		if (vertices.buffer != VK_NULL_HANDLE) {
-			vkDestroyBuffer(device.device(), vertices.buffer, nullptr);
-			vkFreeMemory(device.device(), vertices.memory, nullptr);
+			vkDestroyBuffer(Device::Get().device(), vertices.buffer, nullptr);
+			vkFreeMemory(Device::Get().device(), vertices.memory, nullptr);
 			vertices.buffer = VK_NULL_HANDLE;
 		}
 		if (indices.buffer != VK_NULL_HANDLE) {
-			vkDestroyBuffer(device.device(), indices.buffer, nullptr);
-			vkFreeMemory(device.device(), indices.memory, nullptr);
+			vkDestroyBuffer(Device::Get().device(), indices.buffer, nullptr);
+			vkFreeMemory(Device::Get().device(), indices.memory, nullptr);
 			indices.buffer = VK_NULL_HANDLE;
 		}
 		for (auto texture : textures) {
@@ -459,7 +463,8 @@ namespace Nyxis
 		textures.resize(0);
 		textureSamplers.resize(0);
 		for (auto node : nodes) {
-			delete node;
+			//if(node != nullptr)
+			//	delete node;
 		}
 		materials.resize(0);
 		animations.resize(0);
@@ -1029,6 +1034,7 @@ namespace Nyxis
 
 	void Model::loadFromFile(std::string filename, float scale)
 	{
+		auto& device = Device::Get();
 		tinygltf::Model gltfModel;
 		tinygltf::TinyGLTF gltfContext;
 
@@ -1094,7 +1100,7 @@ namespace Nyxis
 
 		assert(vertexBufferSize > 0);
 
-		struct StagingBuffer {
+		struct {
 			VkBuffer buffer;
 			VkDeviceMemory memory;
 		} vertexStaging, indexStaging;
@@ -1336,110 +1342,43 @@ namespace Nyxis
 			return;
 
 		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+// Descriptor set layout bindings
 		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
 		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 
 	void Model::setupDescriptorSet(SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValuesBuffer)
 	{
+		auto& device = Device::Get();
+		auto pool = ModelDescriptorManager::GetDescriptorPool();
 
-		struct Layouts
+		struct 
 		{
-			VkDescriptorSetLayout scene = ModelManager::GetModelDescriptorSetLayout()->getDescriptorSetLayout();
-			VkDescriptorSetLayout material = ModelManager::GetMaterialDescriptorSetLayout()->getDescriptorSetLayout();
-			VkDescriptorSetLayout node = ModelManager::GetNodeDescriptorSetLayout()->getDescriptorSetLayout();
+			VkDescriptorSetLayout scene = ModelDescriptorManager::GetModelDescriptorSetLayout()->getDescriptorSetLayout();
+			VkDescriptorSetLayout material = ModelDescriptorManager::GetMaterialDescriptorSetLayout()->getDescriptorSetLayout();
+			VkDescriptorSetLayout node = ModelDescriptorManager::GetNodeDescriptorSetLayout()->getDescriptorSetLayout();
 		} descriptorSetLayouts;
 
-		VkDescriptorPool descriptorPool = ModelManager::GetDescriptorPool()->getDescriptorPool();
+		VkDescriptorPool descriptorPool = ModelDescriptorManager::GetDescriptorPool()->getDescriptorPool();
 		// Scene (matrices and environment maps)
 		{
-			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
-				{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-			};
-			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
-			descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
-			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
-			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.scene);
-
 			for (auto i = 0; i < descriptorSets.size(); i++) {
-		
-				VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
-				descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-				descriptorSetAllocInfo.descriptorPool = descriptorPool;
-				descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayouts.scene;
-				descriptorSetAllocInfo.descriptorSetCount = 1;
-				vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &descriptorSets[i]);
-		
-				std::array<VkWriteDescriptorSet, 5> writeDescriptorSets{};
-		
-				writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				writeDescriptorSets[0].descriptorCount = 1;
-				writeDescriptorSets[0].dstSet = descriptorSets[i];
-				writeDescriptorSets[0].dstBinding = 0;
-				writeDescriptorSets[0].pBufferInfo = uniformBuffers[i]->getDescriptorInfo();
-		
-				writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				writeDescriptorSets[1].descriptorCount = 1;
-				writeDescriptorSets[1].dstSet = descriptorSets[i];
-				writeDescriptorSets[1].dstBinding = 1;
-				writeDescriptorSets[1].pBufferInfo = shaderValuesBuffer[i]->getDescriptorInfo();
-		
-				writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writeDescriptorSets[2].descriptorCount = 1;
-				writeDescriptorSets[2].dstSet = descriptorSets[i];
-				writeDescriptorSets[2].dstBinding = 2;
-				writeDescriptorSets[2].pImageInfo = &sceneInfo.textures.irradianceCube.m_Descriptor;
-		
-				writeDescriptorSets[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeDescriptorSets[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writeDescriptorSets[3].descriptorCount = 1;
-				writeDescriptorSets[3].dstSet = descriptorSets[i];
-				writeDescriptorSets[3].dstBinding = 3;
-				writeDescriptorSets[3].pImageInfo = &sceneInfo.textures.prefilteredCube.m_Descriptor;
-		
-				writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writeDescriptorSets[4].descriptorCount = 1;
-				writeDescriptorSets[4].dstSet = descriptorSets[i];
-				writeDescriptorSets[4].dstBinding = 4;
-				writeDescriptorSets[4].pImageInfo = &sceneInfo.textures.lutBrdf.m_Descriptor;
-		
-				vkUpdateDescriptorSets(device.device(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+				DescriptorWriter(ModelDescriptorManager::GetModelDescriptorSetLayout(), pool)
+					.writeBuffer(0, uniformBuffers[i]->getDescriptorInfo())
+					.writeBuffer(1, shaderValuesBuffer[i]->getDescriptorInfo())
+					.writeImage(2, &sceneInfo.textures.irradianceCube.m_Descriptor)
+					.writeImage(3, &sceneInfo.textures.prefilteredCube.m_Descriptor)
+					.writeImage(4, &sceneInfo.textures.lutBrdf.m_Descriptor)
+					.build(descriptorSets[i]);
 			}
 		}
 		
 		// Material (samplers)
 		{
-			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
-				{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-			};
-			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
-			descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
-			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
-			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.material);
-
 			// Per-Material descriptor sets
 			for (auto& material : materials) {
-				VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
-				descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-				descriptorSetAllocInfo.descriptorPool = descriptorPool;
-				descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayouts.material;
-				descriptorSetAllocInfo.descriptorSetCount = 1;
-				vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &material.descriptorSet);
-		
+				pool->allocateDescriptor(descriptorSetLayouts.material, material.descriptorSet);
+
 				std::vector<VkDescriptorImageInfo> imageDescriptors = {
 					sceneInfo.textures.empty.m_Descriptor,
 					sceneInfo.textures.empty.m_Descriptor,
@@ -1483,15 +1422,6 @@ namespace Nyxis
 		
 			// Model node (matrices)
 			{
-				std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
-					{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr },
-				};
-				VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
-				descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-				descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
-				descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
-				vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.node);
-		
 				// Per-Node descriptor set
 				for (auto& node : nodes) {
 					setupNodeDescriptorSet(node);
@@ -1502,11 +1432,11 @@ namespace Nyxis
 
 	void Model::setupNodeDescriptorSet(const Node* node)
 	{
-		auto descriptorPool = ModelManager::GetDescriptorPool();
-		auto descriptorSetLayout = ModelManager::GetNodeDescriptorSetLayout()->getDescriptorSetLayout();
+		auto descriptorPool = ModelDescriptorManager::GetDescriptorPool();
+		auto descriptorSetLayout = ModelDescriptorManager::GetNodeDescriptorSetLayout()->getDescriptorSetLayout();
 		if (node->mesh) {
-			ModelManager::GetDescriptorPool()->allocateDescriptor(descriptorSetLayout, node->mesh->uniformBuffer.descriptorSet);
-			DescriptorWriter (ModelManager::GetNodeDescriptorSetLayout(), ModelManager::GetDescriptorPool())
+			ModelDescriptorManager::GetDescriptorPool()->allocateDescriptor(descriptorSetLayout, node->mesh->uniformBuffer.descriptorSet);
+			DescriptorWriter (ModelDescriptorManager::GetNodeDescriptorSetLayout(), ModelDescriptorManager::GetDescriptorPool())
 				.writeBuffer(0, &node->mesh->uniformBuffer.descriptor)
 				.build(node->mesh->uniformBuffer.descriptorSet);
 		}
@@ -1521,7 +1451,7 @@ namespace Nyxis
 		uniformBuffers[index]->flush();
 	}
 
-	Ref<DescriptorPool> ModelManager::GetDescriptorPool()
+	Ref<DescriptorPool> ModelDescriptorManager::GetDescriptorPool()
 	{
 		if (m_SetupState == false)
 		{
@@ -1531,7 +1461,7 @@ namespace Nyxis
 		return m_DescriptorPool;
 	}
 
-	void ModelManager::Setup()
+	void ModelDescriptorManager::Setup()
 	{
 		m_DescriptorPool = DescriptorPool::Builder()
 			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
@@ -1540,19 +1470,19 @@ namespace Nyxis
 			.build();
 
 		m_ModelDescriptorSetLayout = DescriptorSetLayout::Builder()
-			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
-			.addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT)
-			.addBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
-			.addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
-			.addBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1)
+			.addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,VK_SHADER_STAGE_FRAGMENT_BIT, 1)
+			.addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)
+			.addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)
+			.addBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)
 			.build();
 
 		m_MaterialDescriptorSetLayout = DescriptorSetLayout::Builder()
-			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
-			.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
-			.addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
-			.addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
-			.addBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
+			.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)
+			.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)
+			.addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)
+			.addBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)
+			.addBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1)
 			.build();
 
 		m_NodeDescriptorSetLayout = DescriptorSetLayout::Builder()
@@ -1560,7 +1490,7 @@ namespace Nyxis
 			.build();
 	}
 
-	Ref<DescriptorSetLayout> ModelManager::GetModelDescriptorSetLayout()
+	Ref<DescriptorSetLayout> ModelDescriptorManager::GetModelDescriptorSetLayout()
 	{
 		if (m_SetupState == false)
 		{
@@ -1570,7 +1500,7 @@ namespace Nyxis
 		return m_ModelDescriptorSetLayout;
 	}
 
-	Ref<DescriptorSetLayout> ModelManager::GetMaterialDescriptorSetLayout()
+	Ref<DescriptorSetLayout> ModelDescriptorManager::GetMaterialDescriptorSetLayout()
 	{
 		if (m_SetupState == false)
 		{
@@ -1580,7 +1510,7 @@ namespace Nyxis
 		return m_MaterialDescriptorSetLayout;
 	}
 
-	Ref<DescriptorSetLayout> ModelManager::GetNodeDescriptorSetLayout()
+	Ref<DescriptorSetLayout> ModelDescriptorManager::GetNodeDescriptorSetLayout()
 	{
 		if (m_SetupState == false)
 		{

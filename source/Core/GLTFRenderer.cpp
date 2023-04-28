@@ -17,6 +17,8 @@ namespace Nyxis
 		sceneInfo.shaderValuesParams.scaleIBLAmbient = 1.0f;
 		sceneInfo.shaderValuesParams.debugViewInputs = 0;
 		sceneInfo.shaderValuesParams.debugViewEquation = 0;
+		g_SceneInfo = &this->sceneInfo;
+		g_UniformBufferParams = &this->uniformBuffersParams;
 
 		// Initialize depth buffer array
 		for (int i = 0; i < DEPTH_ARRAY_SCALE; i++)
@@ -79,9 +81,9 @@ namespace Nyxis
 
 		glm::vec2 mousePos = frameInfo->mousePosition;
 		UpdateBuffers();
-		vkCmdBindDescriptorSets(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[frameInfo->frameIndex].skybox, 0, nullptr);
+		vkCmdBindDescriptorSets(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &skyboxDescriptorSets[frameInfo->frameIndex], 0, nullptr);
 		vkCmdBindPipeline(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
-		models.skybox->draw(frameInfo->commandBuffer);
+		skybox->draw(frameInfo->commandBuffer);
 
 		auto modelView = scene->m_Registry.view<Model>();
 		for (auto& model : modelView)
@@ -134,7 +136,7 @@ namespace Nyxis
 
 	void GLTFRenderer::PrepareUniformBuffers()
 	{
-		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+		skyboxDescriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		skyboxBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		uniformBuffersParams.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		objectPickingBuffer.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -198,8 +200,8 @@ namespace Nyxis
 		m_EnvMapFile = "../assets/environments/sky.ktx";
 		std::string sceneFile = "../models/roboto/scene.gltf";
 
-		models.skybox = std::make_shared<Model>();
-		models.skybox->loadFromFile("../models/Box/glTF-Embedded/Box.gltf");
+		skybox = std::make_shared<Model>();
+		skybox->loadFromFile("../models/Box/glTF-Embedded/Box.gltf");
 
 		LoadEnvironment(m_EnvMapFile);
 	}
@@ -233,55 +235,6 @@ namespace Nyxis
 
 	void GLTFRenderer::SetupDescriptorSets()
 	{
-		/*
-			Descriptor sets
-		*/
-
-		// Scene (matrices and environment maps)
-		{
-			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
-				{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-			};
-			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
-			descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
-			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
-			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.scene);
-		}
-		
-		// Material (samplers)
-		{
-			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
-				{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-				{ 4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-			};
-			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
-			descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
-			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
-			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.material);
-		
-		}
-		
-		// Model node (matrices)
-		{
-			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
-				{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr },
-			};
-			VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
-			descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
-			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
-			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.node);
-		}
-
 		// Mouse Map descriptor layout
 		{
 			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
@@ -292,7 +245,7 @@ namespace Nyxis
 			descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 			descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
 			descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
-			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &descriptorSetLayouts.depthBufferLayout);
+			vkCreateDescriptorSetLayout(device.device(), &descriptorSetLayoutCI, nullptr, &depthBufferLayout);
 		}
 
 		depthBufferDescriptorSets.resize(objectPickingBuffer.size());
@@ -302,7 +255,7 @@ namespace Nyxis
 			VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
 			descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 			descriptorSetAllocInfo.descriptorPool = descriptorPool;
-			descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayouts.depthBufferLayout;
+			descriptorSetAllocInfo.pSetLayouts = &depthBufferLayout;
 			descriptorSetAllocInfo.descriptorSetCount = 1;
 			vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &depthBufferDescriptorSets[i]);
 
@@ -322,43 +275,43 @@ namespace Nyxis
 
 	void GLTFRenderer::FreeDescriptorSets()
 	{
-		for (auto descriptorSet : descriptorSets) {
-			vkFreeDescriptorSets(device.device(), descriptorPool, 1, &descriptorSet.scene);
-			vkFreeDescriptorSets(device.device(), descriptorPool, 1, &descriptorSet.skybox);
+		for (auto descriptorSet : skyboxDescriptorSets) {
+				vkFreeDescriptorSets(device.device(), descriptorPool, 1, &descriptorSet);
 		}
 	}
 
 
 	void GLTFRenderer::UpdateSkyboxDescriptorSets()
 	{
+		auto layout = ModelDescriptorManager::GetModelDescriptorSetLayout()->getDescriptorSetLayout();
 		for (auto i = 0; i < skyboxBuffers.size(); i++) {
 			VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
 			descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 			descriptorSetAllocInfo.descriptorPool = descriptorPool;
-			descriptorSetAllocInfo.pSetLayouts = &descriptorSetLayouts.scene;
+			descriptorSetAllocInfo.pSetLayouts = &layout;
 			descriptorSetAllocInfo.descriptorSetCount = 1;
-			vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &descriptorSets[i].skybox);
+			vkAllocateDescriptorSets(device.device(), &descriptorSetAllocInfo, &skyboxDescriptorSets[i]);
 
 			std::array<VkWriteDescriptorSet, 3> writeDescriptorSets{};
 
 			writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			writeDescriptorSets[0].descriptorCount = 1;
-			writeDescriptorSets[0].dstSet = descriptorSets[i].skybox;
+			writeDescriptorSets[0].dstSet = skyboxDescriptorSets[i];
 			writeDescriptorSets[0].dstBinding = 0;
 			writeDescriptorSets[0].pBufferInfo = skyboxBuffers[i]->getDescriptorInfo();
 
 			writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			writeDescriptorSets[1].descriptorCount = 1;
-			writeDescriptorSets[1].dstSet = descriptorSets[i].skybox;
+			writeDescriptorSets[1].dstSet = skyboxDescriptorSets[i];
 			writeDescriptorSets[1].dstBinding = 1;
 			writeDescriptorSets[1].pBufferInfo = uniformBuffersParams[i]->getDescriptorInfo();
 
 			writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			writeDescriptorSets[2].descriptorCount = 1;
-			writeDescriptorSets[2].dstSet = descriptorSets[i].skybox;
+			writeDescriptorSets[2].dstSet = skyboxDescriptorSets[i];
 			writeDescriptorSets[2].dstBinding = 2;
 			writeDescriptorSets[2].pImageInfo = &sceneInfo.textures.prefilteredCube.m_Descriptor;
 
@@ -533,10 +486,11 @@ namespace Nyxis
 
 		// Pipeline layout
 		std::vector<VkDescriptorSetLayout> setLayouts = {
-			descriptorSetLayouts.scene,
-			descriptorSetLayouts.material,
-			descriptorSetLayouts.node
+			ModelDescriptorManager::GetModelDescriptorSetLayout()->getDescriptorSetLayout(),
+			ModelDescriptorManager::GetMaterialDescriptorSetLayout()->getDescriptorSetLayout(),
+			ModelDescriptorManager::GetNodeDescriptorSetLayout()->getDescriptorSetLayout()
 		};
+
 		VkPipelineLayoutCreateInfo pipelineLayoutCI{};
 		pipelineLayoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutCI.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
@@ -600,7 +554,7 @@ namespace Nyxis
 		}
 
 		// PBR pipeline
-		setLayouts.push_back(descriptorSetLayouts.depthBufferLayout);
+		setLayouts.push_back(depthBufferLayout);
 		pipelineLayoutCI.pSetLayouts = setLayouts.data();
 		pipelineLayoutCI.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
 		vkCreatePipelineLayout(device.device(), &pipelineLayoutCI, nullptr, &pipelineLayout);
@@ -1345,7 +1299,7 @@ namespace Nyxis
 
 					VkDeviceSize offsets[1] = { 0 };
 
-					models.skybox->draw(cmdBuf);
+					skybox->draw(cmdBuf);
 
 					vkCmdEndRenderPass(cmdBuf);
 

@@ -1,6 +1,9 @@
 #include "NyxisUI/ComponentViewPanel.hpp"
 #include "EditorLayer.hpp"
 #include "Core/Application.hpp"
+#include "Core/GLTFRenderer.hpp"
+#include "Core/SwapChain.hpp"
+#include "Graphics/GLTFModel.hpp"
 #include "Scene/Components.hpp"
 
 namespace Nyxis
@@ -46,7 +49,7 @@ namespace Nyxis
 					auto& collider = scene->GetComponent<Collider>(selectedEntity);
 
 					ImGui::Text("Collider");
-					auto preview = Nyxis::collider_name[collider.type];
+					auto preview = collider_name[collider.type];
 
 					if (ImGui::BeginCombo("Collider Type", preview.c_str(), ImGuiComboFlags_NoArrowButton))
 					{

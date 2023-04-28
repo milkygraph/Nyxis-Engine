@@ -2,25 +2,20 @@
 #include "Core/Nyxis.hpp"
 #include "Core/Nyxispch.hpp"
 #include "Core/Application.hpp"
-#include "Core/FrameInfo.hpp"
 #include "Core/Pipeline.hpp"
 #include "Scene/Scene.hpp"
 #include "Graphics/GLTFModel.hpp"
 
-#define DEPTH_ARRAY_SCALE 32 // will be used fir object picking buffer
+constexpr auto DEPTH_ARRAY_SCALE = 32; // will be used fir object picking buffer;
 
 namespace Nyxis
 {
+	inline SceneInfo* g_SceneInfo;
+	inline std::vector<Ref<Buffer>>* g_UniformBufferParams;
 	class GLTFRenderer
 	{
 	public:
-		SceneInfo sceneInfo;
-
-		struct Models
-		{
-			Ref<Model> scene;
-			Ref<Model> skybox;
-		} models;
+		SceneInfo sceneInfo{};
 
 		PushConstBlockMaterial pushConstBlockMaterial;
 
@@ -52,7 +47,6 @@ namespace Nyxis
 	private:
 		void PrepareUniformBuffers();
 		void UpdateBuffers();
-		void SetScene() { this->scene = Application::GetScene(); }
 		void LoadAssets();
 		void GenerateBRDFLUT();
 		void GenerateCubemaps();
@@ -63,7 +57,6 @@ namespace Nyxis
 		void RenderNode(Node* node, Material::AlphaMode alphaMode, Model& model);
 
 		Device& device = Device::Get();
-		Ref<Scene> scene;
 
 		enum PBRWorkflows { PBR_WORKFLOW_METALLIC_ROUGHNESS = 0, PBR_WORKFLOW_SPECULAR_GLOSINESS = 1 };
 
@@ -81,21 +74,9 @@ namespace Nyxis
 
 		VkDescriptorPool descriptorPool;
 
-		struct DescriptorSetLayouts
-		{
-			VkDescriptorSetLayout scene;
-			VkDescriptorSetLayout material;
-			VkDescriptorSetLayout node;
-			VkDescriptorSetLayout depthBufferLayout;
-		} descriptorSetLayouts;
+		VkDescriptorSetLayout depthBufferLayout;
 
-		struct DescriptorSets
-		{
-			VkDescriptorSet scene;
-			VkDescriptorSet skybox;
-		};
-
-		std::vector<DescriptorSets> descriptorSets;
+		std::vector<VkDescriptorSet> skyboxDescriptorSets;
 		std::vector<VkDescriptorSet> depthBufferDescriptorSets;
 
 		struct LightSource {
@@ -103,7 +84,6 @@ namespace Nyxis
 			glm::vec3 rotation = glm::vec3(75.0f, 40.0f, 0.0f);
 		} lightSource;
 
-		int m_ClickIndex = 0;
-		bool m_PreviousClick = false;
+		Ref<Model> skybox;
 	};
 }
