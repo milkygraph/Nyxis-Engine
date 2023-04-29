@@ -12,8 +12,8 @@ namespace Nyxis
     class CameraController
     {
     public:
-	    void processMouseMovement(float dt, RigidBody& rigidBody);
-        void moveInPlaneXZ(float dt, RigidBody& rigidBody);
+	    void processMouseMovement(float dt, TransformComponent& transform);
+        void moveInPlaneXZ(float dt, TransformComponent& transform);
 		void setCameraType(CameraType type) { cameraType = type; }
 		CameraType getCameraType() { return cameraType; }
 		float moveSpeed{10.f};

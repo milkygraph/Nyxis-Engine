@@ -168,8 +168,8 @@ namespace Nyxis
 			auto projection = camera->getProjectionMatrix();
 			projection[1][1] *= -1.0f;
 
-			auto& rigidBodyEntity = scene->GetComponent<RigidBody>(selected_entity);
-			auto modelMatrix = rigidBodyEntity.mat4(true);
+			auto& transform = scene->GetComponent<TransformComponent>(selected_entity);
+			auto modelMatrix = transform.mat4(true);
 
 			if (m_DrawGizmos)
 			{
@@ -183,10 +183,10 @@ namespace Nyxis
 				glm::vec3 translation, rotation, scale;
 				DecomposeTransform(glm::mat4(modelMatrix), translation, rotation, scale);
 
-				glm::vec3 deltaRotation = rotation - rigidBodyEntity.rotation;
-				rigidBodyEntity.translation = translation;
-				rigidBodyEntity.rotation += deltaRotation;
-				rigidBodyEntity.scale = scale;
+				glm::vec3 deltaRotation = rotation - transform.rotation;
+				transform.translation = translation;
+				transform.rotation += deltaRotation;
+				transform.scale = scale;
 				mousePos = { -1, -1 };
 			}
 		}

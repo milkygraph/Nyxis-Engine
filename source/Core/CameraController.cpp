@@ -2,26 +2,26 @@
 
 namespace Nyxis
 {
-	void CameraController::processMouseMovement(float dt, RigidBody& rigidBody)
+	void CameraController::processMouseMovement(float dt, TransformComponent& transform)
 	{
 		glm::vec2 mousePosition = Input::getMousePosition();
 		glm::vec2 mouseDelta = (mousePosition - lastMousePosition) * rotationSpeed;
 		lastMousePosition = mousePosition;
 
-		rigidBody.rotation.y += mouseDelta.x;
-		rigidBody.rotation.x += -mouseDelta.y;
+		transform.rotation.y += mouseDelta.x;
+		transform.rotation.x += -mouseDelta.y;
 
-		rigidBody.rotation.x = glm::clamp(rigidBody.rotation.x, -glm::half_pi<float>(), glm::half_pi<float>());
-		rigidBody.rotation.y = glm::mod(rigidBody.rotation.y, glm::two_pi<float>());
+		transform.rotation.x = glm::clamp(transform.rotation.x, -glm::half_pi<float>(), glm::half_pi<float>());
+		transform.rotation.y = glm::mod(transform.rotation.y, glm::two_pi<float>());
 
-        float yaw = rigidBody.rotation.y;
+        float yaw = transform.rotation.y;
         ForwardDir = {sin(yaw), 0.f, cos(yaw)};
         RightDir = {ForwardDir.z, 0.f, -ForwardDir.x};
         UpDir = {0.f, -1.f, 0.f};
 
-        moveInPlaneXZ(dt, rigidBody);
+        moveInPlaneXZ(dt, transform);
 	}
-    void CameraController::moveInPlaneXZ(float dt, RigidBody& rigidBody)
+    void CameraController::moveInPlaneXZ(float dt, TransformComponent& transform)
     {
 		glm::vec3 moveDir{ 0.f };
 		if(cameraType == CameraType::Perspective)
@@ -53,7 +53,7 @@ namespace Nyxis
 
 	    if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon())
 	    {
-		    rigidBody.translation += moveSpeed * dt * glm::normalize(moveDir);
+		    transform.translation += moveSpeed * dt * glm::normalize(moveDir);
 	    }
     }
 }

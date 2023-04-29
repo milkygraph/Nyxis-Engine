@@ -11,8 +11,7 @@ namespace Nyxis
     {
         m_CameraEntity = createEntity("Camera");
         auto& transform = addComponent<TransformComponent>(m_CameraEntity, glm::vec3{ 0, 0, -14 });
-        auto& rigidBody = addComponent<RigidBody>(m_CameraEntity);
-        m_Camera = new Camera(rigidBody);
+        m_Camera = new Camera(transform);
         m_Camera->getCameraController().setCameraType(CameraType::Perspective);
     }
 
@@ -66,10 +65,12 @@ namespace Nyxis
         }
 
     	if (m_Camera->getType() == CameraType::Perspective)
+    	{
             if (aspect > 0)
                 m_Camera->setPerspectiveProjection(glm::radians(60.0f), aspect, 0.1f, 1000.0f);
-            else
-                m_Camera->setOrthographicProjection(-aspect, aspect, -1.0f, 1.0f, 0.1f, 1000.0f);
+    	}
+        else
+            m_Camera->setOrthographicProjection(-aspect, aspect, -1.0f, 1.0f, 0.1f, 1000.0f);
 
 
         if (!Input::isMouseButtonPressed(MouseCodes::MouseButtonRight))
@@ -82,9 +83,9 @@ namespace Nyxis
         if(m_CameraControl)
 			m_Camera->OnUpdate(dt);
 
-    	GetComponentView<Player, RigidBody>().each([&](auto entity, auto &player, auto &rigidBody)
+    	GetComponentView<Player, TransformComponent>().each([&](auto entity, auto &player, auto &transform)
         {
-	        player.OnUpdate(dt, rigidBody);
+	        player.OnUpdate(dt, transform);
         });
 
         if(!m_DeletionQueue.empty())
@@ -92,12 +93,11 @@ namespace Nyxis
             vkDeviceWaitIdle(device.device());
             for(int i = 0; i < m_DeletionQueue.size(); i++)
             {
-                auto entity = m_DeletionQueue.front();
+	            const auto entity = m_DeletionQueue.front();
                 m_DeletionQueue.pop();
                 m_Registry.destroy(entity);
                 m_EntityCount--;
             }
-
         }
     }
 
@@ -113,95 +113,9 @@ namespace Nyxis
 
     void Scene::SaveScene(const std::string &filename)
     {
-        std::ofstream file(filename);
-
-        nlohmann::json j;
-
-        // for each entity add all components to json
-        m_Registry.each([&](auto entity)
-                        {
-                            nlohmann::json entity_json;
-                            if (m_Registry.all_of<TagComponent>(entity))
-                            {
-                                auto &tag = m_Registry.get<TagComponent>(entity);
-                                tag.ToJson(entity_json);
-                            }
-
-                            if (m_Registry.all_of<TransformComponent>(entity))
-                            {
-                                auto &transform = m_Registry.get<TransformComponent>(entity);
-                                transform.ToJson(entity_json);
-                            }
-
-                            if (m_Registry.all_of<MeshComponent>(entity))
-                            {
-                                auto &mesh = m_Registry.get<MeshComponent>(entity);
-                                mesh.ToJson(entity_json);
-                            }
-
-                            if (m_Registry.all_of<Player>(entity))
-                            {
-                                auto &player = m_Registry.get<Player>(entity);
-                                player.ToJson(entity_json);
-                            }
-
-                            j["entities"].push_back(entity_json);
-                        });
-
-        file << j.dump(4);
-        file.close();
-        LOG_INFO("Scene saved to file: {}", SceneName);
     }
 
     void Scene::LoadScene(const std::string &filename)
     {
-        // ClearScene();
-        // veModel::ReleaseModels();
-        std::ifstream file(filename);
-        nlohmann::json j;
-        file >> j;
-
-        for (auto &entity : j["entities"])
-        {
-            auto entity1 = m_Registry.create();
-            m_EntityCount++;
-            if (entity.contains("Tag"))
-            {
-                std::string Tag = entity["Tag"];
-                m_Registry.emplace<TagComponent>(entity1, Tag);
-            }
-
-            if (entity.contains("Transform"))
-            {
-                TransformComponent transform{};
-
-                transform.translation.x = entity["Transform"][0][0];
-                transform.translation.y = entity["Transform"][0][1];
-                transform.translation.z = entity["Transform"][0][2];
-
-                transform.rotation.x = entity["Transform"][1][0];
-                transform.rotation.y = entity["Transform"][1][1];
-                transform.rotation.z = entity["Transform"][1][2];
-
-                transform.scale.x = entity["Transform"][2][0];
-                transform.scale.y = entity["Transform"][2][1];
-                transform.scale.z = entity["Transform"][2][2];
-
-                transform.roughness = entity["Transform"][3][0];
-                m_Registry.emplace<TransformComponent>(entity1, transform.translation, transform.rotation, transform.scale, transform.roughness);
-            }
-            if (entity.contains("MeshComponent"))
-            {
-                std::string filepath = entity["MeshComponent"]["filepath"];
-                m_Registry.emplace<MeshComponent>(entity1, filepath);
-            }
-            if (entity.contains("Player"))
-            {
-                m_Registry.emplace<Player>(entity1, Player{});
-            }
-        }
-
-        file.close();
-        LOG_INFO("Scene {} loaded", SceneName);
     }
 } // namespace Nyxis

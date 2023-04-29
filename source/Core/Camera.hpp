@@ -2,14 +2,12 @@
 #include "Core/Nyxispch.hpp"
 #include "Core/CameraController.hpp"
 
-
 namespace Nyxis
-
 {
     class Camera
     {
     public:
-		Camera(RigidBody& rigidBody) : cameraRigidBody(rigidBody) {}
+		Camera(TransformComponent& transform) : cameraTransform(transform) {}
 
 		void OnUpdate(float dt);
         CameraType getType() { return cameraController.getCameraType(); }
@@ -26,7 +24,7 @@ namespace Nyxis
 
         CameraController& getCameraController() { return cameraController; }
     private:
-		RigidBody& cameraRigidBody;
+		TransformComponent& cameraTransform;
 		CameraController cameraController;
         glm::mat4 projectionMatrix{1.0f};
         glm::mat4 viewMatrix{1.0f};

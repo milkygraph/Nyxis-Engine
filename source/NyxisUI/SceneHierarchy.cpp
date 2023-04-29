@@ -1,5 +1,6 @@
 #include "NyxisUI/SceneHierarchy.hpp"
 #include "Core/Application.hpp"
+#include "Graphics/GLTFModel.hpp"
 
 namespace Nyxis
 {
@@ -28,13 +29,14 @@ namespace Nyxis
 		ImGui::End();
 	}
 
-	void SceneHierarchyPanel::DrawEntityNode(Entity entity) const
+	void SceneHierarchyPanel::DrawEntityNode(Entity entity) 
 	{
 		const auto scene = Application::GetScene();
 		const auto& tag = scene->GetComponent<TagComponent>(entity).Tag;
 		const auto selectedEntity = EditorLayer::GetSelectedEntity();
 
-		ImGuiTreeNodeFlags flags = ((selectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
+		ImGuiTreeNodeFlags flags = ((selectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | 
+			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
 		bool expanded = ImGui::TreeNodeEx(reinterpret_cast<void*>(static_cast<uint64_t>(static_cast<uint32_t>(entity))), flags, "%s", tag.c_str());
 
@@ -49,6 +51,7 @@ namespace Nyxis
 			if (ImGui::MenuItem("Delete Entity"))
 			{
 				scene->destroyEntity(entity);
+				EditorLayer::DeselectEntity();
 			}
 			// add component tree with all components that can be added to entity
 			if (ImGui::BeginMenu("Add Component"))
@@ -57,18 +60,10 @@ namespace Nyxis
 					if (!scene->m_Registry.all_of<RigidBody>(entity))
 						scene->addComponent<RigidBody>(entity);
 
-				if (ImGui::MenuItem("Mesh"))
-					if (!scene->m_Registry.all_of<MeshComponent>(entity))
-						scene->addComponent<MeshComponent>(entity, "../models/sphere.obj");
-
 				if (ImGui::MenuItem("Collider"))
 					if (!scene->m_Registry.all_of<Collider>(entity))
 						scene->addComponent<Collider>(entity, ColliderType::Sphere, glm::vec3{ 0.2, 0.2, 0.2 },
 							0.05);
-
-				if (ImGui::MenuItem("Gravity"))
-					if (!scene->m_Registry.all_of<Gravity>(entity))
-						scene->addComponent<Gravity>(entity);
 
 				ImGui::EndMenu();
 			}
@@ -79,17 +74,9 @@ namespace Nyxis
 					if (ImGui::MenuItem("RigidBody"))
 						scene->m_Registry.remove<RigidBody>(entity);
 
-				if (scene->m_Registry.all_of<MeshComponent>(entity))
-					if (ImGui::MenuItem("Mesh"))
-						scene->m_Registry.remove<MeshComponent>(entity);
-
 				if (scene->m_Registry.all_of<Collider>(entity))
 					if (ImGui::MenuItem("Collider"))
 						scene->m_Registry.remove<Collider>(entity);
-
-				if (scene->m_Registry.all_of<Gravity>(entity))
-					if (ImGui::MenuItem("Gravity"))
-						scene->m_Registry.remove<Gravity>(entity);
 
 				ImGui::EndMenu();
 			}
@@ -99,6 +86,26 @@ namespace Nyxis
 
 		if (expanded)
 		{
+			if (scene->m_Registry.all_of<Model>(entity))
+			{
+				auto& model = scene->GetComponent<Model>(entity);
+				for (auto& node : model.nodes)
+				{
+					DrawNode(node);
+				}
+			}
+			ImGui::TreePop();
+		}
+	}
+
+	void SceneHierarchyPanel::DrawNode(Node* node)
+	{
+		ImGuiTreeNodeFlags flags = ((m_SelectedNode == node) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+		if (ImGui::TreeNodeEx(node->name.c_str(), flags))
+		{
+			m_SelectedNode = node;
+			for (auto* child : node->children)
+				DrawNode(child);
 			ImGui::TreePop();
 		}
 	}

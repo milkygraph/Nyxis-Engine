@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Nyxispch.hpp"
-#include "Core/FrameInfo.hpp"
 #include "Core/Descriptors.hpp"
 #include "Core/Layer.hpp"
 #include "Scene/Scene.hpp"
@@ -31,6 +30,7 @@ namespace Nyxis
         static void SetSelectedEntity(Entity entity);
         static void DeselectEntity();
         static Entity GetSelectedEntity() { return m_SelectedEntity; }
+        static Node* GetSelectedNode() { return m_SelectedNode; }
 
     	VkExtent2D GetViewportExtent() const { return m_Viewport.GetExtent(); }
     private:
@@ -43,8 +43,7 @@ namespace Nyxis
         ComponentViewPanel m_ComponentView;
 
 		static inline Entity m_SelectedEntity = entt::null;
+        static inline Node* m_SelectedNode = nullptr;
         static inline std::vector<std::function<void()>> functions;
-
-    	bool m_ShowEntityComponents = false;
     };
 }

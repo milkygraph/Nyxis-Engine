@@ -37,11 +37,7 @@ namespace Nyxis
 
     void Application::Run()
 	{
-
-        std::thread animationThread;
-        bool animationThreadActive = true;
-
-        // create systems
+        // create rendering systems
         GLTFRenderer gltfRenderer{ Renderer::GetSwapChainRenderPass() };
 
         // add functions to editor layer
@@ -58,12 +54,6 @@ namespace Nyxis
                 ImGui::Checkbox("Enable Physics", &m_PhysicsEngine.enable);
                 ImGui::DragFloat2("BoxEdges", &m_PhysicsEngine.edges.x);
                 ImGui::DragFloat("Gravity", &m_PhysicsEngine.gravity, 0.1, -1.0f, 1.0f);
-                ImGui::End();
-                });
-
-            EditorLayer::AddFunction([&]() {
-                ImGui::Begin("Physics");
-                ImGui::Checkbox("Enable Animations", &animationThreadActive);
                 ImGui::End();
                 });
 
@@ -95,11 +85,12 @@ namespace Nyxis
     	auto currentTime = std::chrono::high_resolution_clock::now();
 
 #if 1
-        for(int i = 0; i < 2; i++)
+        for(int i = 0; i < 1; i++)
         {
 			auto model = m_Scene->createEntity("Model");
-            m_Scene->addComponent<Model>(model, "../models/microphone/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
+            m_Scene->addComponent<Model>(model, "../models/roboto/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
             m_Scene->addComponent<RigidBody>(model);
+            m_Scene->addComponent<TransformComponent>(model);
         }
 #endif
 
@@ -135,18 +126,7 @@ namespace Nyxis
             m_Scene->OnUpdate(m_FrameInfo->frameTime, aspect);
 
     		gltfRenderer.OnUpdate();
-            if (animationThreadActive) {
-                animationThread = std::thread([&]{
-					gltfRenderer.UpdateAnimation(m_FrameInfo->frameTime);
-                    });
-                animationThread.detach();
-            }
     	}
-
-        animationThreadActive = false;
-        if (animationThread.joinable()) {
-            animationThread.join();
-        }
 
     	vkDeviceWaitIdle(m_Device.device());
     }

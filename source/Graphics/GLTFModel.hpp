@@ -286,7 +286,7 @@ namespace Nyxis
 		void updateAnimation(float deltaTime);
 		Node* findNode(Node* parent, uint32_t index);
 		Node* nodeFromIndex(uint32_t index);
-		void updateModelMatrix(RigidBody& rigidBody);
+		void updateModelMatrix(TransformComponent& transform);
 		void setupDescriptorSet(SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValuesBuffer);
 		void setupNodeDescriptorSet(const Node* node);
 		void updateUniformBuffer(uint32_t index, UBOMatrix* ubo);

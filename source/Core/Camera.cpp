@@ -5,9 +5,9 @@ namespace Nyxis
 {
 	void Camera::OnUpdate(float dt)
 	{
-		cameraController.processMouseMovement(dt, cameraRigidBody);
+		cameraController.processMouseMovement(dt, cameraTransform);
 //		cameraController.moveInPlaneXZ(dt, cameraObject);
-		setViewYXZ(cameraRigidBody.translation, cameraRigidBody.rotation);
+		setViewYXZ(cameraTransform.translation, cameraTransform.rotation);
 	}
 
 	void Camera::setOrthographicProjection(

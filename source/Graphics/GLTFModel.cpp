@@ -1277,20 +1277,20 @@ namespace Nyxis
 		return nodeFound;
 	}
 
-	void Model::updateModelMatrix(RigidBody& rigidBody)
+	void Model::updateModelMatrix(TransformComponent& transform)
 	{
 		modelMatrix = glm::mat4(1.0f);
-		modelMatrix = glm::translate(modelMatrix, rigidBody.translation);
-		modelMatrix = glm::scale(modelMatrix, rigidBody.scale);
+		modelMatrix = glm::translate(modelMatrix, transform.translation);
+		modelMatrix = glm::scale(modelMatrix, transform.scale);
 
 		// Check if all rotation angles are zero
-		if (glm::all(glm::equal(rigidBody.rotation, glm::vec3(0.0f))))
+		if (glm::all(glm::equal(transform.rotation, glm::vec3(0.0f))))
 			return;
 
-		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+		modelMatrix = glm::rotate(modelMatrix, glm::radians(transform.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 // Descriptor set layout bindings
-		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-		modelMatrix = glm::rotate(modelMatrix, glm::radians(rigidBody.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+		modelMatrix = glm::rotate(modelMatrix, glm::radians(transform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		modelMatrix = glm::rotate(modelMatrix, glm::radians(transform.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 
 	void Model::setupDescriptorSet(SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValuesBuffer)

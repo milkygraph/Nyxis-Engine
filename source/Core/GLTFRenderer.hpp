@@ -1,9 +1,6 @@
 #pragma once
 #include "Core/Nyxis.hpp"
 #include "Core/Nyxispch.hpp"
-#include "Core/Application.hpp"
-#include "Core/Pipeline.hpp"
-#include "Scene/Scene.hpp"
 #include "Graphics/GLTFModel.hpp"
 
 constexpr auto DEPTH_ARRAY_SCALE = 32; // will be used fir object picking buffer;
@@ -32,7 +29,7 @@ namespace Nyxis
 
 		std::string m_EnvMapFile = "";
 		bool m_SceneUpdated = false;
-		bool m_Animate = false;
+		bool m_Animate = true;
 
 		std::vector<Ref<Buffer>> skyboxBuffers;
 		std::vector<Ref<Buffer>> uniformBuffersParams;
@@ -42,7 +39,7 @@ namespace Nyxis
 		{
 			uint32_t depthBufferObject[DEPTH_ARRAY_SCALE];
 			uint32_t selectedEntity = 0;
-		} objectPicking;
+		} objectPicking{};
 
 	private:
 		void PrepareUniformBuffers();
@@ -85,5 +82,6 @@ namespace Nyxis
 		} lightSource;
 
 		Ref<Model> skybox;
+		std::thread animationThread;
 	};
 }

@@ -34,7 +34,8 @@ namespace Nyxis
 
 	GLTFRenderer::~GLTFRenderer()
 	{
-
+		if(animationThread.joinable())
+			animationThread.join();
 	}
 
 	void GLTFRenderer::OnUpdate()
@@ -72,6 +73,14 @@ namespace Nyxis
 
 			m_SceneUpdated = false;
 		}
+
+        if (m_Animate) {
+            animationThread = std::thread([&]{
+				UpdateAnimation(Application::GetFrameInfo()->frameTime);
+                });
+            animationThread.detach();
+        }
+
 	}
 
 	void GLTFRenderer::Render()
@@ -89,9 +98,9 @@ namespace Nyxis
 		for (auto& model : modelView)
 		{
 			auto& gltfModel = scene->GetComponent<Model>(model);
-			auto& rigidBody = scene->GetComponent<RigidBody>(model);
+			auto& transform = scene->GetComponent<TransformComponent>(model);
 
-			shaderValuesScene.model = rigidBody.mat4();
+			shaderValuesScene.model = transform.mat4();
 			shaderValuesScene.mousePosX = mousePos.x;
 			shaderValuesScene.mousePosY = mousePos.y;
 			shaderValuesScene.entityID = static_cast<int>(model);
@@ -156,12 +165,12 @@ namespace Nyxis
 		shaderValuesScene.projection = scene->m_Camera->getProjectionMatrix();
 		shaderValuesScene.view = scene->m_Camera->getViewMatrix();
 
-		auto& rigidBody = scene->m_Registry.get<RigidBody>(scene->m_CameraEntity);
+		auto& transform = scene->m_Registry.get<TransformComponent>(scene->m_CameraEntity);
 		
 		shaderValuesScene.camPos = glm::vec3(
-			-rigidBody.translation.z * sin(glm::radians(rigidBody.translation.y)) * cos(glm::radians(rigidBody.translation.x)),
-			-rigidBody.translation.z * sin(glm::radians(rigidBody.translation.x)),
-			rigidBody.translation.z * cos(glm::radians(rigidBody.translation.y)) * cos(glm::radians(rigidBody.translation.x))
+			-transform.translation.z * sin(glm::radians(transform.translation.y)) * cos(glm::radians(transform.translation.x)),
+			-transform.translation.z * sin(glm::radians(transform.translation.x)),
+			transform.translation.z * cos(glm::radians(transform.translation.y)) * cos(glm::radians(transform.translation.x))
 		);
 
 		// Skybox

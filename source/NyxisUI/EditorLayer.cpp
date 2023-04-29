@@ -1,7 +1,5 @@
 #include "NyxisUI/EditorLayer.hpp"
 #include "Core/Application.hpp"
-#include "Core/SwapChain.hpp"
-#include "Events/MouseEvents.hpp"
 
 namespace Nyxis
 {
@@ -258,6 +256,7 @@ namespace Nyxis
 	void EditorLayer::SetSelectedEntity(Entity entity)
 	{
 		m_SelectedEntity = entity;
+		m_SelectedNode = nullptr;
 	}
 
 	void EditorLayer::DeselectEntity()

@@ -71,14 +71,14 @@ namespace Nyxis
                                 0, 1,
                                 &frameInfo.globalDescriptorSet, 0, nullptr);
 
-        Application::GetScene()->m_Registry.view<RigidBody, MeshComponent>().each([&](auto entity, auto& rigidBody, auto& mesh)
+        Application::GetScene()->m_Registry.view<RigidBody, TransformComponent, MeshComponent>().each([&](auto entity, auto& rigidBody, auto& transform, auto& mesh)
 		{
 			auto& model = *mesh.model;
 			if(model.loaded)
 			{
 				SimplePushConstantData push{};
-				push.modelMatrix = rigidBody.mat4 ();
-				push.normalMatrix = rigidBody.normalMatrix ();
+				push.modelMatrix = transform.mat4 ();
+				push.normalMatrix = transform.normalMatrix ();
 				push.roughness = rigidBody.roughness;
 				vkCmdPushConstants (
 					frameInfo.commandBuffer,

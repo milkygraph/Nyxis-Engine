@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Camera.hpp"
 #include "Core/Nyxispch.hpp"
-#include "Scene/Components.hpp"
 
 #define LOAD_STATE_NONE 0
 #define LOAD_STATE_STARTED 1

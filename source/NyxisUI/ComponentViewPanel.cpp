@@ -1,9 +1,6 @@
 #include "NyxisUI/ComponentViewPanel.hpp"
 #include "EditorLayer.hpp"
 #include "Core/Application.hpp"
-#include "Core/GLTFRenderer.hpp"
-#include "Core/SwapChain.hpp"
-#include "Graphics/GLTFModel.hpp"
 #include "Scene/Components.hpp"
 
 namespace Nyxis
@@ -30,16 +27,17 @@ namespace Nyxis
 
 			if (scene->m_Registry.all_of<RigidBody>(selectedEntity))
 			{
-				auto& rigidBody = scene->GetComponent<RigidBody>(
-					selectedEntity); // TODO! Fix load scene bug
-				ImGui::Text("Rigid Body");
-				ImGui::DragFloat3("Position", &rigidBody.translation.x, 0.1f, 0, 0, "%.1f");
-				glm::vec3 rotationDeg = glm::degrees(rigidBody.rotation);
-				ImGui::DragFloat3("Rotation", &rotationDeg.x, 0.1f, 0, 0, "%.1f");
-				rigidBody.rotation = glm::radians(rotationDeg);
-				ImGui::DragFloat3("Scale", &rigidBody.scale.x, 0.1f, 0, 0, "%.2f");
+				auto& rigidBody = scene->GetComponent<RigidBody>(selectedEntity); // TODO: Fix load scene bug
+				auto& transform = scene->GetComponent<TransformComponent>(selectedEntity);
 
-				ImGui::DragFloat3("Velocity", &rigidBody.velocity.x, 0.1f);
+				ImGui::Text("Rigid Body");
+				ImGui::DragFloat3("Position", &transform.translation.x, 0.1f, 0, 0, "%.1f");
+				glm::vec3 rotationDeg = glm::degrees(transform.rotation);
+				ImGui::DragFloat3("Rotation", &rotationDeg.x, 0.1f, 0, 0, "%.1f");
+				transform.rotation = glm::radians(rotationDeg);
+				ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f, 0, 0, "%.2f");
+
+				ImGui::DragFloat3("Velocity", &transform.velocity.x, 0.1f);
 				ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0.0f, 1.0f);
 
 				ImGui::DragFloat("Roughness", &rigidBody.roughness, 0.1f);
