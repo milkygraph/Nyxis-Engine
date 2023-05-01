@@ -27,17 +27,17 @@ namespace Nyxis
 		if(cameraType == CameraType::Perspective)
 		{
 			if (Input::isKeyPressed(KeyCodes::W))
-				moveDir += ForwardDir;
-			if (Input::isKeyPressed(KeyCodes::S))
 				moveDir -= ForwardDir;
+			if (Input::isKeyPressed(KeyCodes::S))
+				moveDir += ForwardDir;
 			if (Input::isKeyPressed(KeyCodes::D))
-				moveDir += RightDir;
-			if (Input::isKeyPressed(KeyCodes::A))
 				moveDir -= RightDir;
+			if (Input::isKeyPressed(KeyCodes::A))
+				moveDir += RightDir;
 			if (Input::isKeyPressed(KeyCodes::E))
-				moveDir += UpDir;
-			if (Input::isKeyPressed(KeyCodes::Q))
 				moveDir -= UpDir;
+			if (Input::isKeyPressed(KeyCodes::Q))
+				moveDir += UpDir;
 		}
 		else
 		{

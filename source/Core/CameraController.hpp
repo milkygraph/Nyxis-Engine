@@ -23,7 +23,7 @@ namespace Nyxis
         glm::vec3 RightDir = {1.f, 0.f, 0.f};
         glm::vec3 UpDir = {0.f, 1.f, 0.f};
 
-		CameraType cameraType = CameraType::Orthographic;
+		CameraType cameraType = CameraType::Perspective;
         glm::vec2 lastMousePosition{0.f};
         float lookSpeed{1.5f};
 		float rotationSpeed = 0.002f;
