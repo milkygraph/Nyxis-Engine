@@ -21,7 +21,6 @@ namespace Nyxis
         {
 			projection = camera->getProjectionMatrix();
 			view = camera->getViewMatrix();
-			inverseViewMatrix = camera->getInverseViewMatrix();
         }
     };
 

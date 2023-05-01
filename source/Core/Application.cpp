@@ -44,7 +44,7 @@ namespace Nyxis
         {
  			EditorLayer::AddFunction([&]() {
                 ImGui::Begin("Statistics");
-                ImGui::Text("Entity Count: %d", m_Scene->getEntityCount());
+                ImGui::Text("Entity Count: %d", m_Scene->GetEntityCount());
                 ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
                 ImGui::End();
                 });
@@ -87,10 +87,8 @@ namespace Nyxis
 #if 1
         for(int i = 0; i < 1; i++)
         {
-			auto model = m_Scene->createEntity("Model");
-            m_Scene->addComponent<Model>(model, "../models/roboto/scene.gltf", gltfRenderer.sceneInfo, gltfRenderer.uniformBuffersParams);
-            m_Scene->addComponent<RigidBody>(model);
-            m_Scene->addComponent<TransformComponent>(model);
+			auto model = m_Scene->CreateEntity("Model");
+            m_Scene->AddComponent<RigidBody>(model);
         }
 #endif
 

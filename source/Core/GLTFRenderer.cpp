@@ -98,6 +98,8 @@ namespace Nyxis
 		for (auto& model : modelView)
 		{
 			auto& gltfModel = scene->GetComponent<Model>(model);
+			if (!gltfModel.ready)
+				continue;
 			auto& transform = scene->GetComponent<TransformComponent>(model);
 
 			shaderValuesScene.model = transform.mat4();
@@ -444,7 +446,7 @@ namespace Nyxis
 		rasterizationStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rasterizationStateCI.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizationStateCI.cullMode = VK_CULL_MODE_BACK_BIT;
-		rasterizationStateCI.frontFace = VK_FRONT_FACE_CLOCKWISE;
+		rasterizationStateCI.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		rasterizationStateCI.lineWidth = 1.0f;
 
 		VkPipelineColorBlendAttachmentState blendAttachmentState{};
@@ -583,7 +585,6 @@ namespace Nyxis
 		};
 		depthStencilStateCI.depthWriteEnable = VK_TRUE;
 		depthStencilStateCI.depthTestEnable = VK_TRUE;
-		rasterizationStateCI.cullMode = VK_CULL_MODE_BACK_BIT;
 		vkCreateGraphicsPipelines(device.device(), pipelineCache, 1, &pipelineCI, nullptr, &pipelines.pbr);
 		vkCreateGraphicsPipelines(device.device(), pipelineCache, 1, &pipelineCI, nullptr, &pipelines.pbrDoubleSided);
 

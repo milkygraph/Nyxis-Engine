@@ -1108,6 +1108,7 @@ namespace Nyxis
 		delete[] loaderInfo.indexBuffer;
 
 		getSceneDimensions();
+		ready = true;
 	}
 
 	void Model::drawNode(Node* node, VkCommandBuffer commandBuffer)

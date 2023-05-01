@@ -1,17 +1,16 @@
 #include "Scene/Scene.hpp"
 #include "Events/MouseEvents.hpp"
-#include "Utils/ThreadPool.hpp"
-#include "Utils/Utils.hpp"
-
-#include <json/json.hpp>
+#include "Utils/Path.hpp"
+#include "Core/GLTFRenderer.hpp"
 
 namespace Nyxis
 {
-    Scene::Scene()
+	struct Model;
+
+	Scene::Scene()
     {
-        m_CameraEntity = createEntity("Camera");
-        auto& transform = addComponent<TransformComponent>(m_CameraEntity, glm::vec3{ 0, 0, -14 });
-        m_Camera = new Camera(transform);
+        m_CameraEntity = CreateEntity("Camera");
+        m_Camera = new Camera(m_Registry.get<TransformComponent>(m_CameraEntity));
         m_Camera->getCameraController().setCameraType(CameraType::Perspective);
     }
 
@@ -20,17 +19,18 @@ namespace Nyxis
         m_Registry.clear();
     }
 
-    Entity Scene::createEntity(const std::string &name)
+    Entity Scene::CreateEntity(const std::string &name)
     {
         auto entity = m_Registry.create();
         m_Registry.emplace<TagComponent>(entity, name);
+        m_Registry.emplace<TransformComponent>(entity);
         m_EntityCount++;
         return entity;
     }
 
-    void Scene::destroyEntity(Entity entity)
+    void Scene::DestroyEntity(Entity entity)
     {
-        m_DeletionQueue.emplace(entity);
+        m_EntityDeletionQueue.emplace(entity);
     }
     /**
      * @note - It makes sense to use this function only for imgui interface which will have its own class in the future
@@ -38,12 +38,12 @@ namespace Nyxis
      * @param filename - path to the file with .obj extension
      * @return std::pair<std::string, Entity> - pair of the name of the object and the entity
      */
-    std::pair<std::string, Entity> Scene::addEntity(const std::string &filename)
+    std::pair<std::string, Entity> Scene::AddEntity(const std::string &filename)
     {
         auto name = filename.substr(0, filename.find_last_of('.'));
-        auto entity = createEntity(name);
-        addComponent<TransformComponent>(entity, glm::vec3(0.f, 0.f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.f, 1.f, 1.f), 0.0f);
-        addComponent<MeshComponent>(entity, model_path + filename);
+        auto entity = CreateEntity(name);
+        AddComponent<TransformComponent>(entity, glm::vec3(0.f, 0.f, 0.f), glm::vec3(.0f, .0f, 0.0f), glm::vec3(1.f, 1.f, 1.f), 0.0f);
+        AddComponent<MeshComponent>(entity, model_path + filename);
         auto &model = GetComponent<MeshComponent>(entity);
         model.model->loadModel();
         return {name, entity};
@@ -88,13 +88,13 @@ namespace Nyxis
 	        player.OnUpdate(dt, transform);
         });
 
-        if(!m_DeletionQueue.empty())
+        if (!m_EntityDeletionQueue.empty())
         {
             vkDeviceWaitIdle(device.device());
-            for(int i = 0; i < m_DeletionQueue.size(); i++)
+            for (int i = 0; i < m_EntityDeletionQueue.size(); i++)
             {
-	            const auto entity = m_DeletionQueue.front();
-                m_DeletionQueue.pop();
+                const auto entity = m_EntityDeletionQueue.front();
+                m_EntityDeletionQueue.pop();
                 m_Registry.destroy(entity);
                 m_EntityCount--;
             }
@@ -107,7 +107,7 @@ namespace Nyxis
     void Scene::ClearScene()
     {
 		m_Registry.each([&](auto entity)
-			{ m_DeletionQueue.emplace(entity); });
+			{ m_EntityDeletionQueue.emplace(entity); });
 		OBJModel::ReleaseModels();
     }
 
@@ -118,4 +118,11 @@ namespace Nyxis
     void Scene::LoadScene(const std::string &filename)
     {
     }
+
+	void Scene::LoadModel(const Entity entity, const std::string &filename)
+    {
+        vkDeviceWaitIdle(device.device());
+        m_Registry.remove<Model>(entity);
+		m_Registry.emplace<Model>(entity, filename, *g_SceneInfo, *g_UniformBufferParams);
+	}
 } // namespace Nyxis

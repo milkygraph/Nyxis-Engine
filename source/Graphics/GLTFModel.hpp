@@ -215,8 +215,9 @@ namespace Nyxis
 	};
 
 	struct Model {
-		std::string path;
+		std::string path = "None";
 		bool animate = true;
+		bool ready = false;
 
 		struct Vertex {
 			glm::vec3 pos;

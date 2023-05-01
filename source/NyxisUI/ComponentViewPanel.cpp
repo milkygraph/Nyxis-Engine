@@ -1,6 +1,8 @@
 #include "NyxisUI/ComponentViewPanel.hpp"
 #include "EditorLayer.hpp"
 #include "Core/Application.hpp"
+#include "Core/GLTFRenderer.hpp"
+#include "Graphics/GLTFModel.hpp"
 #include "Scene/Components.hpp"
 
 namespace Nyxis
@@ -24,29 +26,62 @@ namespace Nyxis
 					tag.Tag = std::string(buffer);
 				}
 			}
+			ImGui::PushStyleColor(ImGuiCol_Separator, { 124, 124, 124, 1 });
 
-			if (scene->m_Registry.all_of<RigidBody>(selectedEntity))
-			{
-				auto& rigidBody = scene->GetComponent<RigidBody>(selectedEntity); // TODO: Fix load scene bug
-				auto& transform = scene->GetComponent<TransformComponent>(selectedEntity);
-
-				ImGui::Text("Rigid Body");
-				ImGui::DragFloat3("Position", &transform.translation.x, 0.1f, 0, 0, "%.1f");
-				glm::vec3 rotationDeg = glm::degrees(transform.rotation);
-				ImGui::DragFloat3("Rotation", &rotationDeg.x, 0.1f, 0, 0, "%.1f");
-				transform.rotation = glm::radians(rotationDeg);
-				ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f, 0, 0, "%.2f");
-
-				ImGui::DragFloat3("Velocity", &transform.velocity.x, 0.1f);
-				ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0.0f, 1.0f);
-
-				ImGui::DragFloat("Roughness", &rigidBody.roughness, 0.1f);
-				// check if entity has a collider component
-				if (scene->m_Registry.all_of<Collider>(selectedEntity))
+			DrawComponentNode<TransformComponent>("Transform", selectedEntity, [&](TransformComponent& transform)
 				{
-					auto& collider = scene->GetComponent<Collider>(selectedEntity);
+					ImGui::DragFloat3("Translation", &transform.translation.x, 0.1f, 0, 0, "%.1f");
+					ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.1f, 0, 0, "%.1f");
+					ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f, 0, 0, "%.1f");
+					ImGui::DragFloat3("Velocity", &transform.velocity.x, 0.1, 0, 0, "%.1f");
+					ImGui::DragFloat3("Acceleration", &transform.acceleration.x, 0.1, 0, 0, "%.1f");
+				});
 
-					ImGui::Text("Collider");
+			DrawComponentNode<RigidBody>("RigidBody", selectedEntity, [&](RigidBody& rigidBody)
+				{
+					ImGui::DragFloat("Mass", &rigidBody.mass, 0.1f, 0, 0, "%.1f");
+					ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0, 0, "%.1f");
+					ImGui::DragFloat("Friction", &rigidBody.friction, 0.1f, 0, 0, "%.1f");
+					ImGui::Checkbox("Kinematic", &rigidBody.isKinematic);
+					ImGui::SameLine();
+					ImGui::Checkbox("Static", &rigidBody.isStatic);
+				});
+
+			DrawComponentNode<Model>("Model", selectedEntity, [&](Model& model)
+				{
+					// list of all models in ../models directory
+					const std::string ext = ".gltf";
+					const std::string path = "../models/";
+					std::vector<std::string> models = { model.path };
+					for (const auto& entry : std::filesystem::recursive_directory_iterator(path))
+					{
+						if (entry.path().extension() == ext)
+						{
+							models.push_back(entry.path().relative_path().string());
+						}
+					}
+					if (ImGui::BeginCombo("Models", models[0].data()))
+					{
+						static int current_item = 0;
+						for (int n = 0; n < models.size(); n++)
+						{
+							const bool is_selected = (current_item == n);
+							if (ImGui::Selectable(models[n].data(), is_selected))
+								current_item = n;
+							if (is_selected)
+								ImGui::SetItemDefaultFocus();
+						}
+						ImGui::EndCombo();
+						if (current_item != 0)
+						{
+							scene->LoadModel(selectedEntity, models[current_item]);
+							current_item = 0;
+						}
+					}
+				});
+
+			DrawComponentNode<Collider>("Collider", selectedEntity, [&](Collider& collider)
+				{
 					auto preview = collider_name[collider.type];
 
 					if (ImGui::BeginCombo("Collider Type", preview.c_str(), ImGuiComboFlags_NoArrowButton))
@@ -65,9 +100,25 @@ namespace Nyxis
 
 					else if (collider.type == ColliderType::Sphere)
 						ImGui::DragFloat("Collider Radius", &collider.radius, 0.05f);
-				}
-			}
+				});
+			ImGui::PopStyleColor();
 		}
 		ImGui::End();
+	}
+	template <typename T>
+	void ComponentViewPanel::DrawComponentNode(const char* name, Entity entity, std::function<void(T& component)> func)
+	{
+		constexpr ImGuiBackendFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed |
+			ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
+		auto scene = Application::GetScene();
+		if (scene->m_Registry.all_of<T>(entity))
+		{
+			auto& component = scene->GetComponent<T>(entity);
+			if (ImGui::TreeNodeEx((void*)typeid(T).hash_code(), flags, name))
+			{
+				func(component);
+				ImGui::TreePop();
+			}
+		}
 	}
 }

@@ -151,15 +151,6 @@ namespace Nyxis
 		colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 	}
 
-	std::vector<std::string> getModelNames()
-	{
-		std::vector<std::string> modelNames;
-		for (const auto& entry : std::filesystem::directory_iterator(Nyxis::model_path))
-		{
-			modelNames.push_back(entry.path().filename().string());
-		}
-		return modelNames;
-	}
 
 	void EditorLayer::OnAttach()
 	{

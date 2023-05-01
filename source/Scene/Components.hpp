@@ -3,7 +3,6 @@
 #include "Core/Nyxispch.hpp"
 #include "Graphics/OBJModel.hpp"
 #include "Events/KeyEvents.hpp"
-#include "Utils/Path.hpp"
 
 #include <json/json.hpp>
 
@@ -116,9 +115,10 @@ namespace Nyxis
 
     struct Collider
     {
+        Collider() = default;
         Collider(ColliderType type, glm::vec3 size, float radius) 
             : type(type), size(size), radius(radius) {}
-        ColliderType type;
+        ColliderType type = ColliderType::Sphere;
         
 		glm::vec3 size{ 1.0f };
         float radius;

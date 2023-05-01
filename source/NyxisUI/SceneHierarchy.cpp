@@ -17,7 +17,7 @@ namespace Nyxis
 		if (ImGui::BeginPopupContextWindow())
 		{
 			if (ImGui::MenuItem("Create Empty Entity"))
-				EditorLayer::SetSelectedEntity(scene->createEntity("Empty Entity"));
+				EditorLayer::SetSelectedEntity(scene->CreateEntity("Empty Entity"));
 			if (ImGui::MenuItem("Clear Scene"))
 				scene->ClearScene();
 
@@ -50,33 +50,24 @@ namespace Nyxis
 		{
 			if (ImGui::MenuItem("Delete Entity"))
 			{
-				scene->destroyEntity(entity);
+				scene->DestroyEntity(entity);
 				EditorLayer::DeselectEntity();
 			}
 			// add component tree with all components that can be added to entity
 			if (ImGui::BeginMenu("Add Component"))
 			{
-				if (ImGui::MenuItem("RigidBody"))
-					if (!scene->m_Registry.all_of<RigidBody>(entity))
-						scene->addComponent<RigidBody>(entity);
-
-				if (ImGui::MenuItem("Collider"))
-					if (!scene->m_Registry.all_of<Collider>(entity))
-						scene->addComponent<Collider>(entity, ColliderType::Sphere, glm::vec3{ 0.2, 0.2, 0.2 },
-							0.05);
+				AddComponent<RigidBody>("RigidBody", selectedEntity);
+				AddComponent<Model>("Model", selectedEntity);
+				AddComponent<Collider>("Collider", selectedEntity);
 
 				ImGui::EndMenu();
 			}
 
 			if (ImGui::BeginMenu("Remove Component"))
 			{
-				if (scene->m_Registry.all_of<RigidBody>(entity))
-					if (ImGui::MenuItem("RigidBody"))
-						scene->m_Registry.remove<RigidBody>(entity);
-
-				if (scene->m_Registry.all_of<Collider>(entity))
-					if (ImGui::MenuItem("Collider"))
-						scene->m_Registry.remove<Collider>(entity);
+				RemoveComponent<RigidBody>("RigidBody", selectedEntity);
+				RemoveComponent<Model>("Model", selectedEntity);
+				RemoveComponent<Collider>("Collider", selectedEntity);
 
 				ImGui::EndMenu();
 			}
@@ -109,4 +100,28 @@ namespace Nyxis
 			ImGui::TreePop();
 		}
 	}
+
+	template<typename T>
+	void SceneHierarchyPanel::AddComponent(const char* name, Entity entity)
+	{
+		if(ImGui::MenuItem(name))
+		{
+			const auto scene = Application::GetScene();
+			if (!scene->m_Registry.all_of<T>(entity))
+			scene->AddComponent<T>(entity);
+			ImGui::CloseCurrentPopup();
+		}
+	}
+
+	template<typename T>
+	void SceneHierarchyPanel::RemoveComponent(const char* name, Entity entity)
+	{
+		if(ImGui::MenuItem(name))
+		{
+			const auto scene = Application::GetScene();
+			if (scene->m_Registry.all_of<T>(entity))
+			scene->m_Registry.remove<T>(entity);
+			ImGui::CloseCurrentPopup();
+		}
+	}	
 }
