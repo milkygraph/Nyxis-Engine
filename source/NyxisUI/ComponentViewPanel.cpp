@@ -143,10 +143,11 @@ namespace Nyxis
 
 		if (scene->m_Registry.all_of<T>(entity))
 		{
-			auto padding = ImGui::GetStyle().FramePadding.x;
+			const auto style = ImGui::GetStyle();
+			const auto padding = style.FramePadding.x;
+			const auto header_color = style.Colors[ImGuiCol_Header];
 			auto& component = scene->GetComponent<T>(entity);
 			auto lineHeight = NyxisWidgets::LineHeight();
-			auto header_color = ImGui::GetStyle().Colors[ImGuiCol_Header];
 
 			const auto availableRegion = ImGui::GetContentRegionAvail();
 			bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), flags, name);

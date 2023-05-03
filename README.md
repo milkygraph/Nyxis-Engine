@@ -1,6 +1,16 @@
 # Nyxis Engine
 
 ![Screenshot](screenshots/robot.png)
+
+Nyxis is an application and rendering engine based on Vulkan API. The main goal of the project is for me to learn graphics programming techniques. Nyxis supports platforms including Windows, Linux, and Mac. The supported and planned features are listed below:
+- [x] PBR based rendering
+- [x] Entity-Component System
+- [x] Model loading
+- [x] Animations
+- [x] Scene graph
+- [ ] Scripting/C# support
+- [ ] PhysX integration
+- [ ] Custom shaders
 ## Building Instructions
 
 Clone repository using 
