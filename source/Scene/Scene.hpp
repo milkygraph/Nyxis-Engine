@@ -47,6 +47,7 @@ namespace Nyxis
 
         template <typename T> void RemoveComponent(Entity entity)
         {
+            vkDeviceWaitIdle(device.device());
             m_Registry.remove<T>(entity);
         }
 

@@ -89,6 +89,7 @@ namespace Nyxis
         {
 			auto model = m_Scene->CreateEntity("Model");
             m_Scene->AddComponent<RigidBody>(model);
+            m_Scene->AddComponent<Model>(model);
         }
 #endif
 

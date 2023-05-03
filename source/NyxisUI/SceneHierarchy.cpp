@@ -108,7 +108,7 @@ namespace Nyxis
 		{
 			const auto scene = Application::GetScene();
 			if (!scene->m_Registry.all_of<T>(entity))
-			scene->AddComponent<T>(entity);
+				scene->AddComponent<T>(entity);
 			ImGui::CloseCurrentPopup();
 		}
 	}
@@ -120,7 +120,7 @@ namespace Nyxis
 		{
 			const auto scene = Application::GetScene();
 			if (scene->m_Registry.all_of<T>(entity))
-			scene->m_Registry.remove<T>(entity);
+				scene->RemoveComponent<T>(entity);
 			ImGui::CloseCurrentPopup();
 		}
 	}	

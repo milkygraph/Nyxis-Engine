@@ -1,18 +1,32 @@
 #include "NyxisUI/ComponentViewPanel.hpp"
 #include "EditorLayer.hpp"
 #include "Core/Application.hpp"
-#include "Core/GLTFRenderer.hpp"
 #include "Graphics/GLTFModel.hpp"
 #include "Scene/Components.hpp"
+#include "NyxisUI/Widgets.hpp"
 
 namespace Nyxis
 {
+	template<typename T>
+	void AddComponentComboItem(const char* name, Ref<Scene> scene, Entity entity)
+	{
+		if (!scene->m_Registry.all_of<T>(entity))
+		{
+			if (ImGui::MenuItem(name))
+			{
+				scene->AddComponent<T>(entity);
+				ImGui::CloseCurrentPopup();
+			}
+		}
+	}
+
 	void ComponentViewPanel::OnUpdate()
 	{
 		auto scene = Application::GetScene();
 		auto selectedEntity = EditorLayer::GetSelectedEntity();
 
-		ImGui::Begin("Component");
+		ImGui::PushStyleColor(ImGuiCol_Separator, { 124, 124, 124, 1 });
+		ImGui::Begin("Component", nullptr, ImGuiWindowFlags_NoScrollbar);
 		// Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 		if (scene->m_Registry.valid(selectedEntity))
 		{
@@ -26,22 +40,24 @@ namespace Nyxis
 					tag.Tag = std::string(buffer);
 				}
 			}
-			ImGui::PushStyleColor(ImGuiCol_Separator, { 124, 124, 124, 1 });
+
+			const ImVec4 clear_color = { 0,0,0,0 };
+			ImGui::PushStyleColor(ImGuiCol_Button, clear_color);
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, clear_color);
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, clear_color);
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, clear_color);
+			ImGui::PushStyleColor(ImGuiCol_HeaderActive, clear_color);
 
 			DrawComponentNode<TransformComponent>("Transform", selectedEntity, [&](TransformComponent& transform)
 				{
-					ImGui::DragFloat3("Translation", &transform.translation.x, 0.1f, 0, 0, "%.1f");
-					ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.1f, 0, 0, "%.1f");
-					ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f, 0, 0, "%.1f");
-					ImGui::DragFloat3("Velocity", &transform.velocity.x, 0.1, 0, 0, "%.1f");
-					ImGui::DragFloat3("Acceleration", &transform.acceleration.x, 0.1, 0, 0, "%.1f");
+					NyxisWidgets::TableVec3({ "Translation", "Rotation", "Scale", "Velocity", "Acceleration" },
+						{ &transform.translation, &transform.rotation, &transform.scale, &transform.velocity, &transform.acceleration });
 				});
 
 			DrawComponentNode<RigidBody>("RigidBody", selectedEntity, [&](RigidBody& rigidBody)
 				{
-					ImGui::DragFloat("Mass", &rigidBody.mass, 0.1f, 0, 0, "%.1f");
-					ImGui::DragFloat("Restitution", &rigidBody.restitution, 0.1f, 0, 0, "%.1f");
-					ImGui::DragFloat("Friction", &rigidBody.friction, 0.1f, 0, 0, "%.1f");
+					NyxisWidgets::TableFloat({ "Mass", "Restitution", "Friction" },
+						{ &rigidBody.mass, &rigidBody.restitution, &rigidBody.friction });
 					ImGui::Checkbox("Kinematic", &rigidBody.isKinematic);
 					ImGui::SameLine();
 					ImGui::Checkbox("Static", &rigidBody.isStatic);
@@ -52,7 +68,7 @@ namespace Nyxis
 					// list of all models in ../models directory
 					const std::string ext = ".gltf";
 					const std::string path = "../models/";
-					std::vector<std::string> models = { model.path };
+					std::vector models = { model.path };
 					for (const auto& entry : std::filesystem::recursive_directory_iterator(path))
 					{
 						if (entry.path().extension() == ext)
@@ -101,23 +117,76 @@ namespace Nyxis
 					else if (collider.type == ColliderType::Sphere)
 						ImGui::DragFloat("Collider Radius", &collider.radius, 0.05f);
 				});
-			ImGui::PopStyleColor();
+			ImGui::PopStyleColor(5);
+			const float width = ImGui::GetContentRegionAvail().x;
+
+			ImGui::SetNextItemWidth(width);
+			if (ImGui::BeginCombo("##", "Add Component", ImGuiComboFlags_NoArrowButton))
+			{
+				AddComponentComboItem<TagComponent>("Tag Component", scene, selectedEntity);
+				AddComponentComboItem<TransformComponent>("Transform Component", scene, selectedEntity);
+				AddComponentComboItem<RigidBody>("Rigid Body", scene, selectedEntity);
+				AddComponentComboItem<Model>("Model", scene, selectedEntity);
+				ImGui::EndCombo();
+			}
 		}
 		ImGui::End();
+		ImGui::PopStyleColor(1);
 	}
+
 	template <typename T>
 	void ComponentViewPanel::DrawComponentNode(const char* name, Entity entity, std::function<void(T& component)> func)
 	{
-		constexpr ImGuiBackendFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed |
-			ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
+		constexpr ImGuiBackendFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth |
+			ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
 		auto scene = Application::GetScene();
+
 		if (scene->m_Registry.all_of<T>(entity))
 		{
+			auto padding = ImGui::GetStyle().FramePadding.x;
 			auto& component = scene->GetComponent<T>(entity);
-			if (ImGui::TreeNodeEx((void*)typeid(T).hash_code(), flags, name))
+			auto lineHeight = NyxisWidgets::LineHeight();
+			auto header_color = ImGui::GetStyle().Colors[ImGuiCol_Header];
+
+			const auto availableRegion = ImGui::GetContentRegionAvail();
+			bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), flags, name);
+
+			const auto size = ImGui::GetItemRectSize();
+			const auto pos = ImGui::GetItemRectMin();
+
+			ImGui::SameLine(availableRegion.x - lineHeight / 2 - padding);
+			bool removeComponent = false;
+			if (ImGui::Button("...", { lineHeight, lineHeight }))
+			{
+				ImGui::OpenPopup("RemoveComponent");
+			}
+
+			if (ImGui::BeginPopup("RemoveComponent") )
+			{
+				if (ImGui::MenuItem("Remove"))
+				{
+					removeComponent = true;
+				}
+				ImGui::EndPopup();
+			}
+
+			if(open)
 			{
 				func(component);
+				const ImVec2 fill = ImGui::GetCursorPos();
 				ImGui::TreePop();
+				ImGui::GetWindowDrawList()->AddRectFilled({pos.x, pos.y}, { pos.x + size.x, fill.y + lineHeight }, ImGui::ColorConvertFloat4ToU32(header_color), 5);
+				ImGui::Dummy({size.x, 2});
+			}
+
+			else
+			{
+				ImGui::GetWindowDrawList()->AddRectFilled(pos, { pos.x + availableRegion.x, pos.y + lineHeight }, ImGui::ColorConvertFloat4ToU32(header_color), 5);
+			}
+			if(removeComponent)
+			{
+				scene->RemoveComponent<T>(entity);
+				ImGui::CloseCurrentPopup();
 			}
 		}
 	}

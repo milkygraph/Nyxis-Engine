@@ -73,7 +73,7 @@ namespace Nyxis
 		style.PopupRounding = 7.0f;
 		style.PopupBorderSize = 0.5f;
 		style.FramePadding = ImVec2(4.0f, 3.0f);
-		style.FrameRounding = 7.0f;
+		style.FrameRounding = 5.0f;
 		style.FrameBorderSize = 0.0f;
 		style.ItemSpacing = ImVec2(8.0f, 4.0f);
 		style.ItemInnerSpacing = ImVec2(4.0f, 4.0f);
@@ -118,7 +118,7 @@ namespace Nyxis
 		colors[ImGuiCol_Button] = ImVec4(0.44f, 0.44f, 0.44f, 0.40f);
 		colors[ImGuiCol_ButtonHovered] = ImVec4(0.46f, 0.47f, 0.48f, 1.00f);
 		colors[ImGuiCol_ButtonActive] = ImVec4(0.42f, 0.42f, 0.42f, 1.00f);
-		colors[ImGuiCol_Header] = ImVec4(0.49f, 0.49f, 0.49f, 0.31f);
+		colors[ImGuiCol_Header] = ImVec4(0.1f,0.1f,0.1f,0.3f);
 		colors[ImGuiCol_HeaderHovered] = ImVec4(0.63f, 0.63f, 0.63f, 0.65f);
 		colors[ImGuiCol_HeaderActive] = ImVec4(0.48f, 0.50f, 0.52f, 1.00f);
 		colors[ImGuiCol_Separator] = ImVec4(0.00f, 0.00f, 0.00f, 0.50f);
@@ -216,6 +216,7 @@ namespace Nyxis
 
 	void EditorLayer::OnUpdate()
 	{
+		ImGui::ShowDemoWindow();
 		m_Viewport.OnUpdate();
 		m_MenuBar.OnUpdate();
 		m_SceneHierarchy.OnUpdate();
