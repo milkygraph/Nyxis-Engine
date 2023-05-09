@@ -26,6 +26,7 @@ namespace Nyxis
 		void UpdateAnimation(float dt);
 		void LoadEnvironment(std::string& filename);
 		void UpdateSkyboxDescriptorSets();
+		void UpdateScene() { m_SceneUpdated = true; }
 
 		std::string m_EnvMapFile = "";
 		bool m_SceneUpdated = false;

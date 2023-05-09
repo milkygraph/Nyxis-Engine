@@ -158,8 +158,9 @@ namespace Nyxis
 			glm::mat4 matrix;
 			glm::mat4 jointMatrix[MAX_NUM_JOINTS]{};
 			float jointcount{ 0 };
+			uint32_t id{ 0 };
 		} uniformBlock;
-		Mesh(glm::mat4 matrix);
+		Mesh(glm::mat4 matrix, uint32_t id);
 		~Mesh();
 		void setBoundingBox(glm::vec3 min, glm::vec3 max);
 	};

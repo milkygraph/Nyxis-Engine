@@ -326,9 +326,10 @@ namespace Nyxis
 	}
 
 	// Mesh
-	Mesh::Mesh(glm::mat4 matrix)
+	Mesh::Mesh(glm::mat4 matrix, uint32_t id)
 	{
 		this->uniformBlock.matrix = matrix;
+		this->uniformBlock.id = id;
 		uniformBuffer.meshBuffer = std::make_unique<Buffer>(sizeof(uniformBlock), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniformBlock);
 		uniformBuffer.meshBuffer->map();
@@ -500,7 +501,7 @@ namespace Nyxis
 		// Node contains mesh data
 		if (node.mesh > -1) {
 			const tinygltf::Mesh mesh = model.meshes[node.mesh];
-			Mesh* newMesh = new Mesh(newNode->matrix);
+			Mesh* newMesh = new Mesh(newNode->matrix, newNode->index);
 			for (size_t j = 0; j < mesh.primitives.size(); j++) {
 				const tinygltf::Primitive& primitive = mesh.primitives[j];
 				uint32_t vertexStart = static_cast<uint32_t>(loaderInfo.vertexPos);

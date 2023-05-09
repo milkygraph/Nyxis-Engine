@@ -63,9 +63,37 @@ namespace Nyxis
                     ImGui::DragFloat("Exposure", &gltfRenderer.sceneInfo.shaderValuesParams.exposure, 0.1f, 0.0f, 10.0f);
                     ImGui::DragFloat("Gamma", &gltfRenderer.sceneInfo.shaderValuesParams.gamma, 0.1f, 0.0f, 10.0f);
                     ImGui::DragFloat3("Light Direction", &gltfRenderer.sceneInfo.shaderValuesParams.lightDir.x);
-                    if (ImGui::InputText("Path", &gltfRenderer.m_EnvMapFile, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Reload", ImVec2(75, 25)))
+                    if(ImGui::BeginCombo("Environment", gltfRenderer.m_EnvMapFile.c_str()))
                     {
-                        gltfRenderer.m_SceneUpdated = true;
+                        static const std::string path = "../assets/environments/";
+                        static const std::string ext = ".ktx";
+
+						std::vector maps = { gltfRenderer.m_EnvMapFile };
+						for (const auto& entry : std::filesystem::recursive_directory_iterator(path))
+						{
+							if (entry.path().extension() == ext)
+							{
+								maps.push_back(entry.path().filename().string());
+							}
+						}
+
+						static int current_item = 0;
+						for (int n = 0; n < maps.size(); n++)
+						{
+							const bool is_selected = (current_item == n);
+							if (ImGui::Selectable(maps[n].data(), is_selected))
+								current_item = n;
+							if (is_selected)
+								ImGui::SetItemDefaultFocus();
+						}
+						ImGui::EndCombo();
+
+                    	if(current_item != 0)
+                    	{
+                    		gltfRenderer.m_EnvMapFile = path + maps[current_item];
+							gltfRenderer.UpdateScene();
+                            current_item = 0;
+                    	}
                     }
 
                     static std::vector<const char*> debugViews = { "None", "Base color", "Normal", "Occlusion", "Emissive", "Metallic", "Roughness" };

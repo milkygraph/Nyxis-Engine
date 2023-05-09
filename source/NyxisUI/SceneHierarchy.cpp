@@ -94,6 +94,8 @@ namespace Nyxis
 		ImGuiTreeNodeFlags flags = ((m_SelectedNode == node) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 		if (ImGui::TreeNodeEx(node->name.c_str(), flags))
 		{
+			if (node->mesh)
+				EditorLayer::SetSelectedMaterial(&node->mesh->primitives[0]->material);
 			m_SelectedNode = node;
 			for (auto* child : node->children)
 				DrawNode(child);

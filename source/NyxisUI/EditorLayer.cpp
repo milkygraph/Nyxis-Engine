@@ -216,11 +216,12 @@ namespace Nyxis
 
 	void EditorLayer::OnUpdate()
 	{
-		ImGui::ShowDemoWindow();
 		m_Viewport.OnUpdate();
 		m_MenuBar.OnUpdate();
 		m_SceneHierarchy.OnUpdate();
 		m_ComponentView.OnUpdate();
+		if(m_SelectedMaterial != nullptr)
+			m_MaterialView.OnUpdate();
 
 		for (auto& function : functions)
 			function();
@@ -248,11 +249,14 @@ namespace Nyxis
 	void EditorLayer::SetSelectedEntity(Entity entity)
 	{
 		m_SelectedEntity = entity;
+		m_SelectedMaterial = nullptr;
 		m_SelectedNode = nullptr;
 	}
 
 	void EditorLayer::DeselectEntity()
 	{
 		m_SelectedEntity = entt::null;
+		m_SelectedMaterial = nullptr;
+		m_SelectedNode = nullptr;
 	}
 }

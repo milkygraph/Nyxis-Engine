@@ -14,3 +14,6 @@
 [submodule "libs/gli"]
 	path = libs/gli
 	url = https://github.com/g-truc/gli.git
+[submodule "libs/imgui-node-editor"]
+	path = libs/imgui-node-editor
+	url = https://github.com/thedmd/imgui-node-editor.git

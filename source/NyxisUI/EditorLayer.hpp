@@ -7,10 +7,12 @@
 #include "NyxisUI/MenuBar.hpp"
 #include "NyxisUI/SceneHierarchy.hpp"
 #include "NyxisUI/ComponentViewPanel.hpp"
+#include "NyxisUI/MaterialPanel.hpp"
+#include "Graphics/GLTFModel.hpp"
 
 namespace Nyxis
 {
-    class EditorLayer : public Layer
+	class EditorLayer : public Layer
     {
     public:
 		EditorLayer() = default;
@@ -27,12 +29,18 @@ namespace Nyxis
         void End();
 
         static void AddFunction(const std::function<void()>& function);
-        static void SetSelectedEntity(Entity entity);
-        static void DeselectEntity();
-        static Entity GetSelectedEntity() { return m_SelectedEntity; }
-        static Node* GetSelectedNode() { return m_SelectedNode; }
 
     	VkExtent2D GetViewportExtent() const { return m_Viewport.GetExtent(); }
+    	static Entity GetSelectedEntity() { return m_SelectedEntity; }
+        static Node* GetSelectedNode() { return m_SelectedNode; }
+        static Material* GetSelectedMaterial() { return m_SelectedMaterial; }
+
+        static void SetSelectedEntity(Entity entity);
+        static void SetSelectedNode(Node* node) { m_SelectedNode = node; }
+        static void SetSelectedMaterial(Material* material) { m_SelectedMaterial = material; }
+
+        static void DeselectEntity();
+
     private:
         Ref<DescriptorPool> imguiPool{};
         Ref<Scene> m_ActiveScene;
@@ -41,9 +49,11 @@ namespace Nyxis
         MenuBar m_MenuBar;
         SceneHierarchyPanel m_SceneHierarchy;
         ComponentViewPanel m_ComponentView;
+		MaterialPanel m_MaterialView;
 
 		static inline Entity m_SelectedEntity = entt::null;
         static inline Node* m_SelectedNode = nullptr;
+    	static inline Material* m_SelectedMaterial = nullptr;
         static inline std::vector<std::function<void()>> functions;
     };
 }

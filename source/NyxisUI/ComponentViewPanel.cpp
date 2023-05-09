@@ -66,18 +66,19 @@ namespace Nyxis
 			DrawComponentNode<Model>("Model", selectedEntity, [&](Model& model)
 				{
 					// list of all models in ../models directory
-					const std::string ext = ".gltf";
-					const std::string path = "../models/";
-					std::vector models = { model.path };
-					for (const auto& entry : std::filesystem::recursive_directory_iterator(path))
+					static const std::string ext = ".gltf";
+					static const std::string path = "../models/";
+
+					if (ImGui::BeginCombo("Models", model.path.c_str()))
 					{
-						if (entry.path().extension() == ext)
+						std::vector models = { model.path };
+						for (const auto& entry : std::filesystem::recursive_directory_iterator(path))
 						{
-							models.push_back(entry.path().relative_path().string());
+							if (entry.path().extension() == ext)
+							{
+								models.push_back(entry.path().relative_path().string());
+							}
 						}
-					}
-					if (ImGui::BeginCombo("Models", models[0].data()))
-					{
 						static int current_item = 0;
 						for (int n = 0; n < models.size(); n++)
 						{
