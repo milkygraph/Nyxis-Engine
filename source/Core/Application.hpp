@@ -11,8 +11,9 @@
 
 namespace Nyxis
 {
+	class NyxisProject;
 
-    class Application
+	class Application
     {
     public:
 		static Application* GetInstance()
@@ -24,7 +25,7 @@ namespace Nyxis
 		}
         ~Application();
 
-        // copy constructor and operator
+		// copy constructor and operator
         Application(const Application &) = delete;
         Application &operator=(const Application &) = delete;
 
@@ -34,7 +35,7 @@ namespace Nyxis
         void Run();
 		static Ref<Scene> GetScene() { return s_Instance->m_Scene; }
 		static Ref<FrameInfo> GetFrameInfo() { return s_Instance->m_FrameInfo; }
-
+		static Ref<NyxisProject> GetProject() { return s_Instance->m_CurrentProject; }
     private:
         Application();
     	static inline Application* s_Instance = nullptr;
@@ -44,9 +45,11 @@ namespace Nyxis
         Device& m_Device = Device::Get();
         Ref<FrameInfo> m_FrameInfo = nullptr;
         Ref<Scene> m_Scene = nullptr;
+        Ref<NyxisProject> m_CurrentProject = nullptr;
 
         LayerStack m_LayerStack{};
         EditorLayer m_EditorLayer{};
         PhysicsEngine m_PhysicsEngine{};
+
     }; // class Application
 } // namespace Nyxis

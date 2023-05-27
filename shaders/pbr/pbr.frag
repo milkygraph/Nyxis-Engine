@@ -47,7 +47,7 @@ layout (set = 1, binding = 2) uniform sampler2D normalMap;
 layout (set = 1, binding = 3) uniform sampler2D aoMap;
 layout (set = 1, binding = 4) uniform sampler2D emissiveMap;
 
-#define DEPTH_ARRAY_SCALE 32
+#define DEPTH_ARRAY_SCALE 2048
 
 layout(set = 3, binding = 0) buffer DepthBuffer
 {

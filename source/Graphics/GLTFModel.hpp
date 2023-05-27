@@ -266,7 +266,7 @@ namespace Nyxis
 		std::vector<VkDescriptorSet> descriptorSets;
 
 		Model();
-		Model(const std::string& filename, SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValueBuffers);
+		Model(const std::string& filename);
 		~Model();
 
 		void destroy();

@@ -3,8 +3,8 @@
 #include "Application.hpp"
 #include "Core/Log.hpp"
 #include "Core/SwapChain.hpp"
-#include "Events/MouseEvents.hpp"
 #include "Scene/Components.hpp"
+#include "Scene/NyxisProject.hpp"
 
 namespace Nyxis
 {
@@ -94,7 +94,7 @@ namespace Nyxis
 		vkCmdBindPipeline(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
 		skybox->draw(frameInfo->commandBuffer);
 
-		auto modelView = scene->m_Registry.view<Model>();
+		auto modelView = scene->GetComponentView<Model>();
 		for (auto& model : modelView)
 		{
 			auto& gltfModel = scene->GetComponent<Model>(model);
@@ -200,14 +200,13 @@ namespace Nyxis
 
 	void GLTFRenderer::LoadAssets()
 	{
-		sceneInfo.textures.empty.LoadFromFile("../assets/textures/empty.ktx", VK_FORMAT_R8G8B8A8_UNORM);
+		const std::string assets_path = Application::GetProject()->GetAssetPath();
 
-		m_EnvMapFile = "../assets/environments/sky.ktx";
-		std::string sceneFile = "../models/roboto/scene.gltf";
-
+		sceneInfo.textures.empty.LoadFromFile(assets_path + "/textures/empty.ktx", VK_FORMAT_R8G8B8A8_UNORM);
 		skybox = std::make_shared<Model>();
-		skybox->loadFromFile("../models/Box/glTF-Embedded/Box.gltf");
+		skybox->loadFromFile(assets_path + "/models/basic/cube.gltf");
 
+		m_EnvMapFile = assets_path + "/environments/sky.ktx";
 		LoadEnvironment(m_EnvMapFile);
 	}
 
@@ -1296,7 +1295,7 @@ namespace Nyxis
 						pushBlockPrefilterEnv.roughness = (float)m / (float)(numMips - 1);
 						vkCmdPushConstants(cmdBuf, pipelinelayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushBlockPrefilterEnv), &pushBlockPrefilterEnv);
 						break;
-					};
+					}
 
 					vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 					vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelinelayout, 0, 1, &descriptorset, 0, NULL);

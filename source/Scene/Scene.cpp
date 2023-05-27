@@ -7,7 +7,8 @@ namespace Nyxis
 {
 	struct Model;
 
-	Scene::Scene()
+	Scene::Scene(const std::string name)
+		: m_SceneName(name)
     {
         m_CameraEntity = CreateEntity("Camera");
         m_Camera = new Camera(m_Registry.get<TransformComponent>(m_CameraEntity));
@@ -55,13 +56,11 @@ namespace Nyxis
         {
             SaveSceneFlag = false;
             vkDeviceWaitIdle(device.device());
-            SaveScene();
         }
         if (LoadSceneFlag)
         {
             LoadSceneFlag = false;
             vkDeviceWaitIdle(device.device());
-            LoadScene(SceneName);
         }
 
     	if (m_Camera->getType() == CameraType::Perspective)
@@ -111,18 +110,10 @@ namespace Nyxis
 		OBJModel::ReleaseModels();
     }
 
-    void Scene::SaveScene(const std::string &filename)
-    {
-    }
-
-    void Scene::LoadScene(const std::string &filename)
-    {
-    }
-
 	void Scene::LoadModel(const Entity entity, const std::string &filename)
     {
         vkDeviceWaitIdle(device.device());
         m_Registry.remove<Model>(entity);
-		m_Registry.emplace<Model>(entity, filename, *g_SceneInfo, *g_UniformBufferParams);
+		m_Registry.emplace<Model>(entity, filename);
 	}
 } // namespace Nyxis

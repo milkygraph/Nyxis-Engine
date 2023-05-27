@@ -5,7 +5,11 @@
 #include "Core/Nyxispch.hpp"
 #include "Core/SwapChain.hpp"
 #include "Graphics/GLTFModel.hpp"
+
+#include "Core/Application.hpp"
+#include "Core/GLTFRenderer.hpp"
 #include "Graphics/Texture.hpp"
+#include "Scene/NyxisProject.hpp"
 
 namespace Nyxis
 {
@@ -414,31 +418,30 @@ namespace Nyxis
 		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 	}
 
-	Model::Model(const std::string& filename, SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValuesBuffer)
+	Model::Model(const std::string& filename)
 	{
-		LOG_INFO("Loading model from {}", filename);
 		path = filename;
-		animationIndex = 0;
-		animationTimer = 0.0f;
+		const auto assets_path = Application::GetProject()->GetAssetPath();
+		LOG_INFO("Loading model from {}", path);
 		auto tStart = std::chrono::high_resolution_clock::now();
-		loadFromFile(filename);
-		auto tFileLoad = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
-		LOG_INFO("Loading took {} ms", tFileLoad);
+		loadFromFile(assets_path + filename);
 
 		uniformBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 		for (int i = 0; i < SwapChain::MAX_FRAMES_IN_FLIGHT; i++) {
 			uniformBuffers[i] = std::make_shared<Buffer>(sizeof(UBOMatrix), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			uniformBuffers[i]->map();
 		}
-
 		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-		setupDescriptorSet(sceneInfo, shaderValuesBuffer);
+		setupDescriptorSet(*g_SceneInfo, *g_UniformBufferParams);
+
+		auto tFileLoad = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
+		LOG_INFO("Loading took {} ms", tFileLoad);
 	}
 
 	Model::~Model()
 	{
 		destroy();
-		// ModelDescriptorManager::GetDescriptorPool()->freeDescriptors(descriptorSets);
+		ModelDescriptorManager::GetDescriptorPool()->freeDescriptors(descriptorSets);
 	}
 
 	void Model::destroy()
@@ -1297,6 +1300,12 @@ namespace Nyxis
 
 	void Model::setupDescriptorSet(SceneInfo& sceneInfo, std::vector<Ref<Buffer>>& shaderValuesBuffer)
 	{
+		if (shaderValuesBuffer.size() == 0)
+		{
+			LOG_INFO("Shader Values Buffer is not ready!");
+			return;
+		}
+
 		auto& device = Device::Get();
 		auto pool = ModelDescriptorManager::GetDescriptorPool();
 

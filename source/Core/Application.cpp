@@ -4,6 +4,7 @@
 #include "Core/FrameInfo.hpp"
 #include "Events/MouseEvents.hpp"
 #include "Scene/Components.hpp"
+#include "Scene/NyxisProject.hpp"
 
 namespace Nyxis
 {
@@ -16,6 +17,9 @@ namespace Nyxis
         m_EditorLayer.Init(Renderer::GetUIRenderPass(), commandBuffer);
         m_Device.endSingleTimeCommands(commandBuffer);
     	m_Scene = std::make_shared<Scene>();
+        m_CurrentProject = std::make_shared<NyxisProject>("Default", "default_project.npj");
+        m_CurrentProject->Create();
+        m_CurrentProject->AddScene(m_Scene);
         m_EditorLayer.SetScene(m_Scene);
     	s_Instance = this;
         m_Window.SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
@@ -65,7 +69,7 @@ namespace Nyxis
                     ImGui::DragFloat3("Light Direction", &gltfRenderer.sceneInfo.shaderValuesParams.lightDir.x);
                     if(ImGui::BeginCombo("Environment", gltfRenderer.m_EnvMapFile.c_str()))
                     {
-                        static const std::string path = "../assets/environments/";
+                        const std::string path = GetProject()->GetAssetPath() + "/environment";
                         static const std::string ext = ".ktx";
 
 						std::vector maps = { gltfRenderer.m_EnvMapFile };

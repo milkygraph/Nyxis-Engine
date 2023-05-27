@@ -1,5 +1,8 @@
 #include "NyxisUI/MenuBar.hpp"
+
+#include "Core/Application.hpp"
 #include "NyxisUI/EditorLayer.hpp"
+#include "Scene/NyxisProject.hpp"
 
 namespace Nyxis
 {
@@ -16,6 +19,7 @@ namespace Nyxis
 			}
 			if (ImGui::MenuItem("Save", "Ctrl+S"))
 			{
+				Application::GetProject()->Save();
 			}
 			ImGui::Separator();
 			ImGui::EndMenu();

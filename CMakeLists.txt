@@ -18,13 +18,30 @@ file (GLOB_RECURSE HEADERS source/*/*.hpp )
 # set filter for shaders in shaders folder
 file(GLOB_RECURSE SHADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*/*.vert" "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.frag")
 source_group("Shaders" FILES ${SHADER_FILES})
-    
-add_executable(${PROJECT} ${SOURCES} ${HEADERS} ${SHADER_FILES})
+
+file(GLOB_RECURSE Core "${CMAKE_CURRENT_SOURCE_DIR}/source/Core/*")
+file(GLOB_RECURSE Events "${CMAKE_CURRENT_SOURCE_DIR}/source/Events/*")
+file(GLOB_RECURSE Graphics "${CMAKE_CURRENT_SOURCE_DIR}/source/Graphics/*")
+file(GLOB_RECURSE NyxisUI "${CMAKE_CURRENT_SOURCE_DIR}/source/NyxisUI/*")
+file(GLOB_RECURSE RenderSystems "${CMAKE_CURRENT_SOURCE_DIR}/source/RenderSystems/*")
+file(GLOB_RECURSE Scene "${CMAKE_CURRENT_SOURCE_DIR}/source/Scene/*")
+file(GLOB_RECURSE Utils "${CMAKE_CURRENT_SOURCE_DIR}/source/Utils/*")
+
+source_group("Core" FILES ${Core})
+source_group("Events" FILES ${Events})
+source_group("Graphics" FILES ${Graphics})
+source_group("NyxisUI" FILES ${NyxisUI})
+source_group("RenderSystems" FILES ${RenderSystems})
+source_group("Scene" FILES ${Scene})
+source_group("Utils" FILES ${Utils})
+
+add_executable(${PROJECT} ${SOURCES} ${HEADERS} ${SHADER_FILES} ${Core})
 
 target_include_directories(${PROJECT} PUBLIC source libs libs/imgui libs/imgui/backends)
 target_link_directories(${PROJECT} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 target_link_libraries(${PROJECT} PUBLIC Vulkan::Vulkan glfw assimp::assimp)
 
+option(GLI_TEST_ENABLE "Build unit tests" OFF)
 add_subdirectory(libs/spdlog)
 add_subdirectory(libs/gli)
 target_link_libraries(${PROJECT} PRIVATE spdlog gli)

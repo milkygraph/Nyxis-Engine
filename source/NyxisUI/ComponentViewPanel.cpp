@@ -4,6 +4,7 @@
 #include "Graphics/GLTFModel.hpp"
 #include "Scene/Components.hpp"
 #include "NyxisUI/Widgets.hpp"
+#include "Scene/NyxisProject.hpp"
 
 namespace Nyxis
 {
@@ -65,21 +66,20 @@ namespace Nyxis
 
 			DrawComponentNode<Model>("Model", selectedEntity, [&](Model& model)
 				{
-					// list of all models in ../models directory
+					// list of all models in project models directory
 					static const std::string ext = ".gltf";
-					static const std::string path = "../models/";
+					const std::string assetspath = Application::GetProject()->GetAssetPath();
+					const std::string path = "/models/";
 
 					if (ImGui::BeginCombo("Models", model.path.c_str()))
 					{
-						std::vector models = { model.path };
-						for (const auto& entry : std::filesystem::recursive_directory_iterator(path))
+						std::vector<std::string> models{};
+						for (const auto& entry : std::filesystem::recursive_directory_iterator(assetspath + path))
 						{
 							if (entry.path().extension() == ext)
-							{
-								models.push_back(entry.path().relative_path().string());
-							}
+								models.push_back(entry.path().string().substr(assetspath.size() + path.size()));
 						}
-						static int current_item = 0;
+						static int current_item = -1;
 						for (int n = 0; n < models.size(); n++)
 						{
 							const bool is_selected = (current_item == n);
@@ -89,10 +89,10 @@ namespace Nyxis
 								ImGui::SetItemDefaultFocus();
 						}
 						ImGui::EndCombo();
-						if (current_item != 0)
+						if (current_item != -1)
 						{
-							scene->LoadModel(selectedEntity, models[current_item]);
-							current_item = 0;
+							scene->LoadModel(selectedEntity, path + models[current_item]);
+							current_item = -1;
 						}
 					}
 				});

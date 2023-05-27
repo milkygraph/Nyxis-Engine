@@ -3,7 +3,7 @@
 #include "Core/Nyxispch.hpp"
 #include "Graphics/GLTFModel.hpp"
 
-constexpr auto DEPTH_ARRAY_SCALE = 32; // will be used fir object picking buffer;
+constexpr auto DEPTH_ARRAY_SCALE = 2048; // will be used fir object picking buffer;
 
 namespace Nyxis
 {

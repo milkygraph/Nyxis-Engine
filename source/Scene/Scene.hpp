@@ -14,7 +14,7 @@ namespace Nyxis
     class Scene
     {
     public:
-        Scene();
+        Scene(const std::string name = "Default Scene");
         ~Scene();
 
         Entity CreateEntity(const std::string &name);
@@ -52,22 +52,21 @@ namespace Nyxis
         }
 
         void ClearScene();
-        void SaveScene(const std::string &filename = "scene.json");
-        void LoadScene(const std::string &filename);
 		void LoadModel(Entity entity, const std::string& filename);
 
         void OnUpdate(float dt, float aspect);
 
 		Camera *GetCamera() { return m_Camera; }
 		void SetCameraControl(bool control) { m_CameraControl = control; }
+        std::string GetSceneName() { return m_SceneName; }
 
         Registry m_Registry;
         bool SaveSceneFlag = false;
         bool LoadSceneFlag = false;
 
-        std::string SceneName = "scene.json";
 
     private:
+        std::string m_SceneName;
         friend class GLTFRenderer;
 		Camera* m_Camera = nullptr;
 		Entity m_CameraEntity = entt::null;

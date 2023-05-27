@@ -1,6 +1,7 @@
 #include "NyxisUI/SceneHierarchy.hpp"
 #include "Core/Application.hpp"
 #include "Graphics/GLTFModel.hpp"
+#include "Scene/NyxisProject.hpp"
 
 namespace Nyxis
 {
@@ -16,8 +17,32 @@ namespace Nyxis
 
 		if (ImGui::BeginPopupContextWindow())
 		{
-			if (ImGui::MenuItem("Create Empty Entity"))
-				EditorLayer::SetSelectedEntity(scene->CreateEntity("Empty Entity"));
+			if(ImGui::BeginMenu("CreateEntity"))
+			{
+				if(ImGui::MenuItem("Create Empty Entity"))
+					EditorLayer::SetSelectedEntity(scene->CreateEntity("Empty Entity"));
+				if(ImGui::MenuItem("Sphere"))
+				{
+					auto assets_path = Application::GetProject()->GetAssetPath();
+					auto entity = scene->CreateEntity("Sphere");
+					scene->AddComponent<Model>(entity, "/models/basic/sphere.gltf");
+				}
+				if(ImGui::MenuItem("Cube"))
+				{
+					auto assets_path = Application::GetProject()->GetAssetPath();
+					auto entity = scene->CreateEntity("Cube");
+					scene->AddComponent<Model>(entity, "/models/basic/cube.gltf");
+				}
+				if(ImGui::MenuItem("Plane"))
+				{
+					auto assets_path = Application::GetProject()->GetAssetPath();
+					auto entity = scene->CreateEntity("Plane");
+					scene->AddComponent<Model>(entity, "/models/basic/plane.gltf");
+				}
+
+				ImGui::EndMenu();
+			}
+
 			if (ImGui::MenuItem("Clear Scene"))
 				scene->ClearScene();
 
