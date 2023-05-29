@@ -69,7 +69,7 @@ namespace Nyxis
                     ImGui::DragFloat3("Light Direction", &gltfRenderer.sceneInfo.shaderValuesParams.lightDir.x);
                     if(ImGui::BeginCombo("Environment", gltfRenderer.m_EnvMapFile.c_str()))
                     {
-                        const std::string path = GetProject()->GetAssetPath() + "/environment";
+                        const std::string path = GetProject()->GetAssetPath() + "/environments/";
                         static const std::string ext = ".ktx";
 
 						std::vector maps = { gltfRenderer.m_EnvMapFile };

@@ -56,6 +56,7 @@ namespace Nyxis
 
         void OnUpdate(float dt, float aspect);
 
+        Entity GetCameraEntity() { return m_CameraEntity; }
 		Camera *GetCamera() { return m_Camera; }
 		void SetCameraControl(bool control) { m_CameraControl = control; }
         std::string GetSceneName() { return m_SceneName; }

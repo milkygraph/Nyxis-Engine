@@ -33,9 +33,12 @@ namespace Nyxis
         static constexpr int HEIGHT = 720;
 
         void Run();
-		static Ref<Scene> GetScene() { return s_Instance->m_Scene; }
 		static Ref<FrameInfo> GetFrameInfo() { return s_Instance->m_FrameInfo; }
 		static Ref<NyxisProject> GetProject() { return s_Instance->m_CurrentProject; }
+		static Ref<Scene> GetScene() { return s_Instance->m_Scene; }
+
+		static void SetScene(Ref<Scene> scene) { s_Instance->m_Scene = scene; }
+        static void SetProject(Ref<NyxisProject> project) { s_Instance->m_CurrentProject = project; }
     private:
         Application();
     	static inline Application* s_Instance = nullptr;

@@ -14,7 +14,8 @@ namespace Nyxis
 		void OnUpdate();
 		void OnEvent();
 		static bool IsFocused() { return m_IsFocused; }
-		static bool IsClicked() { return ImGui::IsMouseClicked(ImGuiMouseButton_Left) && IsFocused(); }
+		static bool IsClicked() { return ImGui::IsMouseClicked(ImGuiMouseButton_Left) && IsHovered(); }
+		static bool IsHovered() { return m_IsHovered; }
 		VkExtent2D GetExtent() const { return m_Extent; }
 
 	private:
@@ -28,5 +29,6 @@ namespace Nyxis
 		bool m_DrawGizmos = true;
 		bool m_GizmoSnapping = false;
 		static inline bool m_IsFocused = false;
+		static inline bool m_IsHovered = false;
 	};
 }

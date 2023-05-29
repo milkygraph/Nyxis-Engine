@@ -192,7 +192,7 @@ namespace Nyxis
 		}
 
 		m_IsFocused = ImGui::IsWindowFocused();
-
+		m_IsHovered = ImGui::IsWindowHovered();
 		ImGui::End();
 		ImGui::PopStyleVar();
 

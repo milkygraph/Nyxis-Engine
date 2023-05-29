@@ -17,6 +17,10 @@ namespace Nyxis
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
 			{
 			}
+			if (ImGui::MenuItem("Load", "Ctrl+L"))
+			{
+				Application::GetProject()->Load();
+			}
 			if (ImGui::MenuItem("Save", "Ctrl+S"))
 			{
 				Application::GetProject()->Save();
