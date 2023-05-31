@@ -18,6 +18,7 @@ namespace Nyxis
 		glm::vec4 lightDir{};
 		float exposure = 4.5f;
 		float gamma = 2.2f;
+		float lod = 1.0f;
 		float prefilteredCubeMipLevels;
 		float scaleIBLAmbient = 1.0f;
 		float debugViewInputs = 0;

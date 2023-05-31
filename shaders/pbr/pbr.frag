@@ -29,6 +29,7 @@ layout (set = 0, binding = 1) uniform UBOParams {
 	vec4 lightDir;
 	float exposure;
 	float gamma;
+	float lod;
 	float prefilteredCubeMipLevels;
 	float scaleIBLAmbient;
 	float debugViewInputs;

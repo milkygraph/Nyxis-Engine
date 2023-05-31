@@ -10,6 +10,7 @@ layout (set = 0, binding = 1) uniform UBOParams {
 	vec4 _pad0;
 	float exposure;
 	float gamma;
+	float lod;
 } uboParams;
 
 // From http://filmicworlds.com/blog/filmic-tonemapping-operators/
@@ -51,6 +52,6 @@ vec4 SRGBtoLINEAR(vec4 srgbIn)
 
 void main() 
 {
-	vec3 color = SRGBtoLINEAR(tonemap(textureLod(samplerEnv, inUVW, 1.5))).rgb;	
+	vec3 color = SRGBtoLINEAR(tonemap(textureLod(samplerEnv, inUVW, uboParams.lod))).rgb;	
 	outColor = vec4(color * 1.0, 1.0);
 }
