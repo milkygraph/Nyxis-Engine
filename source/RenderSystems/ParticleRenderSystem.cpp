@@ -57,7 +57,7 @@ namespace Nyxis
 	void ParticleRenderSystem::CreatePipeline(VkRenderPass renderPass)
 	{
 		PipelineConfigInfo pipelineConfig{};
-		vePipeline::defaultPipelineConfigInfo(pipelineConfig);
+		Pipeline::DefaultPipelineConfigInfo(pipelineConfig);
 		
 		pipelineConfig.attributeDescriptions.clear();
 		pipelineConfig.bindingDescriptions.clear();
@@ -65,7 +65,7 @@ namespace Nyxis
 		//pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		pipelineConfig.renderPass = renderPass;
 		pipelineConfig.pipelineLayout = m_PipelineLayout;
-		m_Pipeline = std::make_shared<vePipeline>(
+		m_Pipeline = std::make_shared<Pipeline>(
 			"../shaders/particle_shader.vert.spv",
 			"../shaders/particle_shader.frag.spv",
 			pipelineConfig);
@@ -78,7 +78,7 @@ namespace Nyxis
 	{
 		m_ParticlePool[frameInfo.frameIndex]->resetPool();
 
-		m_Pipeline->bind(frameInfo.commandBuffer);
+		m_Pipeline->Bind(frameInfo.commandBuffer);
 	
 		// write particle buffer to descriptor set
 		VkDescriptorSet descriptorSet;

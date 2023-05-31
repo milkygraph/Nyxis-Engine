@@ -7,8 +7,6 @@ namespace Nyxis
     struct PipelineConfigInfo
     {
         PipelineConfigInfo() = default;
-        PipelineConfigInfo(const PipelineConfigInfo &) = delete;
-        PipelineConfigInfo &operator=(const PipelineConfigInfo &) = delete;
 
         VkPipelineViewportStateCreateInfo viewportInfo;
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
@@ -26,33 +24,39 @@ namespace Nyxis
 
         VkPipelineLayout pipelineLayout = nullptr;
         VkRenderPass renderPass = nullptr;
-        uint32_t subpass = 0; // No idead what this is
+        uint32_t subpass = 0;
     };
 
-    class vePipeline
+    class Pipeline
     {
     public:
-        vePipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);
-        ~vePipeline();
+        Pipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);
+        ~Pipeline();
 
         // copy constructors and destructors
 
-        vePipeline(const vePipeline &) = delete;
-        vePipeline &operator=(const vePipeline &) = delete;
+        Pipeline(const Pipeline &) = delete;
+        Pipeline &operator=(const Pipeline &) = delete;
 
-        void bind(VkCommandBuffer commandBuffer);
-        static void defaultPipelineConfigInfo(PipelineConfigInfo &config);
-        static std::vector<char> readFile(const std::string& filename);
+        void Bind(VkCommandBuffer commandBuffer);
+        static void DefaultPipelineConfigInfo(PipelineConfigInfo &config);
+        static void EnableBlending(PipelineConfigInfo& config);
+        static std::vector<char> ReadFile(const std::string& filename);
+
+
+    	VkGraphicsPipelineCreateInfo pipelineCreateInfo;
 
     private:
 
-        void createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule);
-        void createGraphicsPipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);
+        void CreateShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule);
+        void CreateGraphicsPipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);
 
         Device &device = Device::Get();
         VkPipeline graphicsPipeline;
         VkShaderModule vertShaderModule;
         VkShaderModule fragShaderModule;
+
+        PipelineConfigInfo pipelineConfigInfo;
     };
 
 } // namespace Nyxis

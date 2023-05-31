@@ -47,7 +47,7 @@ namespace Nyxis
         assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
         PipelineConfigInfo pipelineConfig{};
-        vePipeline::defaultPipelineConfigInfo(pipelineConfig);
+        Pipeline::DefaultPipelineConfigInfo(pipelineConfig);
 
         // clear prevoiiusly set values
         pipelineConfig.attributeDescriptions.clear();
@@ -55,7 +55,7 @@ namespace Nyxis
 
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
-        pipeline = std::make_unique<vePipeline>(
+        pipeline = std::make_unique<Pipeline>(
             current_path + "/../shaders/point_light.vert.spv",
             current_path + "/../shaders/point_light.frag.spv",
             pipelineConfig);
@@ -63,7 +63,7 @@ namespace Nyxis
 
     void PointLightSystem::Render(FrameInfo &frameInfo)
     {
-        pipeline->bind(frameInfo.commandBuffer);
+        pipeline->Bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(
             frameInfo.commandBuffer,

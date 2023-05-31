@@ -1,6 +1,7 @@
 #include "Core/GLTFRenderer.hpp"
 
 #include "Application.hpp"
+#include "Pipeline.hpp"
 #include "Core/Log.hpp"
 #include "Core/SwapChain.hpp"
 #include "Scene/Components.hpp"
@@ -91,7 +92,7 @@ namespace Nyxis
 		glm::vec2 mousePos = frameInfo->mousePosition;
 		UpdateBuffers();
 		vkCmdBindDescriptorSets(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &skyboxDescriptorSets[frameInfo->frameIndex], 0, nullptr);
-		vkCmdBindPipeline(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
+		Pipes.skybox->Bind(frameInfo->commandBuffer);
 		skybox->draw(frameInfo->commandBuffer);
 
 		auto modelView = scene->GetComponentView<Model>();
@@ -437,6 +438,49 @@ namespace Nyxis
 
 	void GLTFRenderer::PreparePipelines(VkRenderPass renderPass)
 	{
+		PipelineConfigInfo pipelineConfig{};
+		Pipeline::DefaultPipelineConfigInfo(pipelineConfig);
+		Pipeline::EnableBlending(pipelineConfig);
+		pipelineConfig.renderPass = renderPass;
+		pipelineConfig.rasterizationInfo.cullMode = VK_CULL_MODE_NONE; // Cull back faces
+		pipelineConfig.depthStencilInfo.depthWriteEnable = VK_FALSE;
+		pipelineConfig.depthStencilInfo.depthTestEnable = VK_FALSE;
+		pipelineConfig.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+		pipelineConfig.depthStencilInfo.back = pipelineConfig.depthStencilInfo.back; // Enable depth test and write
+		pipelineConfig.depthStencilInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+		pipelineConfig.bindingDescriptions = { { 0, sizeof(Model::Vertex), VK_VERTEX_INPUT_RATE_VERTEX } };
+		pipelineConfig.attributeDescriptions = 
+		{
+			{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
+			{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
+			{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 }
+		};
+
+		// Pipeline layout
+		std::vector<VkDescriptorSetLayout> setLayouts = {
+			ModelDescriptorManager::GetModelDescriptorSetLayout()->getDescriptorSetLayout(),
+			ModelDescriptorManager::GetMaterialDescriptorSetLayout()->getDescriptorSetLayout(),
+			ModelDescriptorManager::GetNodeDescriptorSetLayout()->getDescriptorSetLayout()
+		};
+
+		VkPipelineLayoutCreateInfo pipelineLayoutCI{};
+		pipelineLayoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutCI.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
+		pipelineLayoutCI.pSetLayouts = setLayouts.data();
+		VkPushConstantRange pushConstantRange{};
+		pushConstantRange.size = sizeof(PushConstBlockMaterial);
+		pushConstantRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		pipelineLayoutCI.pushConstantRangeCount = 1;
+		pipelineLayoutCI.pPushConstantRanges = &pushConstantRange;
+		vkCreatePipelineLayout(device.device(), &pipelineLayoutCI, nullptr, &pipelineLayout);
+
+		pipelineConfig.pipelineLayout = pipelineLayout;
+		Pipes.skybox = std::make_shared<Pipeline>(
+			"../shaders/pbr/skybox.vert.spv",
+			"../shaders/pbr/skybox.frag.spv",
+			pipelineConfig
+		);
+
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCI{};
 		inputAssemblyStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 		inputAssemblyStateCI.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -445,7 +489,7 @@ namespace Nyxis
 		rasterizationStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rasterizationStateCI.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizationStateCI.cullMode = VK_CULL_MODE_BACK_BIT;
-		rasterizationStateCI.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		rasterizationStateCI.frontFace = VK_FRONT_FACE_CLOCKWISE;
 		rasterizationStateCI.lineWidth = 1.0f;
 
 		VkPipelineColorBlendAttachmentState blendAttachmentState{};
@@ -478,7 +522,7 @@ namespace Nyxis
 		multisampleStateCI.pSampleMask = nullptr;            // Optional
 		multisampleStateCI.alphaToCoverageEnable = VK_FALSE; // Optional
 		multisampleStateCI.alphaToOneEnable = VK_FALSE;      // Optional
-
+		
 		std::vector<VkDynamicState> dynamicStateEnables = {
 			VK_DYNAMIC_STATE_VIEWPORT,
 			VK_DYNAMIC_STATE_SCISSOR
@@ -488,24 +532,6 @@ namespace Nyxis
 		dynamicStateCI.pDynamicStates = dynamicStateEnables.data();
 		dynamicStateCI.dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size());
 
-		// Pipeline layout
-		std::vector<VkDescriptorSetLayout> setLayouts = {
-			ModelDescriptorManager::GetModelDescriptorSetLayout()->getDescriptorSetLayout(),
-			ModelDescriptorManager::GetMaterialDescriptorSetLayout()->getDescriptorSetLayout(),
-			ModelDescriptorManager::GetNodeDescriptorSetLayout()->getDescriptorSetLayout()
-		};
-
-		VkPipelineLayoutCreateInfo pipelineLayoutCI{};
-		pipelineLayoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutCI.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
-		pipelineLayoutCI.pSetLayouts = setLayouts.data();
-		VkPushConstantRange pushConstantRange{};
-		pushConstantRange.size = sizeof(PushConstBlockMaterial);
-		pushConstantRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		pipelineLayoutCI.pushConstantRangeCount = 1;
-		pipelineLayoutCI.pPushConstantRanges = &pushConstantRange;
-		vkCreatePipelineLayout(device.device(), &pipelineLayoutCI, nullptr, &pipelineLayout);
-
 		// Vertex bindings an attributes
 		VkVertexInputBindingDescription vertexInputBinding = { 0, sizeof(Model::Vertex), VK_VERTEX_INPUT_RATE_VERTEX };
 		std::vector<VkVertexInputAttributeDescription> vertexInputAttributes = {
@@ -513,6 +539,7 @@ namespace Nyxis
 			{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
 			{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 }
 		};
+
 		VkPipelineVertexInputStateCreateInfo vertexInputStateCI{};
 		vertexInputStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vertexInputStateCI.vertexBindingDescriptionCount = 1;
@@ -545,14 +572,14 @@ namespace Nyxis
 		multisampleStateCI.alphaToCoverageEnable = VK_FALSE; // Optional
 		multisampleStateCI.alphaToOneEnable = VK_FALSE;      // Optional
 
+		auto otherPipeline = Pipes.skybox->pipelineCreateInfo;
+
 		// Skybox pipeline (background cube)
 		shaderStages = {
 			loadShader(device.device(), "../shaders/pbr/skybox.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
 			loadShader(device.device(), "../shaders/pbr/skybox.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 
-		rasterizationStateCI.cullMode = VK_CULL_MODE_NONE;
-		vkCreateGraphicsPipelines(device.device(), pipelineCache, 1, &pipelineCI, nullptr, &pipelines.skybox);
 		for (auto shaderStage : shaderStages) {
 			vkDestroyShaderModule(device.device(), shaderStage.module, nullptr);
 		}

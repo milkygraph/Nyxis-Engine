@@ -19,7 +19,7 @@ namespace Nyxis
 		virtual void CreateDescriptorSetLayout();
 
                 Device & pDevice = Device::Get();
-		std::unique_ptr<vePipeline> pPipeline;
+		std::unique_ptr<Pipeline> pPipeline;
 		VkPipelineLayout pipelineLayout;
 
 		std::string& VertexShaderPath;

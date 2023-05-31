@@ -66,6 +66,7 @@ namespace Nyxis
                     ImGui::Text("SkyMap");
                     ImGui::DragFloat("Exposure", &gltfRenderer.sceneInfo.shaderValuesParams.exposure, 0.1f, 0.0f, 10.0f);
                     ImGui::DragFloat("Gamma", &gltfRenderer.sceneInfo.shaderValuesParams.gamma, 0.1f, 0.0f, 10.0f);
+                    ImGui::DragFloat("lod", &gltfRenderer.sceneInfo.shaderValuesParams.lod, 0.1f, 0.0f, 10.0f);
                     ImGui::DragFloat3("Light Direction", &gltfRenderer.sceneInfo.shaderValuesParams.lightDir.x);
                     if(ImGui::BeginCombo("Environment", gltfRenderer.m_EnvMapFile.c_str()))
                     {

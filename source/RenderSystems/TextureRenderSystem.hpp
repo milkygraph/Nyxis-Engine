@@ -20,7 +20,7 @@ namespace Nyxis
 		void CreatePipeline(VkRenderPass renderPass);
 
 		Device &pDevice = Device::Get();
-		std::unique_ptr<vePipeline> pPipeline;
+		std::unique_ptr<Pipeline> pPipeline;
 		VkPipelineLayout m_PipelineLayout;
 		
 		std::vector<Ref<DescriptorPool>> m_TexturePool{};

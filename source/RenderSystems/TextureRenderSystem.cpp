@@ -41,7 +41,7 @@ namespace Nyxis
 	{
 		m_TexturePool[frameInfo.frameIndex]->resetPool();
 
-		pPipeline->bind(frameInfo.commandBuffer);
+		pPipeline->Bind(frameInfo.commandBuffer);
 
 		vkCmdBindDescriptorSets(
 			frameInfo.commandBuffer,
@@ -130,10 +130,10 @@ namespace Nyxis
 	void TextureRenderSystem::CreatePipeline(VkRenderPass renderPass)
 	{
 		PipelineConfigInfo pipelineConfig{};
-		vePipeline::defaultPipelineConfigInfo(pipelineConfig);
+		Pipeline::DefaultPipelineConfigInfo(pipelineConfig);
 		pipelineConfig.renderPass = renderPass;
 		pipelineConfig.pipelineLayout = m_PipelineLayout;
-		pPipeline = std::make_unique<vePipeline>(
+		pPipeline = std::make_unique<Pipeline>(
 			"../shaders/texture_shader.vert.spv",
 			"../shaders/texture_shader.frag.spv",
 			pipelineConfig);

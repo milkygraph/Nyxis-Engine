@@ -25,7 +25,7 @@ namespace Nyxis
 
         Device &device = Device::Get();
 
-        std::unique_ptr<vePipeline> pipeline;
+        std::unique_ptr<Pipeline> pipeline;
         VkPipelineLayout pipelineLayout;
     };
 } // namespace Nyxis

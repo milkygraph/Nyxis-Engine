@@ -4,20 +4,19 @@
 
 namespace Nyxis
 {
-    vePipeline::vePipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config)
+    Pipeline::Pipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config)
     {
-
-        createGraphicsPipeline(vertPath, fragPath, config);
+        CreateGraphicsPipeline(vertPath, fragPath, config);
     }
 
-    vePipeline::~vePipeline()
+    Pipeline::~Pipeline()
     {
         vkDestroyShaderModule(device.device(), vertShaderModule, nullptr);
         vkDestroyShaderModule(device.device(), fragShaderModule, nullptr);
         vkDestroyPipeline(device.device(), graphicsPipeline, nullptr);
     }
 
-	std::vector<char> vePipeline::readFile(const std::string &filename)
+	std::vector<char> Pipeline::ReadFile(const std::string &filename)
     {
         std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
@@ -33,16 +32,16 @@ namespace Nyxis
         return buffer;
     }
 
-    void vePipeline::createGraphicsPipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config)
+    void Pipeline::CreateGraphicsPipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config)
     {
         assert(config.pipelineLayout != VK_NULL_HANDLE && "Cannot create graphics pipeline: no pipelineLayout provided in config");
         assert(config.renderPass != VK_NULL_HANDLE && "Cannot create graphics pipeline: no renderPass provided in config");
 
-        auto vertCode = readFile(vertPath);
-        auto fragCode = readFile(fragPath);
+        auto vertCode = ReadFile(vertPath);
+        auto fragCode = ReadFile(fragPath);
 
-        createShaderModule(vertCode, &vertShaderModule);
-        createShaderModule(fragCode, &fragShaderModule);
+        CreateShaderModule(vertCode, &vertShaderModule);
+        CreateShaderModule(fragCode, &fragShaderModule);
 
         VkPipelineShaderStageCreateInfo shaderStages[2];
         shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -69,6 +68,7 @@ namespace Nyxis
         vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
         vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
         vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+        
 
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -90,13 +90,15 @@ namespace Nyxis
         pipelineInfo.basePipelineIndex = -1;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
+        this->pipelineCreateInfo = pipelineInfo;
+
         if (vkCreateGraphicsPipelines(device.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create graphics pipeline");
         }
     }
 
-    void vePipeline::createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule)
+    void Pipeline::CreateShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule)
     {
         VkShaderModuleCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -109,12 +111,12 @@ namespace Nyxis
         }
     }
 
-    void vePipeline::bind(VkCommandBuffer commandBuffer)
+    void Pipeline::Bind(VkCommandBuffer commandBuffer)
     {
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
     }
 
-    void vePipeline::defaultPipelineConfigInfo(PipelineConfigInfo &config)
+    void Pipeline::DefaultPipelineConfigInfo(PipelineConfigInfo &config)
     {
         config.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         config.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -183,8 +185,19 @@ namespace Nyxis
         config.dynamicStateInfo.pDynamicStates = config.dynamicStateEnables.data();
         config.dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(config.dynamicStateEnables.size());
         config.dynamicStateInfo.flags = 0;
+    }
 
-        config.bindingDescriptions = OBJModel::Vertex::getBindingDescriptions();
-        config.attributeDescriptions = OBJModel::Vertex::getAttributeDescriptions();
+    void Pipeline::EnableBlending(PipelineConfigInfo& config)
+    {
+        config.colorBlendAttachment.blendEnable = VK_TRUE;
+        config.colorBlendAttachment.colorWriteMask =
+            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
+            VK_COLOR_COMPONENT_A_BIT;
+        config.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        config.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        config.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+        config.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        config.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        config.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
     }
 }

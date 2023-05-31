@@ -52,10 +52,10 @@ namespace Nyxis
         // assert(pipelineLayout == nullptr && "Can not create pipeline before pipeline layout");
 
         PipelineConfigInfo pipelineConfig{};
-        vePipeline::defaultPipelineConfigInfo(pipelineConfig);
+        Pipeline::DefaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
-        pPipeline = std::make_unique<vePipeline>(
+        pPipeline = std::make_unique<Pipeline>(
             current_path + "/../shaders/simple_shader.vert.spv",
             current_path + "/../shaders/simple_shader.frag.spv",
             pipelineConfig);
@@ -63,7 +63,7 @@ namespace Nyxis
 
     void SimpleRenderSystem::Render(FrameInfo &frameInfo)
     {
-        pPipeline->bind(frameInfo.commandBuffer);
+        pPipeline->Bind(frameInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(frameInfo.commandBuffer,
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,

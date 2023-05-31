@@ -7,6 +7,8 @@ constexpr auto DEPTH_ARRAY_SCALE = 2048; // will be used fir object picking buff
 
 namespace Nyxis
 {
+	class Pipeline;
+
 	inline SceneInfo* g_SceneInfo;
 	inline std::vector<Ref<Buffer>>* g_UniformBufferParams;
 	class GLTFRenderer
@@ -60,11 +62,18 @@ namespace Nyxis
 
 		struct Pipelines
 		{
-			VkPipeline skybox;
 			VkPipeline pbr;
 			VkPipeline pbrDoubleSided;
 			VkPipeline pbrAlphaBlend;
 		} pipelines;
+
+		struct
+		{
+			Ref<Pipeline> skybox;
+			Ref<Pipeline> pbr;
+			Ref<Pipeline> pbrDoubleSided;
+			Ref<Pipeline> pbrAlphaBlend;
+		} Pipes;
 
 		VkPipeline boundPipeline = VK_NULL_HANDLE;
 		VkPipelineLayout pipelineLayout;
