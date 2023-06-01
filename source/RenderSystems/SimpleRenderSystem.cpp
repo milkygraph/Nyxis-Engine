@@ -50,15 +50,16 @@ namespace Nyxis
     void SimpleRenderSystem::createPipeline(VkRenderPass renderPass)
     {
         // assert(pipelineLayout == nullptr && "Can not create pipeline before pipeline layout");
+		pPipeline = std::make_unique<Pipeline>(
+			current_path + "/../shaders/simple_shader.vert.spv",
+			current_path + "/../shaders/simple_shader.frag.spv"
+		);
 
-        PipelineConfigInfo pipelineConfig{};
+        auto pipelineConfig = pPipeline->GetConfig();
         Pipeline::DefaultPipelineConfigInfo(pipelineConfig);
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
-        pPipeline = std::make_unique<Pipeline>(
-            current_path + "/../shaders/simple_shader.vert.spv",
-            current_path + "/../shaders/simple_shader.frag.spv",
-            pipelineConfig);
+        pPipeline->Create();
     }
 
     void SimpleRenderSystem::Render(FrameInfo &frameInfo)

@@ -8,9 +8,17 @@ constexpr auto DEPTH_ARRAY_SCALE = 2048; // will be used fir object picking buff
 namespace Nyxis
 {
 	class Pipeline;
-
 	inline SceneInfo* g_SceneInfo;
 	inline std::vector<Ref<Buffer>>* g_UniformBufferParams;
+
+	enum class PipelineType
+	{
+		SKYBOX = 0,
+		PBR,
+		PBR_DOUBLE_SIDED,
+		PBR_ALPHA_BLEND
+	};
+
 	class GLTFRenderer
 	{
 	public:
@@ -19,6 +27,8 @@ namespace Nyxis
 		PushConstBlockMaterial pushConstBlockMaterial;
 
 		UBOMatrix shaderValuesScene{}, shaderValuesSkybox{};
+		bool m_PBRPipelineUpdate = false;
+		bool m_SkyboxPipelineUpdate = false;
 
 		GLTFRenderer(VkRenderPass renderPass);
 		~GLTFRenderer();
@@ -26,13 +36,14 @@ namespace Nyxis
 		void OnUpdate();
 		void Render();
 		void UpdateAnimation(float dt);
+		void UpdatePipeline(PipelineType type);
 		void LoadEnvironment(std::string& filename);
 		void UpdateSkyboxDescriptorSets();
 		void UpdateScene() { m_SceneUpdated = true; }
 
 		std::string m_EnvMapFile = "";
 		bool m_SceneUpdated = false;
-		bool m_Animate = true;
+		bool m_Animate = false;
 
 		std::vector<Ref<Buffer>> skyboxBuffers;
 		std::vector<Ref<Buffer>> uniformBuffersParams;
@@ -43,6 +54,14 @@ namespace Nyxis
 			uint32_t depthBufferObject[DEPTH_ARRAY_SCALE];
 			uint32_t selectedEntity = 0;
 		} objectPicking{};
+
+		struct
+		{
+			Ref<Pipeline> skybox;
+			Ref<Pipeline> pbr;
+			Ref<Pipeline> pbrDoubleSided;
+			Ref<Pipeline> pbrAlphaBlend;
+		} Pipes;
 
 	private:
 		void PrepareUniformBuffers();
@@ -67,13 +86,6 @@ namespace Nyxis
 			VkPipeline pbrAlphaBlend;
 		} pipelines;
 
-		struct
-		{
-			Ref<Pipeline> skybox;
-			Ref<Pipeline> pbr;
-			Ref<Pipeline> pbrDoubleSided;
-			Ref<Pipeline> pbrAlphaBlend;
-		} Pipes;
 
 		VkPipeline boundPipeline = VK_NULL_HANDLE;
 		VkPipelineLayout pipelineLayout;

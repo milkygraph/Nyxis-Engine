@@ -34,12 +34,12 @@ namespace Nyxis
 	}
 	void RenderSystem::CreatePipeline(VkRenderPass renderPass)
 	{
-		PipelineConfigInfo pipelineConfig{};
+		pPipeline = std::make_unique<Pipeline>(VertexShaderPath, FragmentShaderPath);
+		auto pipelineConfig = pPipeline->GetConfig();
 		Pipeline::DefaultPipelineConfigInfo(pipelineConfig);
 		pipelineConfig.renderPass = renderPass;
 		pipelineConfig.pipelineLayout = pipelineLayout;
-
-		pPipeline = std::make_unique<Pipeline>(VertexShaderPath, FragmentShaderPath, pipelineConfig);
+		pPipeline->Create();
 	}
 	void RenderSystem::CreateDescriptorSetLayout() {}
 }

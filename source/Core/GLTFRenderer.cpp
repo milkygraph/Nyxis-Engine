@@ -82,6 +82,16 @@ namespace Nyxis
             animationThread.detach();
         }
 
+		if(m_PBRPipelineUpdate)
+		{
+			Pipes.pbr->Recreate();
+			m_PBRPipelineUpdate = false;
+		}
+		if(m_SkyboxPipelineUpdate)
+		{
+			Pipes.skybox->Recreate();
+			m_SkyboxPipelineUpdate = false;
+		}
 	}
 
 	void GLTFRenderer::Render()
@@ -137,6 +147,18 @@ namespace Nyxis
 				auto& gltfModel = scene->GetComponent<Model>(model);
 				gltfModel.updateAnimation(dt);
 			}
+		}
+	}
+
+	void GLTFRenderer::UpdatePipeline(PipelineType pipeline)
+	{
+		switch (pipeline)
+		{
+		case PipelineType::PBR:
+			m_PBRPipelineUpdate = true;
+			break;
+		default:
+			break;
 		}
 	}
 
@@ -344,9 +366,9 @@ namespace Nyxis
 					}
 
 					if (pipeline != boundPipeline) {
-						vkCmdBindPipeline(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-						boundPipeline = pipeline;
 					}
+
+					Pipes.pbr->Bind(frameInfo->commandBuffer);
 
 					const std::vector<VkDescriptorSet> descriptorsets = {
 						model.getDescriptorSet(frameInfo->frameIndex),
@@ -438,18 +460,22 @@ namespace Nyxis
 
 	void GLTFRenderer::PreparePipelines(VkRenderPass renderPass)
 	{
-		PipelineConfigInfo pipelineConfig{};
-		Pipeline::DefaultPipelineConfigInfo(pipelineConfig);
-		Pipeline::EnableBlending(pipelineConfig);
-		pipelineConfig.renderPass = renderPass;
-		pipelineConfig.rasterizationInfo.cullMode = VK_CULL_MODE_NONE; // Cull back faces
-		pipelineConfig.depthStencilInfo.depthWriteEnable = VK_FALSE;
-		pipelineConfig.depthStencilInfo.depthTestEnable = VK_FALSE;
-		pipelineConfig.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-		pipelineConfig.depthStencilInfo.back = pipelineConfig.depthStencilInfo.back; // Enable depth test and write
-		pipelineConfig.depthStencilInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
-		pipelineConfig.bindingDescriptions = { { 0, sizeof(Model::Vertex), VK_VERTEX_INPUT_RATE_VERTEX } };
-		pipelineConfig.attributeDescriptions = 
+		Pipes.skybox = std::make_shared<Pipeline>(
+			"../shaders/pbr/skybox.vert.spv",
+			"../shaders/pbr/skybox.frag.spv"
+		);
+
+		auto& skyboxConfig = Pipes.skybox->GetConfig();
+		skyboxConfig.renderPass = renderPass;
+		skyboxConfig.rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT; // Cull back faces
+		skyboxConfig.rasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		skyboxConfig.depthStencilInfo.depthWriteEnable = VK_FALSE;
+		skyboxConfig.depthStencilInfo.depthTestEnable = VK_FALSE;
+		skyboxConfig.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+		skyboxConfig.depthStencilInfo.back = skyboxConfig.depthStencilInfo.back; // Enable depth test and write
+		skyboxConfig.depthStencilInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+		skyboxConfig.bindingDescriptions = { { 0, sizeof(Model::Vertex), VK_VERTEX_INPUT_RATE_VERTEX } };
+		skyboxConfig.attributeDescriptions = 
 		{
 			{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
 			{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
@@ -474,125 +500,40 @@ namespace Nyxis
 		pipelineLayoutCI.pPushConstantRanges = &pushConstantRange;
 		vkCreatePipelineLayout(device.device(), &pipelineLayoutCI, nullptr, &pipelineLayout);
 
-		pipelineConfig.pipelineLayout = pipelineLayout;
-		Pipes.skybox = std::make_shared<Pipeline>(
-			"../shaders/pbr/skybox.vert.spv",
-			"../shaders/pbr/skybox.frag.spv",
-			pipelineConfig
-		);
+		skyboxConfig.pipelineLayout = pipelineLayout;
 
-		VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCI{};
-		inputAssemblyStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		inputAssemblyStateCI.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		Pipes.skybox->Create();
 
-		VkPipelineRasterizationStateCreateInfo rasterizationStateCI{};
-		rasterizationStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		rasterizationStateCI.polygonMode = VK_POLYGON_MODE_FILL;
-		rasterizationStateCI.cullMode = VK_CULL_MODE_BACK_BIT;
-		rasterizationStateCI.frontFace = VK_FRONT_FACE_CLOCKWISE;
-		rasterizationStateCI.lineWidth = 1.0f;
+		// PBR pipeline
 
-		VkPipelineColorBlendAttachmentState blendAttachmentState{};
-		blendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		blendAttachmentState.blendEnable = VK_FALSE;
-
-		VkPipelineColorBlendStateCreateInfo colorBlendStateCI{};
-		colorBlendStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		colorBlendStateCI.attachmentCount = 1;
-		colorBlendStateCI.pAttachments = &blendAttachmentState;
-
-		VkPipelineDepthStencilStateCreateInfo depthStencilStateCI{};
-		depthStencilStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencilStateCI.depthTestEnable = VK_FALSE;
-		depthStencilStateCI.depthWriteEnable = VK_FALSE;
-		depthStencilStateCI.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-		depthStencilStateCI.front = depthStencilStateCI.back;
-		depthStencilStateCI.back.compareOp = VK_COMPARE_OP_ALWAYS;
-
-		VkPipelineViewportStateCreateInfo viewportStateCI{};
-		viewportStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		viewportStateCI.viewportCount = 1;
-		viewportStateCI.scissorCount = 1;
-
-		VkPipelineMultisampleStateCreateInfo multisampleStateCI{};
-		multisampleStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		multisampleStateCI.sampleShadingEnable = VK_FALSE;
-		multisampleStateCI.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-		multisampleStateCI.minSampleShading = 1.0f;          // Optional
-		multisampleStateCI.pSampleMask = nullptr;            // Optional
-		multisampleStateCI.alphaToCoverageEnable = VK_FALSE; // Optional
-		multisampleStateCI.alphaToOneEnable = VK_FALSE;      // Optional
+		Pipes.pbr = std::make_shared<Pipeline>(
+			"../shaders/pbr/pbr.vert.spv",
+			"../shaders/pbr/pbr.frag.spv");
+		auto& pbrConfig = Pipes.pbr->GetConfig();
+		Pipeline::EnableBlending(pbrConfig);
 		
-		std::vector<VkDynamicState> dynamicStateEnables = {
-			VK_DYNAMIC_STATE_VIEWPORT,
-			VK_DYNAMIC_STATE_SCISSOR
-		};
-		VkPipelineDynamicStateCreateInfo dynamicStateCI{};
-		dynamicStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		dynamicStateCI.pDynamicStates = dynamicStateEnables.data();
-		dynamicStateCI.dynamicStateCount = static_cast<uint32_t>(dynamicStateEnables.size());
-
-		// Vertex bindings an attributes
-		VkVertexInputBindingDescription vertexInputBinding = { 0, sizeof(Model::Vertex), VK_VERTEX_INPUT_RATE_VERTEX };
-		std::vector<VkVertexInputAttributeDescription> vertexInputAttributes = {
+		pbrConfig.renderPass = renderPass;
+		pbrConfig.rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT; // Cull back faces
+		pbrConfig.rasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		pbrConfig.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+		pbrConfig.depthStencilInfo.back = skyboxConfig.depthStencilInfo.back; // Enable depth test and write
+		pbrConfig.depthStencilInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
+		pbrConfig.bindingDescriptions = { { 0, sizeof(Model::Vertex), VK_VERTEX_INPUT_RATE_VERTEX } };
+		pbrConfig.attributeDescriptions = 
+		{
 			{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
 			{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
 			{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 }
 		};
 
-		VkPipelineVertexInputStateCreateInfo vertexInputStateCI{};
-		vertexInputStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputStateCI.vertexBindingDescriptionCount = 1;
-		vertexInputStateCI.pVertexBindingDescriptions = &vertexInputBinding;
-		vertexInputStateCI.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
-		vertexInputStateCI.pVertexAttributeDescriptions = vertexInputAttributes.data();
-
-		// Pipelines
-		std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages;
-
-		VkGraphicsPipelineCreateInfo pipelineCI{};
-		pipelineCI.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineCI.layout = pipelineLayout;
-		pipelineCI.renderPass = renderPass;
-		pipelineCI.pInputAssemblyState = &inputAssemblyStateCI;
-		pipelineCI.pVertexInputState = &vertexInputStateCI;
-		pipelineCI.pRasterizationState = &rasterizationStateCI;
-		pipelineCI.pColorBlendState = &colorBlendStateCI;
-		pipelineCI.pMultisampleState = &multisampleStateCI;
-		pipelineCI.pViewportState = &viewportStateCI;
-		pipelineCI.pDepthStencilState = &depthStencilStateCI;
-		pipelineCI.pDynamicState = &dynamicStateCI;
-		pipelineCI.stageCount = static_cast<uint32_t>(shaderStages.size());
-		pipelineCI.pStages = shaderStages.data();
-		multisampleStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		multisampleStateCI.sampleShadingEnable = VK_FALSE;
-		multisampleStateCI.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-		multisampleStateCI.minSampleShading = 1.0f;          // Optional
-		multisampleStateCI.pSampleMask = nullptr;            // Optional
-		multisampleStateCI.alphaToCoverageEnable = VK_FALSE; // Optional
-		multisampleStateCI.alphaToOneEnable = VK_FALSE;      // Optional
-
-		auto otherPipeline = Pipes.skybox->pipelineCreateInfo;
-
-		// Skybox pipeline (background cube)
-		shaderStages = {
-			loadShader(device.device(), "../shaders/pbr/skybox.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-			loadShader(device.device(), "../shaders/pbr/skybox.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-		};
-
-		for (auto shaderStage : shaderStages) {
-			vkDestroyShaderModule(device.device(), shaderStage.module, nullptr);
-		}
-
-		// PBR pipeline
 		setLayouts.push_back(depthBufferLayout);
 		pipelineLayoutCI.pSetLayouts = setLayouts.data();
 		pipelineLayoutCI.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
 		vkCreatePipelineLayout(device.device(), &pipelineLayoutCI, nullptr, &pipelineLayout);
 
-		pipelineCI.layout = pipelineLayout;
+		pbrConfig.pipelineLayout = pipelineLayout;
 
-		vertexInputAttributes = {
+		pbrConfig.attributeDescriptions = {
 			{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
 			{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
 			{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 },
@@ -602,32 +543,9 @@ namespace Nyxis
 			{ 6, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 18 }
 		};
 
-		vertexInputStateCI.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
-		vertexInputStateCI.pVertexAttributeDescriptions = vertexInputAttributes.data();
-
-		shaderStages = {
-			loadShader(device.device(), "../shaders/pbr/pbr.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
-			loadShader(device.device(), "../shaders/pbr/pbr.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-		};
-		depthStencilStateCI.depthWriteEnable = VK_TRUE;
-		depthStencilStateCI.depthTestEnable = VK_TRUE;
-		vkCreateGraphicsPipelines(device.device(), pipelineCache, 1, &pipelineCI, nullptr, &pipelines.pbr);
-		vkCreateGraphicsPipelines(device.device(), pipelineCache, 1, &pipelineCI, nullptr, &pipelines.pbrDoubleSided);
-
-		rasterizationStateCI.cullMode = VK_CULL_MODE_NONE;
-		blendAttachmentState.blendEnable = VK_TRUE;
-		blendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		blendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-		blendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-		blendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
-		blendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-		blendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-		blendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
-		vkCreateGraphicsPipelines(device.device(), pipelineCache, 1, &pipelineCI, nullptr, &pipelines.pbrAlphaBlend);
-
-		for (auto shaderStage : shaderStages) {
-			vkDestroyShaderModule(device.device(), shaderStage.module, nullptr);
-		}
+		pbrConfig.depthStencilInfo.depthWriteEnable = VK_TRUE;
+		pbrConfig.depthStencilInfo.depthTestEnable = VK_TRUE;
+		Pipes.pbr->Create();
 	}
 
 	void GLTFRenderer::GenerateBRDFLUT()

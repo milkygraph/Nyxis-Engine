@@ -183,6 +183,7 @@ namespace Nyxis
         VkPhysicalDeviceFeatures deviceFeatures = {};
         deviceFeatures.samplerAnisotropy = VK_TRUE;
         deviceFeatures.fragmentStoresAndAtomics = VK_TRUE; // TODO: investigate this feature
+        deviceFeatures.logicOp = VK_TRUE; // To enable logical operations in the fragment shader
 
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

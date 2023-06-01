@@ -4,9 +4,11 @@
 
 namespace Nyxis
 {
-    Pipeline::Pipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config)
+    Pipeline::Pipeline(const std::string &vertPath, const std::string &fragPath)
     {
-        CreateGraphicsPipeline(vertPath, fragPath, config);
+        this->vertPath = vertPath;
+		this->fragPath = fragPath;
+    	DefaultPipelineConfigInfo(this->pipelineConfigInfo);
     }
 
     Pipeline::~Pipeline()
@@ -32,10 +34,10 @@ namespace Nyxis
         return buffer;
     }
 
-    void Pipeline::CreateGraphicsPipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config)
+    void Pipeline::Create()
     {
-        assert(config.pipelineLayout != VK_NULL_HANDLE && "Cannot create graphics pipeline: no pipelineLayout provided in config");
-        assert(config.renderPass != VK_NULL_HANDLE && "Cannot create graphics pipeline: no renderPass provided in config");
+        assert(pipelineConfigInfo.pipelineLayout != VK_NULL_HANDLE && "Cannot create graphics pipeline: no pipelineLayout provided in config");
+        assert(pipelineConfigInfo.renderPass != VK_NULL_HANDLE && "Cannot create graphics pipeline: no renderPass provided in config");
 
         auto vertCode = ReadFile(vertPath);
         auto fragCode = ReadFile(fragPath);
@@ -59,8 +61,8 @@ namespace Nyxis
         shaderStages[1].pNext = nullptr;
         shaderStages[1].pSpecializationInfo = nullptr;
 
-        auto &bindingDescriptions = config.bindingDescriptions;
-        auto &attributeDescriptions = config.attributeDescriptions;
+        auto &bindingDescriptions = pipelineConfigInfo.bindingDescriptions;
+        auto &attributeDescriptions = pipelineConfigInfo.attributeDescriptions;
 
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -75,22 +77,20 @@ namespace Nyxis
         pipelineInfo.stageCount = 2;
         pipelineInfo.pStages = shaderStages;
         pipelineInfo.pVertexInputState = &vertexInputInfo;
-        pipelineInfo.pInputAssemblyState = &config.inputAssemblyInfo;
-        pipelineInfo.pViewportState = &config.viewportInfo;
-        pipelineInfo.pRasterizationState = &config.rasterizationInfo;
-        pipelineInfo.pMultisampleState = &config.multisamplingInfo;
-        pipelineInfo.pColorBlendState = &config.colorBlendInfo;
-        pipelineInfo.pDepthStencilState = &config.depthStencilInfo;
-        pipelineInfo.pDynamicState = &config.dynamicStateInfo;
+        pipelineInfo.pInputAssemblyState = &pipelineConfigInfo.inputAssemblyInfo;
+        pipelineInfo.pViewportState = &pipelineConfigInfo.viewportInfo;
+        pipelineInfo.pRasterizationState = &pipelineConfigInfo.rasterizationInfo;
+        pipelineInfo.pMultisampleState = &pipelineConfigInfo.multisamplingInfo;
+        pipelineInfo.pColorBlendState = &pipelineConfigInfo.colorBlendInfo;
+        pipelineInfo.pDepthStencilState = &pipelineConfigInfo.depthStencilInfo;
+        pipelineInfo.pDynamicState = &pipelineConfigInfo.dynamicStateInfo;
 
-        pipelineInfo.layout = config.pipelineLayout;
-        pipelineInfo.renderPass = config.renderPass;
-        pipelineInfo.subpass = config.subpass;
+        pipelineInfo.layout = pipelineConfigInfo.pipelineLayout;
+        pipelineInfo.renderPass = pipelineConfigInfo.renderPass;
+        pipelineInfo.subpass = pipelineConfigInfo.subpass;
 
         pipelineInfo.basePipelineIndex = -1;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-
-        this->pipelineCreateInfo = pipelineInfo;
 
         if (vkCreateGraphicsPipelines(device.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
         {
@@ -109,6 +109,14 @@ namespace Nyxis
         {
             throw std::runtime_error("failed to create shader module!");
         }
+    }
+
+    void Pipeline::Recreate()
+    {
+        vkDeviceWaitIdle(device.device());
+        vkDestroyPipeline(device.device(), graphicsPipeline, nullptr);
+        Create();
+        LOG_INFO("Pipeline recreated");
     }
 
     void Pipeline::Bind(VkCommandBuffer commandBuffer)
@@ -196,8 +204,8 @@ namespace Nyxis
         config.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
         config.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
         config.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-        config.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        config.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        config.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        config.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
         config.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
     }
 }

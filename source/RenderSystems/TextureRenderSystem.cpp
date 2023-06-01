@@ -129,13 +129,14 @@ namespace Nyxis
 
 	void TextureRenderSystem::CreatePipeline(VkRenderPass renderPass)
 	{
-		PipelineConfigInfo pipelineConfig{};
+		pPipeline = std::make_unique<Pipeline>(
+			"../shaders/texture_shader.vert.spv",
+			"../shaders/texture_shader.frag.spv"
+			);
+		auto pipelineConfig = pPipeline->GetConfig();
 		Pipeline::DefaultPipelineConfigInfo(pipelineConfig);
 		pipelineConfig.renderPass = renderPass;
 		pipelineConfig.pipelineLayout = m_PipelineLayout;
-		pPipeline = std::make_unique<Pipeline>(
-			"../shaders/texture_shader.vert.spv",
-			"../shaders/texture_shader.frag.spv",
-			pipelineConfig);
+		pPipeline->Create();
 	}
 }

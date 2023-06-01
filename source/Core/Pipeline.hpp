@@ -8,19 +8,19 @@ namespace Nyxis
     {
         PipelineConfigInfo() = default;
 
-        VkPipelineViewportStateCreateInfo viewportInfo;
-        VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
-        VkPipelineRasterizationStateCreateInfo rasterizationInfo;
-        VkPipelineMultisampleStateCreateInfo multisamplingInfo;
-        VkPipelineColorBlendAttachmentState colorBlendAttachment;
-        VkPipelineColorBlendStateCreateInfo colorBlendInfo;
-        VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
+        VkPipelineViewportStateCreateInfo viewportInfo{};
+        VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
+        VkPipelineRasterizationStateCreateInfo rasterizationInfo{};
+        VkPipelineMultisampleStateCreateInfo multisamplingInfo{};
+        VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+        VkPipelineColorBlendStateCreateInfo colorBlendInfo{};
+        VkPipelineDepthStencilStateCreateInfo depthStencilInfo{};
 
-        std::vector<VkDynamicState> dynamicStateEnables;
-        VkPipelineDynamicStateCreateInfo dynamicStateInfo;
+        std::vector<VkDynamicState> dynamicStateEnables{};
+        VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
 
-        std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
-        std::vector<VkVertexInputBindingDescription> bindingDescriptions;
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
+        std::vector<VkVertexInputBindingDescription> bindingDescriptions{};
 
         VkPipelineLayout pipelineLayout = nullptr;
         VkRenderPass renderPass = nullptr;
@@ -30,7 +30,7 @@ namespace Nyxis
     class Pipeline
     {
     public:
-        Pipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);
+        Pipeline(const std::string &vertPath, const std::string &fragPath);
         ~Pipeline();
 
         // copy constructors and destructors
@@ -38,25 +38,25 @@ namespace Nyxis
         Pipeline(const Pipeline &) = delete;
         Pipeline &operator=(const Pipeline &) = delete;
 
+        void Create();
+        void Recreate();
         void Bind(VkCommandBuffer commandBuffer);
-        static void DefaultPipelineConfigInfo(PipelineConfigInfo &config);
+        PipelineConfigInfo& GetConfig() { return pipelineConfigInfo; }
+    	static void DefaultPipelineConfigInfo(PipelineConfigInfo &config);
         static void EnableBlending(PipelineConfigInfo& config);
         static std::vector<char> ReadFile(const std::string& filename);
 
-
-    	VkGraphicsPipelineCreateInfo pipelineCreateInfo;
-
+    	PipelineConfigInfo pipelineConfigInfo;
     private:
 
         void CreateShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule);
-        void CreateGraphicsPipeline(const std::string &vertPath, const std::string &fragPath, const PipelineConfigInfo &config);
 
         Device &device = Device::Get();
         VkPipeline graphicsPipeline;
+
+        std::string vertPath;
+        std::string fragPath;
         VkShaderModule vertShaderModule;
         VkShaderModule fragShaderModule;
-
-        PipelineConfigInfo pipelineConfigInfo;
     };
-
 } // namespace Nyxis

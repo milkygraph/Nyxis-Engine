@@ -1,4 +1,6 @@
 #include "Core/Application.hpp"
+
+#include "Pipeline.hpp"
 #include "Core/Renderer.hpp"
 #include "Core/GLTFRenderer.hpp"
 #include "Core/FrameInfo.hpp"
@@ -38,6 +40,176 @@ namespace Nyxis
         LOG_INFO("{}", e.toString());
 #endif
 	}
+    // TODO: Move to editor layer
+    void AddPipelineConfigUI(std::string name, GLTFRenderer& renderer, Ref<Pipeline> pipeline, PipelineType type)
+    {
+        auto cullingMode = pipeline->pipelineConfigInfo.rasterizationInfo.cullMode;
+        auto frontFace = pipeline->pipelineConfigInfo.rasterizationInfo.frontFace;
+
+        static std::vector cullingModes = { "None", "Front", "Back", "Front and Back" };
+        static std::vector frontFaces = { "Counter Clockwise", "Clockwise" };
+        static std::vector depthModes = { "None", "Read Only", "Write Only", "Read/Write" };
+        static std::vector blendOperations = { "Add", "Subtract", "Min", "Max", "Zero", "Src", "Dst" };
+        static std::vector stencilOperations = { "Keep", "Zero", "Replace", "Increment and Clamp", "Decrement and Clamp", "Invert", "Increment and Wrap", "Decrement and Wrap" };
+        static std::vector stencilTestModes = { "Never", "Less", "Equal", "Less or Equal", "Greater", "Not Equal", "Greater or Equal", "Always" };
+        static std::vector polygonModes = { "Fill", "Line", "Point" };
+        static std::vector depthBiasModes = { "None", "Dynamic", "Static" };
+        static std::vector blendFactor = { "Zero", "One", "Src Color", "One Minus Src Color", "Dst Color",
+            "One Minus Dst Color", "Src Alpha", "One Minus Src Alpha", "Dst Alpha", "One Minus Dst Alpha", "Constant Color", "One Minus Constant Color",
+            "Constant Alpha", "One Minus Constant Alpha", "Src Alpha Saturate" };
+
+        ImGui::PushID(name.c_str());
+
+        ImGui::Text(name.c_str());
+        if(ImGui::TreeNode("Culling"))
+        {
+            ImGui::TreePop();
+			if (ImGui::BeginCombo("Culling", cullingModes[cullingMode]))
+			{
+				for (int i = 0; i < cullingModes.size(); ++i)
+				{
+					const bool is_selected = (cullingMode == i);
+					if (ImGui::Selectable(cullingModes[i], is_selected))
+					{
+						cullingMode = i;
+						pipeline->pipelineConfigInfo.rasterizationInfo.cullMode = static_cast<VkCullModeFlagBits>(i);
+						pipeline->pipelineConfigInfo.renderPass = Renderer::GetSwapChainRenderPass();
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+
+			if (ImGui::BeginCombo("Front Face", frontFaces[static_cast<int>(frontFace)]))
+			{
+				for (int i = 0; i < frontFaces.size(); ++i)
+				{
+					const bool is_selected = (frontFace == i);
+					if (ImGui::Selectable(frontFaces[i], is_selected))
+					{
+						frontFace = static_cast<VkFrontFace>(i);
+						pipeline->pipelineConfigInfo.rasterizationInfo.frontFace = frontFace;
+						pipeline->pipelineConfigInfo.renderPass = Renderer::GetSwapChainRenderPass();
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+        }
+
+        if(ImGui::TreeNode("Depth"))
+        {
+			ImGui::TreePop();
+			if (ImGui::BeginCombo("Depth Mode", depthModes[pipeline->pipelineConfigInfo.depthStencilInfo.depthTestEnable]))
+			{
+				for (int i = 0; i < depthModes.size(); ++i)
+				{
+					const bool is_selected = (pipeline->pipelineConfigInfo.depthStencilInfo.depthTestEnable == i);
+					if (ImGui::Selectable(depthModes[i], is_selected))
+					{
+						pipeline->pipelineConfigInfo.depthStencilInfo.depthTestEnable = static_cast<VkBool32>(i);
+						pipeline->pipelineConfigInfo.renderPass = Renderer::GetSwapChainRenderPass();
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+        }
+
+        if(ImGui::TreeNode("Blending"))
+        {
+            ImGui::TreePop();
+			if (ImGui::BeginCombo("Blend Operation", blendOperations[pipeline->pipelineConfigInfo.colorBlendInfo.logicOp]))
+			{
+				for (int i = 0; i < blendOperations.size(); ++i)
+				{
+					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendInfo.logicOp == i);
+					if (ImGui::Selectable(blendOperations[i], is_selected))
+					{
+						pipeline->pipelineConfigInfo.colorBlendInfo.logicOp = static_cast<VkLogicOp>(i);
+						pipeline->pipelineConfigInfo.renderPass = Renderer::GetSwapChainRenderPass();
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+
+			if (ImGui::BeginCombo("Source Color Blend Factor", blendFactor[pipeline->pipelineConfigInfo.colorBlendAttachment.srcColorBlendFactor]))
+			{
+				for (int i = 0; i < blendFactor.size(); ++i)
+				{
+					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendAttachment.srcColorBlendFactor == i);
+					if (ImGui::Selectable(blendFactor[i], is_selected))
+					{
+						pipeline->pipelineConfigInfo.colorBlendAttachment.srcColorBlendFactor = static_cast<VkBlendFactor>(i);
+						pipeline->pipelineConfigInfo.renderPass = Renderer::GetSwapChainRenderPass();
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+
+			if (ImGui::BeginCombo("Destination Color Blend Factor", blendFactor[pipeline->pipelineConfigInfo.colorBlendAttachment.dstColorBlendFactor]))
+			{
+				for (int i = 0; i < blendFactor.size(); ++i)
+				{
+					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendAttachment.dstColorBlendFactor == i);
+					if (ImGui::Selectable(blendFactor[i], is_selected))
+					{
+						pipeline->pipelineConfigInfo.colorBlendAttachment.dstColorBlendFactor = static_cast<VkBlendFactor>(i);
+						pipeline->pipelineConfigInfo.renderPass = Renderer::GetSwapChainRenderPass();
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+
+			if (ImGui::BeginCombo("Source Alpha Blend Factor", blendFactor[pipeline->pipelineConfigInfo.colorBlendAttachment.srcAlphaBlendFactor]))
+			{
+				for (int i = 0; i < blendFactor.size(); ++i)
+				{
+					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendAttachment.srcAlphaBlendFactor == i);
+					if (ImGui::Selectable(blendFactor[i], is_selected))
+					{
+						pipeline->pipelineConfigInfo.colorBlendAttachment.srcAlphaBlendFactor = static_cast<VkBlendFactor>(i);
+						pipeline->pipelineConfigInfo.renderPass = Renderer::GetSwapChainRenderPass();
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+
+
+			if (ImGui::BeginCombo("Destination Alpha Blend Factor", blendFactor[pipeline->pipelineConfigInfo.colorBlendAttachment.dstAlphaBlendFactor]))
+			{
+				for (int i = 0; i < blendFactor.size(); ++i)
+				{
+					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendAttachment.dstAlphaBlendFactor == i);
+					if (ImGui::Selectable(blendFactor[i], is_selected))
+					{
+						pipeline->pipelineConfigInfo.colorBlendAttachment.dstAlphaBlendFactor = static_cast<VkBlendFactor>(i);
+						pipeline->pipelineConfigInfo.renderPass = Renderer::GetSwapChainRenderPass();
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+        }
+
+        if(ImGui::Button("Recreate", {100, 25}))
+        {
+            renderer.UpdatePipeline(type);
+        }
+        ImGui::PopID();
+    }
 
     void Application::Run()
 	{
@@ -113,6 +285,15 @@ namespace Nyxis
 
                     ImGui::End();
                 });
+
+            EditorLayer::AddFunction([&]()
+				{
+                    ImGui::Begin("Pipeline");
+                    AddPipelineConfigUI("PBR", gltfRenderer, gltfRenderer.Pipes.pbr, PipelineType::PBR);
+                    ImGui::Separator();
+                    AddPipelineConfigUI("Skybox", gltfRenderer, gltfRenderer.Pipes.skybox, PipelineType::SKYBOX);
+                    ImGui::End();
+				});
         }
 
     	auto currentTime = std::chrono::high_resolution_clock::now();

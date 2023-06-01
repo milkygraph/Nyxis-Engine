@@ -45,8 +45,11 @@ namespace Nyxis
     void PointLightSystem::createPipeline(VkRenderPass renderPass)
     {
         assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
-
-        PipelineConfigInfo pipelineConfig{};
+		pipeline = std::make_unique<Pipeline>(
+			current_path + "/../shaders/point_light.vert.spv",
+			current_path + "/../shaders/point_light.frag.spv"
+		);
+        auto pipelineConfig = pipeline->GetConfig();
         Pipeline::DefaultPipelineConfigInfo(pipelineConfig);
 
         // clear prevoiiusly set values
@@ -55,10 +58,7 @@ namespace Nyxis
 
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;
-        pipeline = std::make_unique<Pipeline>(
-            current_path + "/../shaders/point_light.vert.spv",
-            current_path + "/../shaders/point_light.frag.spv",
-            pipelineConfig);
+        pipeline->Create();
     }
 
     void PointLightSystem::Render(FrameInfo &frameInfo)
