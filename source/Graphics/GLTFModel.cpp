@@ -824,6 +824,7 @@ namespace Nyxis
 	{
 		for (tinygltf::Material& mat : gltfModel.materials) {
 			Material material{};
+			material.name = mat.name;
 			material.doubleSided = mat.doubleSided;
 			if (mat.values.find("baseColorTexture") != mat.values.end()) {
 				material.baseColorTexture = &textures[mat.values["baseColorTexture"].TextureIndex()];

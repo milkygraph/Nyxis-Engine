@@ -1,4 +1,5 @@
 #include "NyxisUI/EditorLayer.hpp"
+#include "MaterialEditorPanel.hpp"
 #include "Core/Application.hpp"
 
 namespace Nyxis
@@ -199,6 +200,7 @@ namespace Nyxis
 		init_info.DescriptorPool = imguiPool->getDescriptorPool();
 		ImGui_ImplVulkan_Init(&init_info, RenderPass);
 		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+		MaterialEditorPanel::Init();
 	}
 
 	void EditorLayer::Begin()
@@ -216,15 +218,16 @@ namespace Nyxis
 
 	void EditorLayer::OnUpdate()
 	{
+		for (auto& function : functions)
+			function();
+
+		MaterialEditorPanel::OnUpdate(m_SelectedMaterial);
 		m_Viewport.OnUpdate();
 		m_MenuBar.OnUpdate();
 		m_SceneHierarchy.OnUpdate();
 		m_ComponentView.OnUpdate();
 		if(m_SelectedMaterial != nullptr)
 			m_MaterialView.OnUpdate();
-
-		for (auto& function : functions)
-			function();
 
 		OnEvent();
 	}
@@ -233,6 +236,30 @@ namespace Nyxis
 	{
 		ImGui::Render();
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), Application::GetFrameInfo()->commandBuffer);
+	}
+
+	bool EditorLayer::DisplayUIImage(std::unordered_map<ModelTexture*, VkDescriptorSet>& map, ModelTexture* texture)
+	{
+		if (texture != nullptr)
+		{
+			if(!map.contains(texture))
+			{
+				map[texture] = ImGui_ImplVulkan_AddTexture(texture->sampler, texture->view, texture->imageLayout);
+				ImGui::Image((ImTextureID)map[texture], ImVec2(64, 64));
+			}
+			else
+			{
+				ImGui::Image((ImTextureID)map[texture], ImVec2(64, 64));
+			}
+			return true;
+		}
+		return false;
+	}
+
+	void EditorLayer::DeselectMaterial()
+	{
+		m_SelectedMaterial = nullptr;
+		m_SelectedNode = nullptr;
 	}
 
 	void EditorLayer::OnEvent()

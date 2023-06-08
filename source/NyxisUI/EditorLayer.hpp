@@ -24,11 +24,11 @@ namespace Nyxis
         void SetScene(Ref<Scene> scene);
 
     	void Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer);
-		void Begin();
+		static void Begin();
         void OnUpdate();
-        void End();
+		static void End();
 
-        static void AddFunction(const std::function<void()>& function);
+		static void AddFunction(const std::function<void()>& function);
 
     	VkExtent2D GetViewportExtent() const { return m_Viewport.GetExtent(); }
     	static Entity GetSelectedEntity() { return m_SelectedEntity; }
@@ -38,11 +38,12 @@ namespace Nyxis
         static void SetSelectedEntity(Entity entity);
         static void SetSelectedNode(Node* node) { m_SelectedNode = node; }
         static void SetSelectedMaterial(Material* material) { m_SelectedMaterial = material; }
-
         static void DeselectEntity();
+		static void DeselectMaterial();
 
+		static bool DisplayUIImage(std::unordered_map<ModelTexture*, VkDescriptorSet>& map, ModelTexture* texture);
     private:
-        Ref<DescriptorPool> imguiPool{};
+		Ref<DescriptorPool> imguiPool{};
         Ref<Scene> m_ActiveScene;
 
     	Viewport m_Viewport;
