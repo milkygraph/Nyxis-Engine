@@ -1,5 +1,6 @@
 #pragma once
 #include "Nyxispch.hpp"
+#include "Events/Event.hpp"
 
 namespace Nyxis
 {
@@ -9,10 +10,10 @@ namespace Nyxis
 		Layer() = default;
 		virtual ~Layer() = default;
 
-		virtual void OnAttach() {}
-		virtual void OnDetach() {}
-		virtual void OnImGuiRender() {}
-		virtual void OnEvent() {}
+		virtual void OnUpdate() = 0;
+		virtual void OnAttach() = 0;
+		virtual void OnDetach() = 0;
+		virtual void OnEvent(Event& event) = 0;
 	};
 
 	class LayerStack

@@ -432,7 +432,7 @@ namespace Nyxis
 			uniformBuffers[i]->map();
 		}
 		descriptorSets.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-		setupDescriptorSet(*g_SceneInfo, *g_UniformBufferParams);
+		setupDescriptorSet(GLTFRenderer::s_SceneInfo, GLTFRenderer::s_UniformBuffersParams);
 
 		auto tFileLoad = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
 		LOG_INFO("Loading took {} ms", tFileLoad);

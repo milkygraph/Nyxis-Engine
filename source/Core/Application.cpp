@@ -30,19 +30,21 @@ namespace Nyxis
     Application::~Application()
     {
         m_EditorLayer.OnDetach();
+		GLTFRenderer::Shutdown();
         Renderer::Shutdown();
         Log::Shutdown();
     }
 
     void Application::OnEvent(Event& e)
 	{
-#if 0
-        LOG_INFO("{}", e.toString());
-#endif
+		m_EditorLayer.OnEvent(e);
+		GLTFRenderer::OnEvent(e);
 	}
     // TODO: Move to editor layer
-    void AddPipelineConfigUI(std::string name, GLTFRenderer& renderer, Ref<Pipeline> pipeline, PipelineType type)
+    void AddPipelineConfigUI(const char* name, Ref<Pipeline> pipeline, PipelineType type)
     {
+		if (!pipeline)
+			return;
         auto cullingMode = pipeline->pipelineConfigInfo.rasterizationInfo.cullMode;
         auto frontFace = pipeline->pipelineConfigInfo.rasterizationInfo.frontFace;
 
@@ -58,13 +60,13 @@ namespace Nyxis
             "One Minus Dst Color", "Src Alpha", "One Minus Src Alpha", "Dst Alpha", "One Minus Dst Alpha", "Constant Color", "One Minus Constant Color",
             "Constant Alpha", "One Minus Constant Alpha", "Src Alpha Saturate" };
 
-        ImGui::PushID(name.c_str());
+        ImGui::PushID(name);
 
-        ImGui::Text(name.c_str());
+        ImGui::Text(name);
         if(ImGui::TreeNode("Culling"))
         {
             ImGui::TreePop();
-			if (ImGui::BeginCombo("Culling", cullingModes[cullingMode]))
+			if (ImGui::BeginCombo("Culling", cullingModes[static_cast<VkCullModeFlagBits>(cullingMode)]))
 			{
 				for (int i = 0; i < cullingModes.size(); ++i)
 				{
@@ -206,7 +208,7 @@ namespace Nyxis
 
         if(ImGui::Button("Recreate", {100, 25}))
         {
-            renderer.UpdatePipeline(type);
+            GLTFRenderer::UpdatePipeline(type);
         }
         ImGui::PopID();
     }
@@ -214,7 +216,7 @@ namespace Nyxis
     void Application::Run()
 	{
         // create rendering systems
-        GLTFRenderer gltfRenderer{ Renderer::GetSwapChainRenderPass() };
+		GLTFRenderer::Init(Renderer::GetSwapChainRenderPass());
 
         // add functions to editor layer
         {
@@ -236,16 +238,16 @@ namespace Nyxis
             EditorLayer::AddFunction([&]() {
                     ImGui::Begin("Scene Settings");
                     ImGui::Text("SkyMap");
-                    ImGui::DragFloat("Exposure", &gltfRenderer.sceneInfo.shaderValuesParams.exposure, 0.1f, 0.0f, 10.0f);
-                    ImGui::DragFloat("Gamma", &gltfRenderer.sceneInfo.shaderValuesParams.gamma, 0.1f, 0.0f, 10.0f);
-                    ImGui::DragFloat("lod", &gltfRenderer.sceneInfo.shaderValuesParams.lod, 0.1f, 0.0f, 10.0f);
-                    ImGui::DragFloat3("Light Direction", &gltfRenderer.sceneInfo.shaderValuesParams.lightDir.x);
-                    if(ImGui::BeginCombo("Environment", gltfRenderer.m_EnvMapFile.c_str()))
+                    ImGui::DragFloat("Exposure", &GLTFRenderer::s_SceneInfo.shaderValuesParams.exposure, 0.1f, 0.0f, 10.0f);
+                    ImGui::DragFloat("Gamma", &GLTFRenderer::s_SceneInfo.shaderValuesParams.gamma, 0.1f, 0.0f, 10.0f);
+                    ImGui::DragFloat("lod", &GLTFRenderer::s_SceneInfo.shaderValuesParams.lod, 0.1f, 0.0f, 10.0f);
+                    ImGui::DragFloat3("Light Direction", &GLTFRenderer::s_SceneInfo.shaderValuesParams.lightDir.x);
+                    if(ImGui::BeginCombo("Environment", GLTFRenderer::s_EnvMapFile.c_str()))
                     {
                         const std::string path = GetProject()->GetAssetPath() + "/environments/";
                         static const std::string ext = ".ktx";
 
-						std::vector maps = { gltfRenderer.m_EnvMapFile };
+						std::vector maps = { GLTFRenderer::s_EnvMapFile };
 						for (const auto& entry : std::filesystem::recursive_directory_iterator(path))
 						{
 							if (entry.path().extension() == ext)
@@ -267,8 +269,8 @@ namespace Nyxis
 
                     	if(current_item != 0)
                     	{
-                    		gltfRenderer.m_EnvMapFile = path + maps[current_item];
-							gltfRenderer.UpdateScene();
+                    		GLTFRenderer::s_EnvMapFile = path + maps[current_item];
+							GLTFRenderer::UpdateScene();
                             current_item = 0;
                     	}
                     }
@@ -276,12 +278,12 @@ namespace Nyxis
                     static std::vector<const char*> debugViews = { "None", "Base color", "Normal", "Occlusion", "Emissive", "Metallic", "Roughness" };
                     static int debugViewIndex = 0;
                     if (ImGui::Combo("Debug View", &debugViewIndex, &debugViews[0], debugViews.size(), debugViews.size()))
-                        gltfRenderer.sceneInfo.shaderValuesParams.debugViewInputs = static_cast<float>(debugViewIndex);
+                        GLTFRenderer::s_SceneInfo.shaderValuesParams.debugViewInputs = static_cast<float>(debugViewIndex);
 
                     static std::vector<const char*> pbrEquations = { "None", "Diff (l,n)", "F (l,h)", "G (l,v,h)", "D (h)", "Specular" };
                     static int pbrIndex = 0;
                     if (ImGui::Combo("PBR Equation", &pbrIndex, &pbrEquations[0], pbrEquations.size(), pbrEquations.size()))
-                        gltfRenderer.sceneInfo.shaderValuesParams.debugViewEquation = static_cast<float>(pbrIndex);
+                        GLTFRenderer::s_SceneInfo.shaderValuesParams.debugViewEquation = static_cast<float>(pbrIndex);
 
                     ImGui::End();
                 });
@@ -289,9 +291,9 @@ namespace Nyxis
             EditorLayer::AddFunction([&]()
 				{
                     ImGui::Begin("Pipeline");
-                    AddPipelineConfigUI("PBR", gltfRenderer, gltfRenderer.Pipes.pbr, PipelineType::PBR);
+                    AddPipelineConfigUI("PBR", GLTFRenderer::Pipes.pbr, PipelineType::PBR);
                     ImGui::Separator();
-                    AddPipelineConfigUI("Skybox", gltfRenderer, gltfRenderer.Pipes.skybox, PipelineType::SKYBOX);
+                    AddPipelineConfigUI("Skybox", GLTFRenderer::Pipes.skybox, PipelineType::SKYBOX);
                     ImGui::End();
 				});
         }
@@ -322,7 +324,7 @@ namespace Nyxis
     		m_FrameInfo->commandBuffer = worldCommandBuffer;
 
             Renderer::BeginMainRenderPass(m_FrameInfo->commandBuffer);
-            gltfRenderer.Render();
+            GLTFRenderer::Render();
 
             m_PhysicsEngine.OnUpdate(m_FrameInfo->frameTime);
             Renderer::EndMainRenderPass(worldCommandBuffer);
@@ -338,7 +340,7 @@ namespace Nyxis
 
             m_Scene->OnUpdate(m_FrameInfo->frameTime, aspect);
 
-    		gltfRenderer.OnUpdate();
+    		GLTFRenderer::OnUpdate();
     	}
 
     	vkDeviceWaitIdle(m_Device.device());

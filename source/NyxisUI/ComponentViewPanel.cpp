@@ -1,5 +1,6 @@
 #include "NyxisUI/ComponentViewPanel.hpp"
 #include "EditorLayer.hpp"
+#include "MaterialEditorPanel.hpp"
 #include "Core/Application.hpp"
 #include "Graphics/GLTFModel.hpp"
 #include "Scene/Components.hpp"
@@ -20,8 +21,6 @@ namespace Nyxis
 			}
 		}
 	}
-
-	void DrawModelComponent(Entity entity);
 
 	void ComponentViewPanel::OnUpdate()
 	{
@@ -66,7 +65,94 @@ namespace Nyxis
 			ImGui::Checkbox("Static", &rigidBody.isStatic);
 				});
 
-			DrawModelComponent(selectedEntity);
+			DrawComponentNode<Model>("Model", selectedEntity, [&](Model& model)
+				{
+					// list of all models in project models directory
+					static const std::string ext = ".gltf";
+					const std::string assetspath = Application::GetProject()->GetAssetPath();
+					const std::string path = "/models/";
+
+					if (ImGui::BeginCombo("Models", model.path.c_str()))
+					{
+						std::vector<std::string> models{};
+						for (const auto& entry : std::filesystem::recursive_directory_iterator(assetspath + path))
+						{
+							if (entry.path().extension() == ext)
+								models.push_back(entry.path().string().substr(assetspath.size() + path.size()));
+						}
+						static int current_item = -1;
+						for (int n = 0; n < models.size(); n++)
+						{
+							const bool is_selected = (current_item == n);
+							if (ImGui::Selectable(models[n].data(), is_selected))
+								current_item = n;
+							if (is_selected)
+								ImGui::SetItemDefaultFocus();
+						}
+						ImGui::EndCombo();
+						if (current_item != -1)
+						{
+							EditorLayer::DeselectMaterial();
+							scene->LoadModel(selectedEntity, path + models[current_item]);
+							current_item = -1;
+						}
+					}
+
+					if (model.materials.size() == 0)
+						return;
+
+					// combo selection of materials
+
+					static int current_item = 0;
+					Material* selected_material = &model.materials[current_item];
+					const char* preview = selected_material->name.c_str();
+					if(ImGui::BeginCombo("Materials", preview))
+					{
+						for (int n = 0; n < model.materials.size(); n++)
+						{
+							const bool is_selected = (current_item == n);
+							if (ImGui::Selectable(model.materials[n].name.c_str(), is_selected))
+							{
+								current_item = n;
+								selected_material = &model.materials[current_item];
+								EditorLayer::SetSelectedMaterial(selected_material);
+							}
+							if (is_selected)
+								ImGui::SetItemDefaultFocus();
+						}
+						ImGui::EndCombo();
+					}
+
+					constexpr static auto table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
+					constexpr static auto column_flags = ImGuiTableColumnFlags_WidthFixed;
+
+					ImGui::BeginTable("Materials", 2, table_flags);
+					ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+					ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+
+					ImGui::TableNextRow();
+					auto padding = ImGui::GetStyle().FramePadding.x;
+					ImGui::TableSetColumnIndex(1);
+					ImGui::PushItemWidth(-FLT_MIN - 100 - padding); // Right-aligned
+
+					auto lambda = [&](const char* name, ModelTexture* texture)
+					{
+						ImGui::TableNextRow();
+						ImGui::TableSetColumnIndex(0);
+						ImGui::Text(name);
+						ImGui::TableSetColumnIndex(1);
+						EditorLayer::ImageButton(MaterialEditorPanel::materialDescriptorSets, texture);
+					};
+
+					lambda("Base Color", selected_material->baseColorTexture);
+					lambda("Normal Texture", selected_material->normalTexture);
+					lambda("Metallic Texture", selected_material->metallicRoughnessTexture);
+					lambda("Occlusion Texture", selected_material->occlusionTexture);
+					lambda("Emissive Texture", selected_material->emissiveTexture);
+
+					ImGui::EndTable();
+
+				});
 
 			DrawComponentNode<Collider>("Collider", selectedEntity, [&](Collider& collider)
 				{
@@ -164,100 +250,4 @@ namespace Nyxis
 		}
 	}
 
-	void DrawModelComponent(Entity entity) 
-	{
-		// TODO: Improve material selection
-		constexpr ImGuiBackendFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAvailWidth |
-			ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
-		auto scene = Application::GetScene();
-		if(!scene->m_Registry.all_of<Model>(entity))
-			return;
-		auto& model = scene->GetComponent<Model>(entity);
-
-		const auto style = ImGui::GetStyle();
-		const auto padding = style.FramePadding.x;
-		const auto header_color = style.Colors[ImGuiCol_Header];
-		auto lineHeight = NyxisWidgets::LineHeight();
-
-		const auto availableRegion = ImGui::GetContentRegionAvail();
-		bool open = ImGui::TreeNodeEx((void*)typeid(Model).hash_code(), flags, "Model2");
-
-		const auto size = ImGui::GetItemRectSize();
-		const auto pos = ImGui::GetItemRectMin();
-
-		ImGui::SameLine(availableRegion.x - lineHeight / 2 - padding);
-		bool removeComponent = false;
-		if (ImGui::Button("...", { lineHeight, lineHeight }))
-		{
-			ImGui::OpenPopup("RemoveComponent");
-		}
-
-		if (ImGui::BeginPopup("RemoveComponent"))
-		{
-			if (ImGui::MenuItem("Remove"))
-			{
-				removeComponent = true;
-			}
-			ImGui::EndPopup();
-		}
-
-		if (open)
-		{
-			// list of all models in project models directory
-			static const std::string ext = ".gltf";
-			const std::string assetspath = Application::GetProject()->GetAssetPath();
-			const std::string path = "/models/";
-
-			if (ImGui::BeginCombo("Models", model.path.c_str()))
-			{
-				std::vector<std::string> models{};
-				for (const auto& entry : std::filesystem::recursive_directory_iterator(assetspath + path))
-				{
-					if (entry.path().extension() == ext)
-						models.push_back(entry.path().string().substr(assetspath.size() + path.size()));
-				}
-				static int current_item = -1;
-				for (int n = 0; n < models.size(); n++)
-				{
-					const bool is_selected = (current_item == n);
-					if (ImGui::Selectable(models[n].data(), is_selected))
-						current_item = n;
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-				if (current_item != -1)
-				{
-					EditorLayer::DeselectMaterial();
-					scene->LoadModel(entity, path + models[current_item]);
-					current_item = -1;
-				}
-			}
-
-			ImGui::BeginTable("Materials", 2);
-			ImGui::TableSetupColumn("Material");
-			ImGui::TableSetupColumn("Texture");
-
-			for (auto& material : model.materials)
-			{
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::Text(material.name.c_str());
-				ImGui::TableSetColumnIndex(1);
-				ImGui::DragFloat("Metallic", &material.metallicFactor, 0.1, 0, 1);
-			}
-
-			ImGui::EndTable();
-
-			const ImVec2 fill = ImGui::GetCursorPos();
-			ImGui::TreePop();
-			ImGui::GetWindowDrawList()->AddRectFilled({ pos.x, pos.y }, { pos.x + size.x, fill.y + lineHeight }, ImGui::ColorConvertFloat4ToU32(header_color), 5);
-			ImGui::Dummy({ size.x, 2 });
-		}
-
-		else
-		{
-			ImGui::GetWindowDrawList()->AddRectFilled(pos, { pos.x + availableRegion.x, pos.y + lineHeight }, ImGui::ColorConvertFloat4ToU32(header_color), 5);
-		}
-	}
 }

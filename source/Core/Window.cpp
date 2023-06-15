@@ -33,7 +33,7 @@ namespace Nyxis
 		    {
 		    case GLFW_PRESS:
 		    {
-			    KeyPressedEvent event(key, 0);
+			    KeyPressedEvent event(key, mods, false);
 			    data.callback(event);
 			    break;
 		    }
@@ -45,7 +45,7 @@ namespace Nyxis
 		    }
 		    case GLFW_REPEAT:
 		    {
-			    KeyPressedEvent event(key, 1);
+			    KeyPressedEvent event(key, mods, true);
 			    data.callback(event);
 			    break;
 		    }
@@ -57,6 +57,21 @@ namespace Nyxis
 			GLFWData& data = *(GLFWData*)glfwGetWindowUserPointer(window);
 			MouseMovedEvent event(xPos, yPos);
 			data.callback(event);
+		});
+
+	    glfwSetMouseButtonCallback(m_Data.window, [](GLFWwindow* window, int mouseButton, int action, int mods)
+		{
+			GLFWData& data = *(GLFWData*)glfwGetWindowUserPointer(window);
+			if(action == GLFW_PRESS)
+			{
+				auto event = MouseButtonPressed(mouseButton);
+				data.callback(event);
+			}
+			else if(action == GLFW_RELEASE)
+			{
+				auto event = MouseButtonReleased(mouseButton);
+				data.callback(event);
+			}
 		});
 
     }

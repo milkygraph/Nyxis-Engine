@@ -194,13 +194,35 @@ namespace Nyxis
 
 	void EditorLayer::Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer)
 	{
+		auto sceneHP = std::make_shared<SceneHierarchyPanel>();
+		auto materialEP = std::make_shared<MaterialEditorPanel>();
+		auto componentVP = std::make_shared<ComponentViewPanel>();
+		auto menuBar = std::make_shared<MenuBar>();
+		auto viewport = std::make_shared<Viewport>();
+
+		m_Viewport = viewport;
+
+		UILayers.push_back(sceneHP);
+		UILayers.push_back(materialEP);
+		UILayers.push_back(componentVP);
+		UILayers.push_back(menuBar);
+		UILayers.push_back(viewport);
+
 		ImGui_ImplGlfw_InitForVulkan(Window::GetGLFWwindow(), true);
 		ImGui_ImplVulkan_InitInfo init_info = {};
 		Device::Get().createImGuiInitInfo(init_info);
 		init_info.DescriptorPool = imguiPool->getDescriptorPool();
 		ImGui_ImplVulkan_Init(&init_info, RenderPass);
 		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-		MaterialEditorPanel::Init();
+
+		for(auto& layer : UILayers)
+			layer->OnAttach();
+	}
+
+	void EditorLayer::OnEvent(Event& event)
+	{
+		for(auto& layer : UILayers)
+			layer->OnEvent(event);
 	}
 
 	void EditorLayer::Begin()
@@ -221,15 +243,8 @@ namespace Nyxis
 		for (auto& function : functions)
 			function();
 
-		MaterialEditorPanel::OnUpdate(m_SelectedMaterial);
-		m_Viewport.OnUpdate();
-		m_MenuBar.OnUpdate();
-		m_SceneHierarchy.OnUpdate();
-		m_ComponentView.OnUpdate();
-		if(m_SelectedMaterial != nullptr)
-			m_MaterialView.OnUpdate();
-
-		OnEvent();
+		for(auto& layer : UILayers)
+			layer->OnUpdate();
 	}
 
 	void EditorLayer::End()
@@ -238,7 +253,7 @@ namespace Nyxis
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), Application::GetFrameInfo()->commandBuffer);
 	}
 
-	bool EditorLayer::DisplayUIImage(std::unordered_map<ModelTexture*, VkDescriptorSet>& map, ModelTexture* texture)
+	bool EditorLayer::Image(std::unordered_map<ModelTexture*, VkDescriptorSet>& map, ModelTexture* texture)
 	{
 		if (texture != nullptr)
 		{
@@ -256,16 +271,34 @@ namespace Nyxis
 		return false;
 	}
 
+	bool EditorLayer::ImageButton(std::unordered_map<ModelTexture*, VkDescriptorSet>& map, ModelTexture* texture)
+	{
+		if (texture != nullptr)
+		{
+			const auto draw_list = ImGui::GetWindowDrawList();
+			const auto min_pos = ImGui::GetCursorScreenPos();
+			const auto max_pos = ImVec2(min_pos.x + 72, min_pos.y + 70);
+			const auto color = ImGui::GetColorU32(ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+			draw_list->AddRect(min_pos, max_pos, color);
+
+			if(!map.contains(texture))
+			{
+				map[texture] = ImGui_ImplVulkan_AddTexture(texture->sampler, texture->view, texture->imageLayout);
+				ImGui::ImageButton((ImTextureID)map[texture], ImVec2(64, 64));
+			}
+			else
+			{
+				ImGui::ImageButton((ImTextureID)map[texture], ImVec2(64, 64));
+			}
+			return true;
+		}
+		return false;
+	}
+
 	void EditorLayer::DeselectMaterial()
 	{
 		m_SelectedMaterial = nullptr;
 		m_SelectedNode = nullptr;
-	}
-
-	void EditorLayer::OnEvent()
-	{
-		if (Input::isKeyPressed(LeftControl) && Input::isKeyPressed(D))
-			m_SelectedEntity = entt::null;
 	}
 
 	void EditorLayer::SetScene(Ref<Scene> scene)

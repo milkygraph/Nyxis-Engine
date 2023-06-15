@@ -7,26 +7,32 @@ namespace Nyxis
     Input* Input::pInstance = new Input();
 	int Input::CursorMode = 0;
 
-	bool Input::isKeyPressedImpl(int key)
+	bool Input::IsKeyPressedImpl(int key)
 	{
 		auto state = glfwGetKey(Window::GetGLFWwindow(), key);
 		return state == GLFW_PRESS || state == GLFW_REPEAT;
 	}
 	
-	bool Input::isMouseButtonPressedImpl(int button)
+	bool Input::IsMouseButtonPressedImpl(int button)
 	{
 		auto state = glfwGetMouseButton(Window::GetGLFWwindow(), button);
 		return state == GLFW_PRESS;
 	}
+
+	bool Input::IsMouseButtonReleasedImpl(int button)
+	{
+		return glfwGetMouseButton(Window::GetGLFWwindow(), button) == GLFW_RELEASE;
+	}
+
 	
-	glm::vec2 Input::getMousePositionImpl()
+	glm::vec2 Input::GetMousePositionImpl()
 	{
 		double xpos, ypos;
 		glfwGetCursorPos(Window::GetGLFWwindow(), &xpos, &ypos);
 		return { xpos, ypos };
 	}
 
-	void Input::setCursorModeImpl(int mode)
+	void Input::SetCursorModeImpl(int mode)
 	{
 		glfwSetInputMode(Window::GetGLFWwindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL + mode);
 		CursorMode = mode;
@@ -34,13 +40,13 @@ namespace Nyxis
 
 	// float Input::getMouseXImpl()
 	// {
-	// 	auto [x, y] = getMousePositionImpl();
+	// 	auto [x, y] = GetMousePositionImpl();
 	// 	return x;
 	// }
 
 	// float Input::getMouseYImpl()
 	// {
-	// 	auto [x, y] = getMousePositionImpl();
+	// 	auto [x, y] = GetMousePositionImpl();
 	// 	return y;
 	// }
 }

@@ -89,13 +89,13 @@ namespace Nyxis
         {
             // 2d movement
             glm::vec3 moveDir{ 0.f };
-            if (Input::isKeyPressed(KeyCodes::W))
+            if (Input::IsKeyPressed(KeyCodes::W))
                 moveDir += glm::vec3{ 0.f, -1.f, 0.f };
-            if (Input::isKeyPressed(KeyCodes::S))
+            if (Input::IsKeyPressed(KeyCodes::S))
                 moveDir -= glm::vec3{ 0.f, -1.f, 0.f };
-            if (Input::isKeyPressed(KeyCodes::D))
+            if (Input::IsKeyPressed(KeyCodes::D))
                 moveDir += glm::vec3{ 1.f, 0.f, 0.f };
-            if (Input::isKeyPressed(KeyCodes::A))
+            if (Input::IsKeyPressed(KeyCodes::A))
                 moveDir -= glm::vec3{ 1.f, 0.f, 0.f };
 
             if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon())

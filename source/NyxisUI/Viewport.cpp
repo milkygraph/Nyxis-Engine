@@ -76,16 +76,153 @@ namespace Nyxis
 		vkDestroySampler(Device::Get().device(), m_Sampler, nullptr);
 	}
 
+	void Viewport::UpdateGizmo()
+	{
+		// TODO: Fix handling of gizmo with y and z axis
+		auto frameInfo = Application::GetFrameInfo();
+		glm::vec2 mousePos = Input::GetMousePosition();
+
+		auto selected_entity = EditorLayer::GetSelectedEntity();
+		if(selected_entity != entt::null)
+		{
+			auto scene = Application::GetScene();
+
+			ImGuizmo::SetOrthographic(false);
+			ImGuizmo::AllowAxisFlip(true);
+			ImGuizmo::SetDrawlist();
+
+			ImGuizmo::SetRect(m_WindowPos.x, m_WindowPos.y, m_WindowSize.x, m_WindowSize.y);
+
+			auto camera = scene->GetCamera();
+			auto view = camera->getViewMatrix();
+			auto projection = camera->getProjectionMatrix();
+			projection[1][1] *= -1.0f;
+
+			auto& transform = scene->GetComponent<TransformComponent>(selected_entity);
+			auto modelMatrix = transform.mat4(true);
+
+			if (m_DrawGizmos)
+			{
+				const float snapValues[3] = { m_SnapValue, m_SnapValue, m_SnapValue };
+				ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
+				                     m_CurrentGizmoOperation, m_CurrentGizmoMode, glm::value_ptr(modelMatrix), nullptr, m_GizmoSnapping ? snapValues: nullptr);
+			}
+				
+			m_OverGizmo = ImGuizmo::IsOver();
+			m_UsingGizmo = ImGuizmo::IsUsing();
+
+			if (m_UsingGizmo)
+			{
+				glm::vec3 translation, rotation, scale;
+				DecomposeTransform(glm::mat4(modelMatrix), translation, rotation, scale);
+
+				glm::vec3 deltaRotation = rotation - transform.rotation;
+				transform.translation = translation;
+				transform.rotation += deltaRotation;
+				transform.scale = scale;
+				mousePos = { -1, -1 };
+			}
+		}
+
+		mousePos.x -= m_WindowPos.x;
+		mousePos.y -= m_WindowPos.y;
+
+		if (mousePos.x < 0 || mousePos.x > m_WindowSize.y)
+			mousePos.x = -1;
+		if (mousePos.y < 0 || mousePos.y > m_WindowSize.x)
+			mousePos.y = -1;
+
+		frameInfo->mousePosition = mousePos;
+	}
+
 	void Viewport::OnUpdate()
 	{
-		auto frameInfo = Application::GetFrameInfo();
-
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 		// ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0)); // Set the alpha channel to 0.5
 		ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
 		             ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
+	
+		m_WindowPos = ImGui::GetWindowPos();
+		m_WindowSize = ImGui::GetWindowSize();
+		m_IsFocused = ImGui::IsWindowFocused();
+		m_IsHovered = ImGui::IsWindowHovered();
+	
+		UpdateViewport();
+		UpdateGizmo();
 
-		auto imageView = Renderer::GetWorldImageView(frameInfo->frameIndex);
+		ImGui::End();
+		ImGui::PopStyleVar();
+	}
+
+	void Viewport::OnEvent(Event& event)
+	{
+		// do not process any events if the window is not focused
+		if (!m_IsHovered)
+			return;
+
+		switch(event.getEventType())
+		{
+		case(EventType::KeyPressed):
+			if(Input::IsKeyPressed(T))
+				m_CurrentGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
+			if(Input::IsKeyPressed(R))
+				m_CurrentGizmoOperation = ImGuizmo::OPERATION::ROTATE;
+ 			if(Input::IsKeyPressed(S))
+				m_CurrentGizmoOperation = ImGuizmo::OPERATION::SCALE;
+			if(Input::IsKeyPressed(W))
+				m_CurrentGizmoMode = ImGuizmo::MODE::WORLD;
+			if(Input::IsKeyPressed(L))
+				m_CurrentGizmoMode = ImGuizmo::MODE::LOCAL;
+			if(Input::IsKeyPressed(LeftControl) && Input::IsKeyPressed(D))
+				EditorLayer::DeselectEntity();
+			break;
+		case(EventType::MouseButtonPressed):
+			if(Input::IsMouseButtonPressed(MouseButtonLeft))
+			{
+				if (Input::IsKeyPressed(LeftControl))
+				{
+					m_GizmoSnapping = true;
+					if (m_CurrentGizmoOperation == ImGuizmo::OPERATION::TRANSLATE || m_CurrentGizmoOperation == ImGuizmo::OPERATION::SCALE)
+					{
+						m_SnapValue = 0.1f;
+					}
+					else
+					{
+						m_SnapValue = 15.0f;
+					}
+				}
+				else
+					m_GizmoSnapping = false;
+				break;
+			}
+			if(Input::IsMouseButtonPressed(MouseButtonRight))
+			{
+				Input::SetCursorMode(CursorDisabled);
+				Application::GetScene()->SetCameraControl(true);
+			}
+
+
+			if(Input::IsMouseButtonReleased(MouseButtonRight))
+			{
+				Input::SetCursorMode(CursorNormal);
+				Application::GetScene()->SetCameraControl(false);
+			}
+		}
+
+		if(event.getEventType() == EventType::MouseButtonPressed)
+		{
+			if(Input::IsMouseButtonPressed(MouseButtonLeft))
+			{
+				Input::SetCursorMode(CursorDisabled);
+				Application::GetScene()->SetCameraControl(true);
+			}
+		}
+	}
+
+	void Viewport::UpdateViewport()
+	{
+		const auto frameInfo = Application::GetFrameInfo();
+		const auto imageView = Renderer::GetWorldImageView(frameInfo->frameIndex);
 
 		if (m_DescriptorSets[frameInfo->frameIndex] == VK_NULL_HANDLE)
 			m_DescriptorSets[frameInfo->frameIndex] = ImGui_ImplVulkan_AddTexture(
@@ -104,112 +241,8 @@ namespace Nyxis
 			write_desc[0].pImageInfo = desc_image;
 			vkUpdateDescriptorSets(Device::Get().device(), 1, write_desc, 0, nullptr);
 		}
-		float windowWidth = ImGui::GetWindowWidth();
-		float windowHeight = ImGui::GetWindowHeight();
 
 		// display image in the middle of the window with the correct aspect ratio
-		ImGui::Image(m_DescriptorSets[frameInfo->frameIndex], ImVec2(windowWidth, windowHeight));
-
-		auto windowPos = ImGui::GetWindowPos();
-		// check if mouse is in window
-		if (ImGui::IsWindowHovered() && Input::isMouseButtonPressed(MouseCodes::MouseButtonRight))
-		{
-			Input::setCursorMode(CursorMode::CursorDisabled);
-			Application::GetScene()->SetCameraControl(true);
-		}
-
-		m_Extent = { static_cast<uint32_t>(windowWidth), static_cast<uint32_t>(windowHeight) };
-		// get mouse position relative to the window
-		glm::vec2 mousePos = Input::getMousePosition();
-
-		float snapValue = 0.1f;
-		// draw gizmos
-		if(!Input::isMouseButtonPressed(MouseCodes::MouseButtonRight))
-		{
- 			if(Input::isKeyPressed(KeyCodes::S))
-				m_CurrentGizmoOperation = ImGuizmo::OPERATION::SCALE;
-			if(Input::isKeyPressed(KeyCodes::R))
-				m_CurrentGizmoOperation = ImGuizmo::OPERATION::ROTATE;
-			if(Input::isKeyPressed(KeyCodes::T))
-				m_CurrentGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
-			if(Input::isKeyPressed(KeyCodes::W))
-				m_CurrentGizmoMode = ImGuizmo::MODE::WORLD;
-			if(Input::isKeyPressed(KeyCodes::L))
-				m_CurrentGizmoMode = ImGuizmo::MODE::LOCAL;
-			if(Input::isKeyPressed(KeyCodes::LeftControl))
-			{
-				m_GizmoSnapping = true;
-				if (m_CurrentGizmoOperation == ImGuizmo::OPERATION::TRANSLATE || m_CurrentGizmoOperation == ImGuizmo::OPERATION::SCALE)
-				{
-					snapValue = 0.1f;
-				}
-				else
-				{
-					snapValue = 15.0f;
-				}
-			}
-			else
-				m_GizmoSnapping = false;
-		}
-
-		auto selected_entity = EditorLayer::GetSelectedEntity();
-		if(selected_entity != entt::null)
-		{
-			auto scene = Application::GetScene();
-
-			ImGuizmo::SetOrthographic(false);
-			ImGuizmo::AllowAxisFlip(true);
-			ImGuizmo::SetDrawlist();
-
-			ImGuizmo::SetRect(windowPos.x, windowPos.y, windowWidth, windowHeight);
-
-			auto camera = scene->GetCamera();
-			auto view = camera->getViewMatrix();
-			auto projection = camera->getProjectionMatrix();
-			projection[1][1] *= -1.0f;
-
-			auto& transform = scene->GetComponent<TransformComponent>(selected_entity);
-			auto modelMatrix = transform.mat4(true);
-
-			if (m_DrawGizmos)
-			{
-				const float snapValues[3] = { snapValue, snapValue, snapValue };
-				ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection),
-					m_CurrentGizmoOperation, m_CurrentGizmoMode, glm::value_ptr(modelMatrix), nullptr, m_GizmoSnapping ? snapValues: nullptr);
-			}
-				
-			if (ImGuizmo::IsUsing())
-			{
-				glm::vec3 translation, rotation, scale;
-				DecomposeTransform(glm::mat4(modelMatrix), translation, rotation, scale);
-
-				glm::vec3 deltaRotation = rotation - transform.rotation;
-				transform.translation = translation;
-				transform.rotation += deltaRotation;
-				transform.scale = scale;
-				mousePos = { -1, -1 };
-			}
-		}
-
-		m_IsFocused = ImGui::IsWindowFocused();
-		m_IsHovered = ImGui::IsWindowHovered();
-		ImGui::End();
-		ImGui::PopStyleVar();
-
-		mousePos.x -= windowPos.x;
-		mousePos.y -= windowPos.y;
-
-		if (mousePos.x < 0 || mousePos.x > windowWidth)
-			mousePos.x = -1;
-		if (mousePos.y < 0 || mousePos.y > windowHeight)
-			mousePos.y = -1;
-
-		frameInfo->mousePosition = mousePos;
-	}
-
-	void Viewport::OnEvent()
-	{
-		// EventDispatcher dispatcher(e);
-		// dispatcher.Dispatch<MouseButtonReleasedEvent>(NYX_BIND_EVENT_FN(Viewport::OnMouseButtonReleased));
+		ImGui::Image(m_DescriptorSets[frameInfo->frameIndex], m_WindowSize);
 	}
 }

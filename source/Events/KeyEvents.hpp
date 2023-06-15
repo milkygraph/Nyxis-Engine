@@ -7,28 +7,27 @@ namespace Nyxis
 	class KeyEvent : public Event
 	{
 	public:
-		inline int getKeyCode() const { return pKeyCode; }
-
+		int getKeyCode() const { return m_KeyCode; }
 		EVENT_CLASS_CATEGORY(EventCategoryKeyboard | EventCategoryInput)
 
+		int m_KeyCode;
+		int m_Mod;
 	protected:
-		KeyEvent(int keyCode) : pKeyCode(keyCode) {}
-
-		int pKeyCode;
+		KeyEvent(int keyCode, int mod=0) : m_KeyCode(keyCode), m_Mod(mod) {}
 	};
 
 	class KeyPressedEvent : public KeyEvent
 	{
 	public:
-		KeyPressedEvent(int keyCode, bool repeat) : KeyEvent(keyCode), pRepeat{repeat} {}
+		KeyPressedEvent(int keyCode, int mod, bool repeat) : KeyEvent(keyCode, mod), m_Repeat{ repeat } {}
 
-		inline int getRepeatCount() const { return pRepeat; }
+		int getRepeatCount() const { return m_Repeat; }
 
 		std::string toString() const override
 		{
 			std::stringstream ss;
-			ss << "KeyPressedEvent: " << pKeyCode;
-			if(pRepeat)
+			ss << "KeyPressedEvent: " << m_KeyCode;
+			if(m_Repeat)
 				ss << " (repeat)";
 			return ss.str();
 		}
@@ -36,7 +35,7 @@ namespace Nyxis
 		EVENT_CLASS_TYPE(KeyPressed)
 
 	private:
-		bool pRepeat;
+		bool m_Repeat;
 	};
 
 	class KeyReleasedEvent : public KeyEvent
@@ -47,7 +46,7 @@ namespace Nyxis
 		std::string toString() const override
 		{
 			std::stringstream ss;
-			ss << "KeyReleasedEvent: " << pKeyCode;
+			ss << "KeyReleasedEvent: " << m_KeyCode;
 			return ss.str();
 		}
 

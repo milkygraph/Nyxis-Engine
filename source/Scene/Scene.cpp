@@ -72,11 +72,11 @@ namespace Nyxis
             m_Camera->setOrthographicProjection(-aspect, aspect, -1.0f, 1.0f, 0.1f, 1000.0f);
 
 
-        if (!Input::isMouseButtonPressed(MouseCodes::MouseButtonRight))
+        if (!Input::IsMouseButtonPressed(MouseCodes::MouseButtonRight))
         {
-            Input::setCursorMode(CursorMode::CursorNormal);
+            Input::SetCursorMode(CursorMode::CursorNormal);
             SetCameraControl(false);
-            m_Camera->setMousePosition(Input::getMousePosition());
+            m_Camera->setMousePosition(Input::GetMousePosition());
         }
 
         if(m_CameraControl)

@@ -9,8 +9,7 @@ namespace Nyxis
 		None = 0,
 		WindowClose, WindowResize, WindowFocus, WindowLostFocus, WindowMoved,
 		KeyPressed, KeyReleased,
-		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled,
-		OpenGLError
+		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled
 	};
 
 	enum EventCategory
@@ -39,8 +38,8 @@ namespace Nyxis
 		virtual int getCategoryFlags() const = 0;
 		virtual std::string toString() const { return getName(); }
 		
-		inline bool isHandled() const { return mHandled; }
-		inline bool isSubCategory(const EventCategory category) const 
+		bool isHandled() const { return mHandled; }
+		bool isSubCategory(const EventCategory category) const 
 		{
 			return getCategoryFlags() & category;
 		}

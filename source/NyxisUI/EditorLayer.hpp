@@ -12,25 +12,25 @@
 
 namespace Nyxis
 {
-	class EditorLayer : public Layer
+	class EditorLayer final : public Layer
     {
     public:
 		EditorLayer() = default;
-		~EditorLayer() = default;
+		~EditorLayer() override = default;
 
-        void OnAttach() override;
+		void OnAttach() override;
         void OnDetach() override;
-        void OnEvent() override;
+        void OnUpdate() override;
+		void OnEvent(Event& event) override;
         void SetScene(Ref<Scene> scene);
 
     	void Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer);
 		static void Begin();
-        void OnUpdate();
 		static void End();
 
 		static void AddFunction(const std::function<void()>& function);
 
-    	VkExtent2D GetViewportExtent() const { return m_Viewport.GetExtent(); }
+    	VkExtent2D GetViewportExtent() const { return m_Viewport->GetExtent(); }
     	static Entity GetSelectedEntity() { return m_SelectedEntity; }
         static Node* GetSelectedNode() { return m_SelectedNode; }
         static Material* GetSelectedMaterial() { return m_SelectedMaterial; }
@@ -41,20 +41,18 @@ namespace Nyxis
         static void DeselectEntity();
 		static void DeselectMaterial();
 
-		static bool DisplayUIImage(std::unordered_map<ModelTexture*, VkDescriptorSet>& map, ModelTexture* texture);
+		static bool Image(std::unordered_map<ModelTexture*, VkDescriptorSet>& map, ModelTexture* texture);
+		static bool ImageButton(std::unordered_map<ModelTexture*, VkDescriptorSet>& map, ModelTexture* texture);
     private:
 		Ref<DescriptorPool> imguiPool{};
         Ref<Scene> m_ActiveScene;
 
-    	Viewport m_Viewport;
-        MenuBar m_MenuBar;
-        SceneHierarchyPanel m_SceneHierarchy;
-        ComponentViewPanel m_ComponentView;
-		MaterialPanel m_MaterialView;
+        Ref<Viewport> m_Viewport;
 
 		static inline Entity m_SelectedEntity = entt::null;
         static inline Node* m_SelectedNode = nullptr;
     	static inline Material* m_SelectedMaterial = nullptr;
         static inline std::vector<std::function<void()>> functions;
+        static inline std::vector<Ref<Layer>> UILayers;
     };
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Nyxispch.hpp"
+#include "Events/KeyEvents.hpp"
 
 namespace Nyxis
 {
@@ -16,21 +17,37 @@ namespace Nyxis
         Input() = default;
         ~Input() = default;
 
-        static bool isKeyPressed(int key) { return pInstance->isKeyPressedImpl(key); };
-        static bool isMouseButtonPressed(int button) { return pInstance->isMouseButtonPressedImpl(button); };
-        static glm::vec2 getMousePosition() { return pInstance->getMousePositionImpl(); };
-        float getMouseX() { return pInstance->getMousePositionImpl().x; }
-        float getMouseY() { return pInstance->getMousePositionImpl().y; }
-		static void setCursorMode(int mode) { pInstance->setCursorModeImpl(mode); }
-		static int getCursorMode() { return pInstance->CursorMode; }
+        static bool IsKeyPressed(int key, int mod = 0)
+        {
+			switch(mod)
+			{
+			case 1:
+				return IsKeyPressedImpl(key) && IsKeyPressedImpl(KeyCodes::LeftShift);
+			case 4:
+				return IsKeyPressedImpl(key) && IsKeyPressedImpl(KeyCodes::LeftControl);
+			case 8:
+				return IsKeyPressedImpl(key) && IsKeyPressedImpl(KeyCodes::LeftAlt);
+			default:
+				return IsKeyPressedImpl(key);
+			}
+				
+        }
+        static bool IsMouseButtonPressed(int button) { return pInstance->IsMouseButtonPressedImpl(button); }
+        static bool IsMouseButtonReleased(int button) { return pInstance->IsMouseButtonReleasedImpl(button); }
+        static glm::vec2 GetMousePosition() { return pInstance->GetMousePositionImpl(); }
+        float GetMouseX() { return pInstance->GetMousePositionImpl().x; }
+        float GetMouseY() { return pInstance->GetMousePositionImpl().y; }
+		static void SetCursorMode(int mode) { pInstance->SetCursorModeImpl(mode); }
+		static int GetCursorMode() { return pInstance->CursorMode; }
 
     private:
         static Input* pInstance;
 		static int CursorMode;
 
-        static bool isKeyPressedImpl(int key);
-        static bool isMouseButtonPressedImpl(int button);
-        static glm::vec2 getMousePositionImpl();
-		static void setCursorModeImpl(int mode);
+		static bool IsMouseButtonReleasedImpl(int button);
+        static bool IsKeyPressedImpl(int key);
+        static bool IsMouseButtonPressedImpl(int button);
+        static glm::vec2 GetMousePositionImpl();
+		static void SetCursorModeImpl(int mode);
 	};
 }

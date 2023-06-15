@@ -54,6 +54,10 @@ namespace Nyxis
 		ImGui::End();
 	}
 
+	void SceneHierarchyPanel::OnEvent(Event& event)
+	{
+	}
+
 	void SceneHierarchyPanel::DrawEntityNode(Entity entity) 
 	{
 		const auto scene = Application::GetScene();

@@ -4,7 +4,7 @@ namespace Nyxis
 {
 	void CameraController::processMouseMovement(float dt, TransformComponent& transform)
 	{
-		glm::vec2 mousePosition = Input::getMousePosition();
+		glm::vec2 mousePosition = Input::GetMousePosition();
 		glm::vec2 mouseDelta = (mousePosition - lastMousePosition) * rotationSpeed;
 		lastMousePosition = mousePosition;
 
@@ -26,28 +26,28 @@ namespace Nyxis
 		glm::vec3 moveDir{ 0.f };
 		if(cameraType == CameraType::Perspective)
 		{
-			if (Input::isKeyPressed(KeyCodes::W))
+			if (Input::IsKeyPressed(KeyCodes::W))
 				moveDir -= ForwardDir;
-			if (Input::isKeyPressed(KeyCodes::S))
+			if (Input::IsKeyPressed(KeyCodes::S))
 				moveDir += ForwardDir;
-			if (Input::isKeyPressed(KeyCodes::D))
+			if (Input::IsKeyPressed(KeyCodes::D))
 				moveDir -= RightDir;
-			if (Input::isKeyPressed(KeyCodes::A))
+			if (Input::IsKeyPressed(KeyCodes::A))
 				moveDir += RightDir;
-			if (Input::isKeyPressed(KeyCodes::E))
+			if (Input::IsKeyPressed(KeyCodes::E))
 				moveDir -= UpDir;
-			if (Input::isKeyPressed(KeyCodes::Q))
+			if (Input::IsKeyPressed(KeyCodes::Q))
 				moveDir += UpDir;
 		}
 		else
 		{
-			if (Input::isKeyPressed(KeyCodes::W))
+			if (Input::IsKeyPressed(KeyCodes::W))
 				moveDir += glm::vec3{ 0.f,1.f, 0.f };
-			if (Input::isKeyPressed(KeyCodes::S))
+			if (Input::IsKeyPressed(KeyCodes::S))
 				moveDir -= glm::vec3{ 0.f, -1.f, 0.f };
-			if (Input::isKeyPressed(KeyCodes::D))
+			if (Input::IsKeyPressed(KeyCodes::D))
 				moveDir += glm::vec3{ 1.f, 0.f, 0.f };
-			if (Input::isKeyPressed(KeyCodes::A))
+			if (Input::IsKeyPressed(KeyCodes::A))
 				moveDir -= glm::vec3{ 1.f, 0.f, 0.f };
 		}
 

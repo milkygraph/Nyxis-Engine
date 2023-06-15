@@ -1,14 +1,16 @@
 #pragma once
-#include "Core/Nyxispch.hpp"
-#include "Core/Nyxis.hpp"
+#include "Core/Layer.hpp"
 
 namespace Nyxis
 {
-	class MenuBar
+	class MenuBar final : public Layer
 	{
 	public:
 		MenuBar() = default;
-		~MenuBar() = default;
-		void OnUpdate();
+		~MenuBar() override = default;
+		void OnAttach() override {}
+		void OnDetach() override {}
+		void OnEvent(Event& event) override {}
+		void OnUpdate() override;
 	};
 }
