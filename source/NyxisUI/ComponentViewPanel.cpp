@@ -36,7 +36,7 @@ namespace Nyxis
 			{
 				auto& tag = scene->GetComponent<TagComponent>(selectedEntity);
 				char buffer[256] = {};
-				strcpy_s(buffer, tag.Tag.c_str());
+				strcpy(buffer, tag.Tag.c_str());
 				if (ImGui::InputText("##Tag", buffer, sizeof(buffer)))
 				{
 					tag.Tag = std::string(buffer);

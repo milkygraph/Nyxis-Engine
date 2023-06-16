@@ -1,5 +1,5 @@
 #include "NyxisUI/Widgets.hpp"
-#include "ImGui/imgui_internal.h"
+#include "imgui/imgui_internal.h"
 
 namespace NyxisWidgets
 {
@@ -8,8 +8,7 @@ namespace NyxisWidgets
 		return GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2;
 	}
 
-
-	void TableFloat(const std::vector<const char*> labels, std::vector<float*> vecs, float step)
+	void TableFloat(const std::vector<const char*>& labels, std::vector<float*> vecs, float step)
 	{
 		ImGui::BeginTable("##table1", 2);
 		ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);  // set column width
@@ -36,7 +35,7 @@ namespace NyxisWidgets
 		ImGui::EndTable();
 	}
 
-	void TableVec3(const std::vector<const char*> labels, std::vector<glm::vec3*> vecs, float step)
+	void TableVec3(const std::vector<const char*>& labels, std::vector<glm::vec3*> vecs, float step)
 	{
 		ImGui::BeginTable("##table1", 2, ImGuiTableFlags_None);
 		ImGui::TableSetupColumn("1", ImGuiTableColumnFlags_WidthFixed);

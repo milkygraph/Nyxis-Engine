@@ -6,6 +6,7 @@
 #include "Graphics/Texture.hpp"
 #include "Scene/Components.hpp"
 
+#define TINYGLTF_NO_STB_IMAGE
 #include <tinygltf/tiny_gltf.h>
 
 #define MAX_NUM_JOINTS 128u

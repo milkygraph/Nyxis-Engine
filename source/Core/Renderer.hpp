@@ -12,20 +12,20 @@ namespace Nyxis
         static void Init(Window* window, Device* device);
         static void Shutdown();
 
-    	static [[nodiscard]] VkImageView GetWorldImageView(int index);
-    	static [[nodiscard]] VkRenderPass GetSwapChainRenderPass() { return m_SwapChain->GetMainRenderPass(); }
-        static [[nodiscard]] VkRenderPass GetUIRenderPass() { return m_SwapChain->GetUIRenderPass(); }
-        static [[nodiscard]] VkExtent2D GetAspectRatio() { return m_WorldImageSize; }
-        static [[nodiscard]] VkCommandBuffer GetMainCommandBuffer();
-        static [[nodiscard]] VkCommandBuffer GetUICommandBuffer();
-        static [[nodiscard]] int GetFrameIndex() { return m_CurrentImageIndex; }
-        static [[nodiscard]] bool IsFrameInProgress() { return m_IsFrameStarted; }
+    	[[nodiscard]] static VkImageView GetWorldImageView(int index);
+    	[[nodiscard]] static VkRenderPass GetSwapChainRenderPass() { return m_SwapChain->GetMainRenderPass(); }
+        [[nodiscard]] static VkRenderPass GetUIRenderPass() { return m_SwapChain->GetUIRenderPass(); }
+        [[nodiscard]] static VkExtent2D GetAspectRatio() { return m_WorldImageSize; }
+        [[nodiscard]] static VkCommandBuffer GetMainCommandBuffer();
+        [[nodiscard]] static VkCommandBuffer GetUICommandBuffer();
+        [[nodiscard]] static int GetFrameIndex() { return m_CurrentImageIndex; }
+        [[nodiscard]] static bool IsFrameInProgress() { return m_IsFrameStarted; }
 		static void SetWorldImageSize(VkExtent2D extent) { m_WorldImageSize = extent; }
 
-        static [[nodiscard]] VkCommandBuffer BeginWorldFrame() ;
+        [[nodiscard]]  static VkCommandBuffer BeginWorldFrame() ;
         static void EndWorldFrame();
 
-        static [[nodiscard]] VkCommandBuffer BeginUIFrame() ;
+        [[nodiscard]] static VkCommandBuffer BeginUIFrame() ;
 		static void EndUIRenderPass(VkCommandBuffer commandBuffer);
 
     	static void BeginMainRenderPass(VkCommandBuffer commandBuffer);

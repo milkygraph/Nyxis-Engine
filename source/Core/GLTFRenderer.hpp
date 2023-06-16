@@ -17,12 +17,30 @@ namespace Nyxis
 		PBR_ALPHA_BLEND
 	};
 
+    struct ObjectPicking
+    {
+        uint32_t depthBufferObject[DEPTH_ARRAY_SCALE];
+        uint32_t selectedEntity = 0;
+    };
+
+    struct Pipelines
+    {
+        Ref<Pipeline> skybox;
+        Ref<Pipeline> pbr;
+        Ref<Pipeline> pbrDoubleSided;
+        Ref<Pipeline> pbrAlphaBlend;
+    };
+
+    struct LightSource {
+        glm::vec3 color = glm::vec3(1.0f, 0.2f, 0.5f);
+        glm::vec3 rotation = glm::vec3(75.0f, 40.0f, 0.0f);
+    };
+
 	class GLTFRenderer
 	{
 	public:
 		static inline SceneInfo s_SceneInfo{};
-
-		static inline PushConstBlockMaterial s_PushConstBlockMaterial;
+        static inline PushConstBlockMaterial s_PushConstBlockMaterial;
 
 		static inline UBOMatrix s_ShaderValuesScene{}, s_ShaderValuesSkybox{};
 		static inline bool s_PBRPipelineUpdate = false;
@@ -48,19 +66,9 @@ namespace Nyxis
 		static inline std::vector<Ref<Buffer>> s_UniformBuffersParams{};
 		static inline std::vector<Ref<Buffer>> s_ObjectPickingBuffer{};
 
-		static inline struct ObjectPicking
-		{
-			uint32_t depthBufferObject[DEPTH_ARRAY_SCALE];
-			uint32_t selectedEntity = 0;
-		} objectPicking{};
-
-		static inline struct
-		{
-			Ref<Pipeline> skybox;
-			Ref<Pipeline> pbr;
-			Ref<Pipeline> pbrDoubleSided;
-			Ref<Pipeline> pbrAlphaBlend;
-		} Pipes;
+        static inline LightSource lightSource{};
+		static inline ObjectPicking objectPicking{};
+        static inline Pipelines Pipes{};
 
 	private:
 		static void PrepareUniformBuffers();
@@ -78,13 +86,12 @@ namespace Nyxis
 
 		enum PBRWorkflows { PBR_WORKFLOW_METALLIC_ROUGHNESS = 0, PBR_WORKFLOW_SPECULAR_GLOSINESS = 1 };
 
-		static inline struct Pipelines
+		static inline struct Pipelines2
 		{
 			VkPipeline pbr;
 			VkPipeline pbrDoubleSided;
 			VkPipeline pbrAlphaBlend;
 		} pipelines;
-
 
 		static inline VkPipeline boundPipeline = VK_NULL_HANDLE;
 		static inline VkPipelineLayout pipelineLayout;
@@ -96,11 +103,6 @@ namespace Nyxis
 
 		static inline std::vector<VkDescriptorSet> skyboxDescriptorSets;
 		static inline std::vector<VkDescriptorSet> depthBufferDescriptorSets;
-
-		static inline struct LightSource {
-			glm::vec3 color = glm::vec3(1.0f, 0.2f, 0.5f);
-			glm::vec3 rotation = glm::vec3(75.0f, 40.0f, 0.0f);
-		} lightSource;
 
 		static inline Ref<Model> skybox = nullptr;
 		static inline std::thread animationThread{};

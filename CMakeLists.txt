@@ -12,7 +12,8 @@ file (GLOB_RECURSE SOURCES source/*.cpp libs/entt/*.cpp libs/stbimage/*.cpp libs
         libs/imgui/imgui_demo.cpp libs/imgui/imgui_draw.cpp libs/imgui/imgui_tables.cpp libs/imgui/imgui_widgets.cpp 
         libs/imgui/misc/cpp/imgui_stdlib.cpp libs/imgui/imgui libs/imgui/backends/imgui_impl_glfw.cpp libs/imgui/backends/imgui_impl_vulkan.cpp
         libs/ImGuizmo/GraphEditor.cpp libs/ImGuizmo/ImCurveEdit.cpp libs/ImGuizmo/ImGradient.cpp libs/ImGuizmo/ImGuizmo.cpp
-        libs/ImGuizmo/ImSequencer.cpp)
+        libs/ImGuizmo/ImSequencer.cpp libs/imgui-node-editor/imgui_canvas.cpp libs/imgui-node-editor/imgui_node_editor.cpp
+        libs/imgui-node-editor/imgui_node_editor_api.cpp libs/imgui-node-editor/crude_json.cpp)
 file (GLOB_RECURSE HEADERS source/*/*.hpp )
 
 # set filter for shaders in shaders folder

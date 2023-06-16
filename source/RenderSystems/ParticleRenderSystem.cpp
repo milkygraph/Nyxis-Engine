@@ -1,4 +1,4 @@
-#include "RenderSystems\ParticleRenderSystem.hpp"
+#include "RenderSystems/ParticleRenderSystem.hpp"
 #include "Core/Nyxispch.hpp"
 #include "Core/SwapChain.hpp"
 
