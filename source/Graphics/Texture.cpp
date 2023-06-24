@@ -10,6 +10,16 @@
 namespace Nyxis
 {
 	void Texture2D::LoadFromFile(std::string filename, VkFormat format, VkImageUsageFlags imageUsageFlags,
+	                             VkImageLayout imageLayout)
+    {
+		if(filename.ends_with(".ktx"))
+			LoadFromKTXFile(filename, format, imageUsageFlags, imageLayout);
+		else
+			LoadFromSTBFile(filename, format, imageUsageFlags, imageLayout);
+    }
+
+
+	void Texture2D::LoadFromKTXFile(std::string filename, VkFormat format, VkImageUsageFlags imageUsageFlags,
 		VkImageLayout imageLayout)
 	{
 		auto& device = Device::Get();
@@ -156,6 +166,22 @@ namespace Nyxis
 		vkCreateImageView(device.device(), &viewCreateInfo, nullptr, &m_View);
 
 		UpdateDescriptor();
+	}
+
+	void Texture2D::LoadFromSTBFile(std::string filename, VkFormat format, VkImageUsageFlags imageUsageFlags,
+	                                VkImageLayout imageLayout)
+	{
+		int texWidth, texHeight, texChannels;
+		stbi_uc* pixels = stbi_load(filename.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		VkDeviceSize imageSize = texWidth * texHeight * 4;
+
+		if (!pixels)
+		{
+			throw std::runtime_error("failed to load texture image!");
+		}
+
+		LoadFromBuffer(pixels, imageSize, format, texWidth, texHeight, VK_FILTER_LINEAR, imageUsageFlags, imageLayout);
+		stbi_image_free(pixels);
 	}
 
 	void Texture2D::LoadFromBuffer(void* buffer, VkDeviceSize bufferSize, VkFormat format, uint32_t width,
