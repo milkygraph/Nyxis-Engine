@@ -212,8 +212,7 @@ namespace Nyxis
 		const std::string assets_path = Application::GetProject()->GetAssetPath();
 
 		s_SceneInfo.textures.empty.LoadFromFile(assets_path + "/textures/empty.ktx", VK_FORMAT_R8G8B8A8_UNORM);
-		skybox = std::make_shared<Model>();
-		skybox->loadFromFile(assets_path + "/models/basic/cube.gltf");
+		skybox = std::make_shared<Model>("/models/basic/cube.gltf");
 
 		s_EnvMapFile = assets_path + "/environments/sky.ktx";
 		LoadEnvironment(s_EnvMapFile);

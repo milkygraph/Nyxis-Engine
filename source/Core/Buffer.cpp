@@ -80,9 +80,13 @@ namespace Nyxis
     {
         if (mapped)
         {
-            vkUnmapMemory(device.device(), memory);
+			// the unmap memory causes a segmentation fault in linux
+			// TODO: investigate the issue in detail
+			// vkUnmapMemory(device.device(), memory);
             mapped = nullptr;
         }
+		else
+	        LOG_WARN("Trying to unmap a buffer that was not mapped");
     }
 
     /**

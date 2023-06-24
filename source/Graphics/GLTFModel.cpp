@@ -1078,7 +1078,7 @@ namespace Nyxis
 			}
 		}
 		else {
-			LOG_ERROR("Could not load gltf file: ", error);
+			LOG_ERROR("Could not load gltf file: {}", error);
 			return;
 		}
 
