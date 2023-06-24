@@ -5,7 +5,6 @@
 namespace Nyxis
 {
     Input* Input::pInstance = new Input();
-	int Input::CursorMode = 0;
 
 	bool Input::IsKeyPressedImpl(int key)
 	{
@@ -35,7 +34,6 @@ namespace Nyxis
 	void Input::SetCursorModeImpl(int mode)
 	{
 		glfwSetInputMode(Window::GetGLFWwindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL + mode);
-		CursorMode = mode;
 	}
 
 	// float Input::getMouseXImpl()

@@ -156,65 +156,57 @@ namespace Nyxis
 	void Viewport::OnEvent(Event& event)
 	{
 		// do not process any events if the window is not focused
-		if (!m_IsHovered)
+		if(!Input::IsMouseButtonPressed(MouseButtonRight) && !m_IsFocused)
 			return;
 
-		switch(event.getEventType())
-		{
-		case(EventType::KeyPressed):
-			if(Input::IsKeyPressed(T))
-				m_CurrentGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
-			if(Input::IsKeyPressed(R))
-				m_CurrentGizmoOperation = ImGuizmo::OPERATION::ROTATE;
- 			if(Input::IsKeyPressed(S))
-				m_CurrentGizmoOperation = ImGuizmo::OPERATION::SCALE;
-			if(Input::IsKeyPressed(W))
-				m_CurrentGizmoMode = ImGuizmo::MODE::WORLD;
-			if(Input::IsKeyPressed(L))
-				m_CurrentGizmoMode = ImGuizmo::MODE::LOCAL;
-			if(Input::IsKeyPressed(LeftControl) && Input::IsKeyPressed(D))
-				EditorLayer::DeselectEntity();
-			break;
-		case(EventType::MouseButtonPressed):
-			if(Input::IsMouseButtonPressed(MouseButtonLeft))
-			{
-				if (Input::IsKeyPressed(LeftControl))
-				{
-					m_GizmoSnapping = true;
-					if (m_CurrentGizmoOperation == ImGuizmo::OPERATION::TRANSLATE || m_CurrentGizmoOperation == ImGuizmo::OPERATION::SCALE)
-					{
-						m_SnapValue = 0.1f;
-					}
-					else
-					{
-						m_SnapValue = 15.0f;
-					}
-				}
-				else
-					m_GizmoSnapping = false;
+		switch(event.getEventType()) {
+			case (EventType::KeyPressed):
+				if (Input::IsKeyPressed(T))
+					m_CurrentGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
+				if (Input::IsKeyPressed(R))
+					m_CurrentGizmoOperation = ImGuizmo::OPERATION::ROTATE;
+				if (Input::IsKeyPressed(S))
+					m_CurrentGizmoOperation = ImGuizmo::OPERATION::SCALE;
+				if (Input::IsKeyPressed(W))
+					m_CurrentGizmoMode = ImGuizmo::MODE::WORLD;
+				if (Input::IsKeyPressed(L))
+					m_CurrentGizmoMode = ImGuizmo::MODE::LOCAL;
+				if (Input::IsKeyPressed(LeftControl) && Input::IsKeyPressed(D))
+					EditorLayer::DeselectEntity();
 				break;
-			}
-			if(Input::IsMouseButtonPressed(MouseButtonRight))
-			{
-				Input::SetCursorMode(CursorDisabled);
-				Application::GetScene()->SetCameraControl(true);
-			}
 
+			// handle mouse button events; mainly for camera control and object selection
+			case (EventType::MouseButtonPressed):
+				if (Input::IsMouseButtonPressed(MouseButtonLeft)) {
+					if (Input::IsKeyPressed(LeftControl)) {
+						m_GizmoSnapping = true;
+						if (m_CurrentGizmoOperation == ImGuizmo::OPERATION::TRANSLATE ||
+						    m_CurrentGizmoOperation == ImGuizmo::OPERATION::SCALE) {
+							m_SnapValue = 0.1f;
+						} else {
+							m_SnapValue = 15.0f;
+						}
+					} else
+						m_GizmoSnapping = false;
+				}
 
-			if(Input::IsMouseButtonReleased(MouseButtonRight))
-			{
-				Input::SetCursorMode(CursorNormal);
-				Application::GetScene()->SetCameraControl(false);
-			}
-		}
+				// disable cursor when using camera
+				if (Input::IsMouseButtonPressed(MouseButtonRight)) {
+					Input::SetCursorMode(CursorDisabled);
+					Application::GetScene()->SetCameraControl(true);
+				}
 
-		if(event.getEventType() == EventType::MouseButtonPressed)
-		{
-			if(Input::IsMouseButtonPressed(MouseButtonLeft))
-			{
-				Input::SetCursorMode(CursorDisabled);
-				Application::GetScene()->SetCameraControl(true);
-			}
+				break;
+
+			case (EventType::MouseButtonReleased):
+				if (Input::IsMouseButtonReleased(MouseButtonRight)) {
+					Input::SetCursorMode(CursorNormal);
+					Application::GetScene()->SetCameraControl(false);
+				}
+				break;
+
+			default:
+				break;
 		}
 	}
 

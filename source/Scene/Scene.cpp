@@ -74,8 +74,6 @@ namespace Nyxis
 
         if (!Input::IsMouseButtonPressed(MouseCodes::MouseButtonRight))
         {
-            Input::SetCursorMode(CursorMode::CursorNormal);
-            SetCameraControl(false);
             m_Camera->setMousePosition(Input::GetMousePosition());
         }
 

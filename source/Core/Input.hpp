@@ -37,12 +37,14 @@ namespace Nyxis
         static glm::vec2 GetMousePosition() { return pInstance->GetMousePositionImpl(); }
         float GetMouseX() { return pInstance->GetMousePositionImpl().x; }
         float GetMouseY() { return pInstance->GetMousePositionImpl().y; }
-		static void SetCursorMode(int mode) { pInstance->SetCursorModeImpl(mode); }
-		static int GetCursorMode() { return pInstance->CursorMode; }
+		static void SetCursorMode(int mode)
+		{
+			LOG_TRACE("Setting cursor mode to {}", mode);
+			pInstance->SetCursorModeImpl(mode);
+		}
 
     private:
         static Input* pInstance;
-		static int CursorMode;
 
 		static bool IsMouseButtonReleasedImpl(int button);
         static bool IsKeyPressedImpl(int key);
