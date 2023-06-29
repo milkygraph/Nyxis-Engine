@@ -86,7 +86,7 @@ namespace Nyxis
             mapped = nullptr;
         }
 		else
-	        LOG_WARN("Trying to unmap a buffer that was not mapped");
+	        LOG_WARN("[Core] Trying to unmap a buffer that was not mapped");
     }
 
     /**

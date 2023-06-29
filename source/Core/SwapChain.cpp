@@ -76,7 +76,7 @@ namespace Nyxis
 		CreateSwapChainFramebuffers();
 		CreateWorldFramebuffers();
 		CreateSyncObjects();
-    	LOG_INFO("Successfully created swap chain.");
+    	LOG_INFO("[Core] Successfully created swap chain.");
 	}
 
 	VkResult SwapChain::AcquireNextImage(uint32_t* imageIndex)
@@ -642,7 +642,7 @@ namespace Nyxis
 		    if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
 		    {
 
-		        LOG_INFO("Present mode : Mailbox");
+		        LOG_INFO("[Core] Present mode : Mailbox");
 		        return availablePresentMode;
 		    }
 		}
@@ -651,12 +651,12 @@ namespace Nyxis
 		{
 		    if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
 		    {
-		        LOG_INFO("Present mode : Immediate");
+		        LOG_INFO("[Core] Present mode: Immediate");
 		        return availablePresentMode;
 		    }
 		}
 
-		LOG_INFO("Present mode : V - Sync");
+		LOG_INFO("[Core] Present mode: V - Sync");
 		return VK_PRESENT_MODE_FIFO_KHR;
 	}
 

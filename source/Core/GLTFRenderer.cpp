@@ -202,7 +202,7 @@ namespace Nyxis
 
 	void GLTFRenderer::LoadEnvironment(std::string& filename)
 	{
-		LOG_INFO("Loading environment from {}", filename);
+		LOG_INFO("[Renderer] Loading environment from {}", filename);
 		s_SceneInfo.textures.environmentCube.LoadFromFile(filename, VK_FORMAT_R16G16B16A16_SFLOAT);
 		GenerateCubemaps();
 	}
@@ -804,7 +804,7 @@ namespace Nyxis
 
 		auto tEnd = std::chrono::high_resolution_clock::now();
 		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
-		LOG_INFO("Generating BRDF LUT took {} ms", tDiff);
+		LOG_INFO("[Renderer] Generating BRDF LUT took {} ms", tDiff);
 	}
 
 	void GLTFRenderer::GenerateCubemaps()
@@ -1359,7 +1359,7 @@ namespace Nyxis
 
 			auto tEnd = std::chrono::high_resolution_clock::now();
 			auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
-			LOG_INFO("Generating cube map with {} mip levels took {} ms", numMips, tDiff);
+			LOG_INFO("[Renderer] Generating cube map with {} mip levels took {} ms", numMips, tDiff);
 		}
 	}
 

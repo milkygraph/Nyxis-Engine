@@ -1,11 +1,11 @@
 #include "NyxisUI/EditorLayer.hpp"
-#include "MaterialEditorPanel.hpp"
+#include "NyxisUI/MaterialEditorPanel.hpp"
+#include "NyxisUI/LogPanel.hpp"
 #include "Core/Application.hpp"
 
 namespace Nyxis
 {
-	void ShowExampleAppDockSpace()
-	{
+	void ShowExampleAppDockSpace() {
 		// this is a copy of the imgui demo code
 		bool p_open = true;
 		static bool opt_fullscreen = true;
@@ -15,20 +15,17 @@ namespace Nyxis
 		// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
 		// because it would be confusing to have two docking targets within each others.
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
-		if (opt_fullscreen)
-		{
-			const ImGuiViewport* viewport = ImGui::GetMainViewport();
+		if (opt_fullscreen) {
+			const ImGuiViewport *viewport = ImGui::GetMainViewport();
 			ImGui::SetNextWindowPos(viewport->WorkPos);
 			ImGui::SetNextWindowSize(viewport->WorkSize);
 			ImGui::SetNextWindowViewport(viewport->ID);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, .0f);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, .0f);
 			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize
-				| ImGuiWindowFlags_NoMove;
+			                | ImGuiWindowFlags_NoMove;
 			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-		}
-		else
-		{
+		} else {
 			dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
 		}
 
@@ -47,19 +44,17 @@ namespace Nyxis
 			ImGui::PopStyleVar(2);
 
 		// Submit the DockSpace
-		ImGuiIO& io = ImGui::GetIO();
-		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-		{
+		ImGuiIO &io = ImGui::GetIO();
+		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) {
 			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
 			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 		}
 		ImGui::End();
 	}
 
-	void SetupImGuiStyle()
-	{
+	void SetupImGuiStyle() {
 		// Unreal style by dev0-1 from ImThemes
-		ImGuiStyle& style = ImGui::GetStyle();
+		ImGuiStyle &style = ImGui::GetStyle();
 
 		style.Alpha = 1.0f;
 		style.DisabledAlpha = 0.6000000238418579f;
@@ -92,9 +87,9 @@ namespace Nyxis
 		style.ButtonTextAlign = ImVec2(0.5f, 0.5f);
 		style.SelectableTextAlign = ImVec2(0.0f, 0.0f);
 		style.WindowMinSize.x = 200.0f;
-		style.WindowTitleAlign = { 0.5f, 0.5f };
+		style.WindowTitleAlign = {0.5f, 0.5f};
 
-		ImVec4* colors = ImGui::GetStyle().Colors;
+		ImVec4 *colors = ImGui::GetStyle().Colors;
 		colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 		colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
 		colors[ImGuiCol_WindowBg] = ImVec4(0.02f, 0.02f, 0.02f, 1.00f);
@@ -119,7 +114,7 @@ namespace Nyxis
 		colors[ImGuiCol_Button] = ImVec4(0.44f, 0.44f, 0.44f, 0.40f);
 		colors[ImGuiCol_ButtonHovered] = ImVec4(0.46f, 0.47f, 0.48f, 1.00f);
 		colors[ImGuiCol_ButtonActive] = ImVec4(0.42f, 0.42f, 0.42f, 1.00f);
-		colors[ImGuiCol_Header] = ImVec4(0.1f,0.1f,0.1f,0.3f);
+		colors[ImGuiCol_Header] = ImVec4(0.1f, 0.1f, 0.1f, 0.3f);
 		colors[ImGuiCol_HeaderHovered] = ImVec4(0.63f, 0.63f, 0.63f, 0.65f);
 		colors[ImGuiCol_HeaderActive] = ImVec4(0.48f, 0.50f, 0.52f, 1.00f);
 		colors[ImGuiCol_Separator] = ImVec4(0.00f, 0.00f, 0.00f, 0.50f);
@@ -152,27 +147,34 @@ namespace Nyxis
 		colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 	}
 
+	EditorLayer::EditorLayer() {
+		LOG_INFO("[Core] Initializing Editor");
+	}
 
-	void EditorLayer::OnAttach()
+	EditorLayer::~EditorLayer()
 	{
+		LOG_INFO("[Core] Destroying Editor");
+	}
+
+	void EditorLayer::OnAttach() {
 		imguiPool = DescriptorPool::Builder()
-			.addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000)
-			.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
-			.setMaxSets(1000)
-			.build();
+				.addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000)
+				.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
+				.setMaxSets(1000)
+				.build();
 
 		ImGui::CreateContext();
-		ImGuiIO* IO = &ImGui::GetIO();
+		ImGuiIO *IO = &ImGui::GetIO();
 		IO->WantCaptureMouse = true;
 		IO->WantCaptureKeyboard = true;
 		IO->ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable  Docking
@@ -185,20 +187,19 @@ namespace Nyxis
 	}
 
 
-	void EditorLayer::OnDetach()
-	{
+	void EditorLayer::OnDetach() {
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
 	}
 
-	void EditorLayer::Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer)
-	{
+	void EditorLayer::Init(VkRenderPass RenderPass, VkCommandBuffer commandBuffer) {
 		auto sceneHP = std::make_shared<SceneHierarchyPanel>();
 		auto materialEP = std::make_shared<MaterialEditorPanel>();
 		auto componentVP = std::make_shared<ComponentViewPanel>();
 		auto menuBar = std::make_shared<MenuBar>();
 		auto viewport = std::make_shared<Viewport>();
+		auto log = std::make_shared<LogPanel>();
 
 		m_Viewport = viewport;
 
@@ -207,6 +208,7 @@ namespace Nyxis
 		UILayers.push_back(componentVP);
 		UILayers.push_back(menuBar);
 		UILayers.push_back(viewport);
+		UILayers.push_back(log);
 
 		ImGui_ImplGlfw_InitForVulkan(Window::GetGLFWwindow(), true);
 		ImGui_ImplVulkan_InitInfo init_info = {};
@@ -215,106 +217,87 @@ namespace Nyxis
 		ImGui_ImplVulkan_Init(&init_info, RenderPass);
 		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
 
-		for(auto& layer : UILayers)
+		for (auto &layer: UILayers)
 			layer->OnAttach();
 	}
 
-	void EditorLayer::OnEvent(Event& event)
-	{
-		for(auto& layer : UILayers)
+	void EditorLayer::OnEvent(Event &event) {
+		for (auto &layer: UILayers)
 			layer->OnEvent(event);
 	}
 
-	void EditorLayer::Begin()
-	{
+	void EditorLayer::Begin() {
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		ShowExampleAppDockSpace();
 	}
 
-	void EditorLayer::AddFunction(const std::function<void()>& function)
-	{
+	void EditorLayer::AddFunction(const std::function<void()> &function) {
 		functions.push_back(function);
 	}
 
-	void EditorLayer::OnUpdate()
-	{
-		for (auto& function : functions)
+	void EditorLayer::OnUpdate() {
+		for (auto &function: functions)
 			function();
 
-		for(auto& layer : UILayers)
+		for (auto &layer: UILayers)
 			layer->OnUpdate();
 	}
 
-	void EditorLayer::End()
-	{
+	void EditorLayer::End() {
 		ImGui::Render();
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), Application::GetFrameInfo()->commandBuffer);
 	}
 
-	bool EditorLayer::Image(std::unordered_map<ModelTexture*, VkDescriptorSet>& map, ModelTexture* texture)
-	{
-		if (texture != nullptr)
-		{
-			if(!map.contains(texture))
-			{
+	bool EditorLayer::Image(std::unordered_map<ModelTexture *, VkDescriptorSet> &map, ModelTexture *texture) {
+		if (texture != nullptr) {
+			if (!map.contains(texture)) {
 				map[texture] = ImGui_ImplVulkan_AddTexture(texture->sampler, texture->view, texture->imageLayout);
-				ImGui::Image((ImTextureID)map[texture], ImVec2(64, 64));
-			}
-			else
-			{
-				ImGui::Image((ImTextureID)map[texture], ImVec2(64, 64));
+				ImGui::Image((ImTextureID) map[texture], ImVec2(64, 64));
+			} else {
+				ImGui::Image((ImTextureID) map[texture], ImVec2(64, 64));
 			}
 			return true;
 		}
 		return false;
 	}
 
-	bool EditorLayer::ImageButton(std::unordered_map<ModelTexture*, VkDescriptorSet>& map, ModelTexture* texture)
-	{
-		if (texture != nullptr)
-		{
+	bool EditorLayer::ImageButton(std::unordered_map<ModelTexture *, VkDescriptorSet> &map, ModelTexture *texture) {
+		if (texture != nullptr) {
 			const auto draw_list = ImGui::GetWindowDrawList();
 			const auto min_pos = ImGui::GetCursorScreenPos();
 			const auto max_pos = ImVec2(min_pos.x + 72, min_pos.y + 70);
 			const auto color = ImGui::GetColorU32(ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 			draw_list->AddRect(min_pos, max_pos, color);
 
-			if(!map.contains(texture))
-			{
+			if (!map.contains(texture)) {
 				map[texture] = ImGui_ImplVulkan_AddTexture(texture->sampler, texture->view, texture->imageLayout);
-				ImGui::ImageButton((ImTextureID)map[texture], ImVec2(64, 64));
-			}
-			else
-			{
-				ImGui::ImageButton((ImTextureID)map[texture], ImVec2(64, 64));
+				ImGui::ImageButton((ImTextureID) map[texture], ImVec2(64, 64));
+			} else {
+				ImGui::ImageButton((ImTextureID) map[texture], ImVec2(64, 64));
 			}
 			return true;
 		}
 		return false;
 	}
 
-	void EditorLayer::DeselectMaterial()
-	{
+	void EditorLayer::DeselectMaterial() {
 		m_SelectedMaterial = nullptr;
 		m_SelectedNode = nullptr;
 	}
 
-	void EditorLayer::SetScene(Ref<Scene> scene)
-	{
+	void EditorLayer::SetScene(Ref<Scene> scene) {
 		m_ActiveScene = scene;
 	}
 
-	void EditorLayer::SetSelectedEntity(Entity entity)
-	{
+	void EditorLayer::SetSelectedEntity(Entity entity) {
 		m_SelectedEntity = entity;
 		m_SelectedMaterial = nullptr;
 		m_SelectedNode = nullptr;
 	}
 
-	void EditorLayer::DeselectEntity()
-	{
+	void EditorLayer::DeselectEntity() {
 		m_SelectedEntity = entt::null;
 		m_SelectedMaterial = nullptr;
 		m_SelectedNode = nullptr;

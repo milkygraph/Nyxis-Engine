@@ -9,9 +9,16 @@ namespace Nyxis
 	using json = nlohmann::json;
 
 	NyxisProject::NyxisProject(const std::string& name, const std::string& path)
-		: m_Path(path), m_Name(name) {}
+		: m_Path(path), m_Name(name)
+	{
+		LOG_INFO("[Core] Creating project: {}", name);
+	}
 
-	
+	NyxisProject::~NyxisProject()
+	{
+		LOG_INFO("[Core] Destroying project: {}", m_Name);
+	}
+
 	/**
 	 * \brief Load a project from path file
 	 */
@@ -119,7 +126,7 @@ namespace Nyxis
 		std::ofstream output_stream(m_Path);
 		output_stream << std::setw(4) << j << std::endl;
 		output_stream.close();
-		LOG_INFO("Saved project to {}", m_Path);
+		LOG_INFO("[Core] Saved project to {}", m_Path);
 	}
 
 	const std::string& NyxisProject::GetAssetPath() const

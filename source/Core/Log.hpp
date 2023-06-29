@@ -3,6 +3,29 @@
 
 namespace Nyxis
 {
+	using LogLevel = spdlog::level::level_enum;
+
+	struct LogText
+	{
+		spdlog::level::level_enum level;
+		const std::string text;
+	};
+
+	// a wrapper class for the log messages
+	class LogBuffer
+	{
+	public:
+		LogBuffer() = default;
+		~LogBuffer() = default;
+
+		std::vector<LogText>& GetBuffer() { return m_Buffer; }
+		void PushLogMessage(const LogLevel& level, const std::string& message);
+		void Clear();
+
+	private:
+		std::vector<LogText> m_Buffer;
+	};
+
 	class Log
 	{
 		public:
@@ -14,16 +37,17 @@ namespace Nyxis
 			return s_CoreLogger; 
 		}
 
-		static void PushLogMessage(spdlog::level::level_enum level, const std::string message)
+		static void PushLogMessage(LogLevel level, const std::string& message);
+
+		static LogBuffer& GetLogBuffer()
 		{
-			std::lock_guard<std::mutex> lock(s_Mutex);
-			s_LogQueue.push({ level, message.data() });
-			s_ConditionVariable.notify_one();
+			return s_LogBuffer;
 		}
 
 		private:
 		static void LoggingThreadFunction();
 
+		static inline LogBuffer s_LogBuffer;
 		static inline std::shared_ptr<spdlog::logger> s_CoreLogger;
 		static inline std::queue < std::tuple < spdlog::level::level_enum, std::string >> s_LogQueue;
 		static inline std::mutex s_Mutex;

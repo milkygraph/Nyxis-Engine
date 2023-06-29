@@ -145,7 +145,7 @@ namespace Nyxis
 		m_WindowSize = ImGui::GetWindowSize();
 		m_IsFocused = ImGui::IsWindowFocused();
 		m_IsHovered = ImGui::IsWindowHovered();
-	
+
 		UpdateViewport();
 		UpdateGizmo();
 
@@ -160,11 +160,13 @@ namespace Nyxis
 			return;
 
 		// do not process any events if the window is not focused
-		if(event.getEventType() != EventType::MouseButtonReleased)
+		if(Input::GetCursorMode() != CursorDisabled)
 			if(!m_IsHovered)
 				return;
 
 		bool handled = true;
+
+		const MouseButtonReleased* mouseButtonReleased = dynamic_cast<MouseButtonReleased*>(&event);
 
 		switch(event.getEventType()) {
 			case (EventType::KeyPressed):
@@ -209,7 +211,7 @@ namespace Nyxis
 				break;
 
 			case (EventType::MouseButtonReleased):
-				if (Input::IsMouseButtonReleased(MouseButtonRight)) {
+				if (mouseButtonReleased->GetButton() == MouseButtonRight) {
 					Input::SetCursorMode(CursorNormal);
 					Application::GetScene()->SetCameraControl(false);
 				}

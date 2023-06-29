@@ -12,10 +12,7 @@ namespace Nyxis
         const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
         void *pUserData)
     {
-        // std::cerr << "[Debug]: " << pCallbackData->pMessage << std::endl;
-#ifdef LOGGING
-        LOG_ERROR("{}", pCallbackData->pMessage);
-#endif // LOGGING
+        LOG_ERROR("[Core]{}", pCallbackData->pMessage);
 
         return VK_FALSE;
     }
@@ -159,7 +156,7 @@ namespace Nyxis
         }
 
         vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-		LOG_INFO("Device name: {}", properties.deviceName);
+		LOG_INFO("[Core] Device name: {}", properties.deviceName);
     }
 
     void Device::createLogicalDevice()

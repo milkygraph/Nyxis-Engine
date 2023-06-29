@@ -15,8 +15,8 @@ namespace Nyxis
 	class EditorLayer final : public Layer
     {
     public:
-		EditorLayer() = default;
-		~EditorLayer() override = default;
+		EditorLayer();
+		~EditorLayer() override;
 
 		void OnAttach() override;
         void OnDetach() override;

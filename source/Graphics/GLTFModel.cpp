@@ -145,7 +145,7 @@ namespace Nyxis
 		imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		if (vkCreateImage(device.device(), &imageInfo, nullptr, &image) != VK_SUCCESS)
 		{
-			LOG_ERROR("Failed to create image");
+			LOG_ERROR("[Core] Failed to create image");
 		}
 
 		vkGetImageMemoryRequirements(device.device(), image, &memReqs);
@@ -154,12 +154,12 @@ namespace Nyxis
 
 		if (vkAllocateMemory(device.device(), &memAllocInfo, nullptr, &deviceMemory) != VK_SUCCESS)
 		{
-			LOG_ERROR("Failed to allocate memory");
+			LOG_ERROR("[Core] Failed to allocate memory");
 		}
 
 		if (vkBindImageMemory(device.device(), image, deviceMemory, 0) != VK_SUCCESS)
 		{
-			LOG_ERROR("Failed to bind image memory");
+			LOG_ERROR("[Core] Failed to bind image memory");
 		}
 
 		auto commandBuffer = device.beginSingleTimeCommands();
@@ -422,7 +422,7 @@ namespace Nyxis
 	{
 		path = filename;
 		const auto assets_path = Application::GetProject()->GetAssetPath();
-		LOG_INFO("Loading model from {}", path);
+		LOG_INFO("[Renderer] Loading model from {}", path);
 		auto tStart = std::chrono::high_resolution_clock::now();
 		loadFromFile(assets_path + filename);
 
@@ -435,7 +435,7 @@ namespace Nyxis
 		setupDescriptorSet(GLTFRenderer::s_SceneInfo, GLTFRenderer::s_UniformBuffersParams);
 
 		auto tFileLoad = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
-		LOG_INFO("Loading took {} ms", tFileLoad);
+		LOG_INFO("[Renderer] Loading took {} ms", tFileLoad);
 	}
 
 	Model::~Model()
@@ -982,7 +982,7 @@ namespace Nyxis
 						break;
 					}
 					default: {
-						LOG_WARN("Unknown accessor type", accessor.type);
+						LOG_WARN("[Renderer] Unknown accessor type", accessor.type);
 						break;
 					}
 					}
@@ -1005,7 +1005,7 @@ namespace Nyxis
 					channel.path = AnimationChannel::PathType::SCALE;
 				}
 				if (source.target_path == "weights") {
-					LOG_WARN("weights not yet supported, skipping channel");
+					LOG_WARN("[Renderer] Weights not yet supported, skipping channel");
 					continue;
 				}
 				channel.samplerIndex = source.sampler;
@@ -1078,7 +1078,7 @@ namespace Nyxis
 			}
 		}
 		else {
-			LOG_ERROR("Could not load gltf file: {}", error);
+			LOG_ERROR("[Renderer] Could not load gltf file: {}", error);
 			return;
 		}
 
@@ -1303,7 +1303,7 @@ namespace Nyxis
 	{
 		if (shaderValuesBuffer.size() == 0)
 		{
-			LOG_INFO("Shader Values Buffer is not ready!");
+			LOG_INFO("[Renderer] Shader Values Buffer is not ready!");
 			return;
 		}
 

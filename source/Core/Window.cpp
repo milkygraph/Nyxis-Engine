@@ -23,7 +23,7 @@ namespace Nyxis
 
 	    glfwSetErrorCallback([](int error, const char* description)
 	    {
-			LOG_ERROR("GLFW Error ({0}): {1}", error, description);
+			LOG_ERROR("[Core] GLFW Error ({0}): {1}", error, description);
 	    });
 
 		glfwSetKeyCallback(m_Data.window, [](GLFWwindow* window, int key, int scancode, int action, int mods)

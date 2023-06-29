@@ -29,7 +29,7 @@ namespace Nyxis
         {
             if(!m_Registry.any_of<T>(entity))
 				return m_Registry.emplace<T>(entity, std::forward<Args>(args)...);
-            LOG_INFO("Component already exists");
+            LOG_INFO("[Core] Component already exists");
             return m_Registry.get<T>(entity);
         }
 

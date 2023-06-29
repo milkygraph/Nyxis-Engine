@@ -14,7 +14,7 @@ namespace Nyxis
 	{
 	public:
 		NyxisProject(const std::string& name, const std::string& path);
-		~NyxisProject() = default;
+		~NyxisProject();
 		void Create();
 		void Load();
 		void Save() const;

@@ -10,6 +10,7 @@ namespace Nyxis
 	Scene::Scene(const std::string name)
 		: m_SceneName(name)
     {
+	    LOG_INFO("[Core] Creating scene: {}", name);
         m_CameraEntity = CreateEntity("Camera");
         m_Camera = new Camera(m_Registry.get<TransformComponent>(m_CameraEntity));
         m_Camera->getCameraController().setCameraType(CameraType::Perspective);
@@ -17,6 +18,7 @@ namespace Nyxis
 
     Scene::~Scene()
     {
+	    LOG_INFO("[Core] Destroying scene: {}", m_SceneName);
         m_Registry.clear();
     }
 

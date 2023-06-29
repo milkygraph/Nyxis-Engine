@@ -6,8 +6,8 @@ namespace Nyxis
 	class PhysicsEngine
 	{
 	public:
-		PhysicsEngine() = default;
-		~PhysicsEngine() = default;
+		PhysicsEngine();
+		~PhysicsEngine();
 
 		void OnUpdate(float deltaTime);
 

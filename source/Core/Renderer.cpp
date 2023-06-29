@@ -5,6 +5,7 @@ namespace Nyxis
 {
     void Renderer::Init(Window* window, Device* device)
     {
+	    LOG_INFO("[Core] Initializing Renderer");
         m_Window = window;
         m_Device = device;
     	RecreateSwapChain();
@@ -70,7 +71,6 @@ namespace Nyxis
         {
             throw std::runtime_error("failed to allocate command buffer!");
         }
-		LOG_INFO("Successfully created main command buffers.");
     }
 
     void Renderer::FreeCommandBuffers()

@@ -4,6 +4,16 @@
 
 namespace Nyxis
 {
+	PhysicsEngine::PhysicsEngine()
+	{
+		LOG_INFO("[Core] Initializing Physics Engine");
+	}
+
+	PhysicsEngine::~PhysicsEngine()
+	{
+		LOG_INFO("[Core] Destroying Physics Engine");
+	}
+
 	void PhysicsEngine::OnUpdate(float deltaTime)
 	{
         if (!enable)

@@ -33,6 +33,7 @@ namespace Nyxis
 
 	void Input::SetCursorModeImpl(int mode)
 	{
+		m_CursorMode = static_cast<CursorMode>(mode);
 		glfwSetInputMode(Window::GetGLFWwindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL + mode);
 	}
 

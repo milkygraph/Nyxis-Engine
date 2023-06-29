@@ -116,7 +116,7 @@ namespace Nyxis
         vkDeviceWaitIdle(device.device());
         vkDestroyPipeline(device.device(), graphicsPipeline, nullptr);
         Create();
-        LOG_INFO("Pipeline recreated");
+        LOG_INFO("[Renderer] Pipeline recreated");
     }
 
     void Pipeline::Bind(VkCommandBuffer commandBuffer)
