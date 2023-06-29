@@ -218,8 +218,20 @@ namespace Nyxis
         // create rendering systems
 		GLTFRenderer::Init(Renderer::GetSwapChainRenderPass());
 
+        auto texture = Texture2D();
+        texture.LoadFromFile("../assets/models/DamagedHelmet/screenshot/screenshot.png",
+                             VK_FORMAT_R8G8B8A8_SRGB);
+
+		auto image = ImGui_ImplVulkan_AddTexture(texture.m_Sampler, texture.m_View, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
         // add functions to editor layer
         {
+            EditorLayer::AddFunction([&]() {
+				ImGui::Begin("Texture Test");
+				ImGui::Image(image, ImGui::GetContentRegionAvail());
+				ImGui::End();
+				});
+
  			EditorLayer::AddFunction([&]() {
                 ImGui::Begin("Statistics");
                 ImGui::Text("Entity Count: %d", m_Scene->GetEntityCount());
@@ -305,7 +317,7 @@ namespace Nyxis
         {
 			auto model = m_Scene->CreateEntity("Model");
             m_Scene->AddComponent<RigidBody>(model);
-            m_Scene->AddComponent<Model>(model);
+            m_Scene->AddComponent<Model>(model, "/models/microphone/scene.gltf");
         }
 #endif
 

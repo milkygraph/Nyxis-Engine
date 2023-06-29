@@ -155,24 +155,33 @@ namespace Nyxis
 
 	void Viewport::OnEvent(Event& event)
 	{
-		// do not process any events if the window is not focused
-		if(!Input::IsMouseButtonPressed(MouseButtonRight) && !m_IsFocused)
+		// do not process any events if the event is handled
+		if(event.isHandled())
 			return;
+
+		// do not process any events if the window is not focused
+		if(event.getEventType() != EventType::MouseButtonReleased)
+			if(!m_IsHovered)
+				return;
+
+		bool handled = true;
 
 		switch(event.getEventType()) {
 			case (EventType::KeyPressed):
 				if (Input::IsKeyPressed(T))
 					m_CurrentGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
-				if (Input::IsKeyPressed(R))
+				else if (Input::IsKeyPressed(R))
 					m_CurrentGizmoOperation = ImGuizmo::OPERATION::ROTATE;
-				if (Input::IsKeyPressed(S))
+				else if (Input::IsKeyPressed(S))
 					m_CurrentGizmoOperation = ImGuizmo::OPERATION::SCALE;
-				if (Input::IsKeyPressed(W))
+				else if (Input::IsKeyPressed(W))
 					m_CurrentGizmoMode = ImGuizmo::MODE::WORLD;
-				if (Input::IsKeyPressed(L))
+				else if (Input::IsKeyPressed(L))
 					m_CurrentGizmoMode = ImGuizmo::MODE::LOCAL;
-				if (Input::IsKeyPressed(LeftControl) && Input::IsKeyPressed(D))
+				else if (Input::IsKeyPressed(LeftControl) && Input::IsKeyPressed(D))
 					EditorLayer::DeselectEntity();
+				else
+					handled = false;
 				break;
 
 			// handle mouse button events; mainly for camera control and object selection
@@ -189,12 +198,13 @@ namespace Nyxis
 					} else
 						m_GizmoSnapping = false;
 				}
-
-				// disable cursor when using camera
-				if (Input::IsMouseButtonPressed(MouseButtonRight)) {
+				else if (Input::IsMouseButtonPressed(MouseButtonRight)) {
+					// disable cursor when using camera
 					Input::SetCursorMode(CursorDisabled);
 					Application::GetScene()->SetCameraControl(true);
 				}
+				else
+					handled = false;
 
 				break;
 
@@ -203,11 +213,15 @@ namespace Nyxis
 					Input::SetCursorMode(CursorNormal);
 					Application::GetScene()->SetCameraControl(false);
 				}
+				else
+					handled = false;
 				break;
 
 			default:
 				break;
 		}
+
+		event.mHandled = handled;
 	}
 
 	void Viewport::UpdateViewport()
