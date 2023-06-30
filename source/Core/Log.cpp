@@ -1,14 +1,24 @@
 #include "Core/Log.hpp"
 
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <filesystem>
+
+#define MAX_LOGFILE_SIZE 1000000
 
 namespace Nyxis
 {
+
+
 	void Log::Init()
 	{
+		if(std::filesystem::exists("Nyxis.log"))
+			if(std::filesystem::file_size("Nyxis.log") > MAX_LOGFILE_SIZE)
+				std::filesystem::remove("Nyxis.log");
+
 		LOG_INFO("[Core] Initializing Log");
-		spdlog::set_pattern("%^[%T] [%L]: %v%$");
-		s_CoreLogger = spdlog::stdout_color_mt("Nyxis Engine");
+		spdlog::set_pattern("%^[%D] [%T] [%L]: %v%$");
+		s_CoreLogger = spdlog::basic_logger_mt("Nyxis Engine", "Nyxis.log");
 		s_CoreLogger->set_level(spdlog::level::trace);
 		s_CoreLogger->flush_on(spdlog::level::trace);
 
@@ -94,7 +104,6 @@ namespace Nyxis
 		default:
 			break;
 		};
-
 
 		auto formatted_message = "[" + str + "] " + "[" + str_level + "] " + message;
 		m_Buffer.push_back({ level, formatted_message });

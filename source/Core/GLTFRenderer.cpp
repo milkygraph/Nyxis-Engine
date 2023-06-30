@@ -34,6 +34,7 @@ namespace Nyxis
 
 	void GLTFRenderer::Shutdown()
 	{
+		LOG_INFO("[Core] Shutting down GLTF Renderer");
 		if(animationThread.joinable())
 			animationThread.join();
 	}

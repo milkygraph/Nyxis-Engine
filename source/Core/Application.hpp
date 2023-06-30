@@ -18,7 +18,6 @@ namespace Nyxis
     public:
 		static Application* GetInstance()
 		{
-            Log::Init();
             if(s_Instance == nullptr)
             	s_Instance = new Application();
             return s_Instance;

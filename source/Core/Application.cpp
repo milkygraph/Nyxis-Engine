@@ -32,7 +32,6 @@ namespace Nyxis
         m_EditorLayer.OnDetach();
 		GLTFRenderer::Shutdown();
         Renderer::Shutdown();
-        Log::Shutdown();
     }
 
     void Application::OnEvent(Event& e)
