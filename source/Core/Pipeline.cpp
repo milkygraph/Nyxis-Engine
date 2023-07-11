@@ -156,22 +156,23 @@ namespace Nyxis
         config.multisamplingInfo.alphaToCoverageEnable = VK_FALSE; // Optional
         config.multisamplingInfo.alphaToOneEnable = VK_FALSE;      // Optional
 
-        config.colorBlendAttachment.colorWriteMask =
+		config.colorBlendAttachments.resize(1);
+        config.colorBlendAttachments[0].colorWriteMask =
             VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
             VK_COLOR_COMPONENT_A_BIT;
-        config.colorBlendAttachment.blendEnable = VK_FALSE;
-        config.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
-        config.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-        config.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;             // Optional
-        config.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
-        config.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-        config.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional
+        config.colorBlendAttachments[0].blendEnable = VK_FALSE;
+        config.colorBlendAttachments[0].srcColorBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
+        config.colorBlendAttachments[0].dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+        config.colorBlendAttachments[0].colorBlendOp = VK_BLEND_OP_ADD;             // Optional
+        config.colorBlendAttachments[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
+        config.colorBlendAttachments[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+        config.colorBlendAttachments[0].alphaBlendOp = VK_BLEND_OP_ADD;             // Optional
 
         config.colorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         config.colorBlendInfo.logicOpEnable = VK_FALSE;
         config.colorBlendInfo.logicOp = VK_LOGIC_OP_COPY; // Optional
-        config.colorBlendInfo.attachmentCount = 1;
-        config.colorBlendInfo.pAttachments = &config.colorBlendAttachment;
+        config.colorBlendInfo.attachmentCount = 2;
+        config.colorBlendInfo.pAttachments = config.colorBlendAttachments.data();
         config.colorBlendInfo.blendConstants[0] = 0.0f; // Optional
         config.colorBlendInfo.blendConstants[1] = 0.0f; // Optional
         config.colorBlendInfo.blendConstants[2] = 0.0f; // Optional
@@ -197,15 +198,36 @@ namespace Nyxis
 
     void Pipeline::EnableBlending(PipelineConfigInfo& config)
     {
-        config.colorBlendAttachment.blendEnable = VK_TRUE;
-        config.colorBlendAttachment.colorWriteMask =
+		config.colorBlendAttachments.resize(1);
+        config.colorBlendAttachments[0].blendEnable = VK_TRUE;
+        config.colorBlendAttachments[0].colorWriteMask =
             VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
             VK_COLOR_COMPONENT_A_BIT;
-        config.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-        config.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-        config.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-        config.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-        config.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        config.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+        config.colorBlendAttachments[0].srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        config.colorBlendAttachments[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        config.colorBlendAttachments[0].colorBlendOp = VK_BLEND_OP_ADD;
+        config.colorBlendAttachments[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        config.colorBlendAttachments[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        config.colorBlendAttachments[0].alphaBlendOp = VK_BLEND_OP_ADD;
     }
+
+	void PipelineConfigInfo::AddColorBlendAttachment()
+	{
+		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+		colorBlendAttachment.colorWriteMask =
+			VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
+			VK_COLOR_COMPONENT_A_BIT;
+		colorBlendAttachment.blendEnable = VK_FALSE;
+		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
+		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;             // Optional
+		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
+		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional
+
+		colorBlendAttachments.push_back(colorBlendAttachment);
+
+		colorBlendInfo.attachmentCount = static_cast<uint32_t>(colorBlendAttachments.size());
+		colorBlendInfo.pAttachments = colorBlendAttachments.data();
+	}
 }

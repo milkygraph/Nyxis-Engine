@@ -17,10 +17,12 @@ namespace Nyxis
 		void OnUpdate() override;
 		void OnEvent(Event& event) override;
 		static bool IsFocused() { return m_IsFocused; }
-		static bool IsClicked() { return ImGui::IsMouseClicked(ImGuiMouseButton_Left) && IsHovered(); }
+		static bool IsClicked() { return m_IsClicked; }
 		static bool IsHovered() { return m_IsHovered; }
 		static bool IsHoveredOverGizmo() { return m_OverGizmo; }
-		VkExtent2D GetExtent() const { return { static_cast<uint32_t>(m_WindowSize.x), static_cast<uint32_t>(m_WindowSize.y) }; }
+		static VkExtent2D GetExtent() { return { static_cast<uint32_t>(m_WindowSize.x), static_cast<uint32_t>(m_WindowSize.y) }; }
+		static glm::vec2 GetWindowPos() { return { m_WindowPos.x, m_WindowPos.y }; }
+		static glm::vec2 GetWindowSize() { return { m_WindowSize.x, m_WindowSize.y }; }
 
 	private:
 		void UpdateViewport();
@@ -29,8 +31,8 @@ namespace Nyxis
 		ImGuizmo::OPERATION m_LastGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
 		ImGuizmo::MODE m_CurrentGizmoMode = ImGuizmo::MODE::WORLD;
 
-		ImVec2 m_WindowPos;
-		ImVec2 m_WindowSize;
+		static inline ImVec2 m_WindowPos;
+		static inline ImVec2 m_WindowSize;
 
 		std::vector<VkDescriptorSet> m_DescriptorSets;
 		VkSampler m_Sampler = VK_NULL_HANDLE;
@@ -41,5 +43,6 @@ namespace Nyxis
 		static inline bool m_OverGizmo = false;
 		static inline bool m_IsFocused = false;
 		static inline bool m_IsHovered = false;
+		static inline bool m_IsClicked = false;
 	};
 }

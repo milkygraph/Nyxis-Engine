@@ -21,8 +21,15 @@ namespace Nyxis
 
     VkImageView Renderer::GetWorldImageView(int index)
     {
-        return m_SwapChain->GetWorldImageView(index);
+		if(m_ShowWorldImage)
+            return m_SwapChain->GetWorldImageView(m_CurrentImageIndex);
+		return m_SwapChain->GetIDImageView(m_CurrentImageIndex);
     }
+
+
+	VkImageView Renderer::GetIDImageView() {
+		return m_SwapChain->GetIDImageView(m_CurrentImageIndex);
+	}
 
     void Renderer::RecreateSwapChain()
     {
@@ -216,7 +223,8 @@ namespace Nyxis
 
         std::array<VkClearValue, 3> clearValues{};
         clearValues[0].color = {.0f, .0f, .0f, 1.0f};
-        clearValues[1].depthStencil = {1.0f, 0};
+		clearValues[1].color = {.0f, .0f, .0f, 1.0f};
+        clearValues[2].depthStencil = {1.0f, 0};
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();

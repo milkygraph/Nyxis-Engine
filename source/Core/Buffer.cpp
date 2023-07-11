@@ -85,8 +85,6 @@ namespace Nyxis
 			// vkUnmapMemory(device.device(), memory);
             mapped = nullptr;
         }
-		else
-	        LOG_WARN("[Core] Trying to unmap a buffer that was not mapped");
     }
 
     /**

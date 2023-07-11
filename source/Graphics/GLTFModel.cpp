@@ -353,6 +353,11 @@ namespace Nyxis
 	}
 
 	// Node
+	Node::Node(Entity entityHandle)
+	{
+		this->entityHandle = entityHandle;
+	}
+
 	glm::mat4 Node::localMatrix()
 	{
 		return glm::translate(glm::mat4(1.0f), translation) * glm::mat4(rotation) * glm::scale(glm::mat4(1.0f), scale) * matrix;
@@ -440,19 +445,14 @@ namespace Nyxis
 
 	Model::~Model()
 	{
-		destroy();
-		ModelDescriptorManager::GetDescriptorPool()->freeDescriptors(descriptorSets);
-	}
-
-	void Model::destroy()
-	{
+		auto scene = Application::GetScene();
 		for (auto texture : textures) {
 			texture.destroy();
 		}
 		textures.resize(0);
 		textureSamplers.resize(0);
-		for (const auto node : nodes) {
-			delete node;
+		for(auto node : nodes) {
+			scene->DestroyEntity(node->entityHandle);
 		}
 		materials.resize(0);
 		animations.resize(0);
@@ -463,11 +463,15 @@ namespace Nyxis
 			delete skin;
 		}
 		skins.resize(0);
-	};
+
+		ModelDescriptorManager::GetDescriptorPool()->freeDescriptors(descriptorSets);
+	}
 
 	void Model::loadNode(Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& model, LoaderInfo& loaderInfo, float globalscale)
 	{
-		Node* newNode = new Node{};
+		auto scene = Application::GetScene();
+		auto entity = scene->CreateEntity(node.name);
+		Node* newNode = &scene->AddComponent<Node>(entity, entity);
 		newNode->index = nodeIndex;
 		newNode->parent = parent;
 		newNode->name = node.name;

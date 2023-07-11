@@ -5,6 +5,7 @@
 #include "Core/Descriptors.hpp"
 #include "Graphics/Texture.hpp"
 #include "Scene/Components.hpp"
+#include "Scene/Scene.hpp"
 
 #include <tinygltf/tiny_gltf.h>
 
@@ -40,6 +41,7 @@ namespace Nyxis
 		float roughnessFactor;
 		float alphaMask;
 		float alphaMaskCutoff;
+		uint32_t nodeID = 0;
 	};
 
 	struct UBOMatrix {
@@ -47,9 +49,9 @@ namespace Nyxis
 		glm::mat4 model;
 		glm::mat4 view;
 		glm::vec3 camPos;
-		float mousePosX;
-		float mousePosY;
-		int entityID;
+		uint entityID;
+		uint selectedEntityID;
+		bool isMouseClicked;
 	};
 
 	struct Textures {
@@ -175,8 +177,10 @@ namespace Nyxis
 	};
 
 	struct Node {
+		Node(Entity entityHandle);
 		Node* parent;
 		uint32_t index;
+		Entity entityHandle;
 		std::vector<Node*> children;
 		glm::mat4 matrix;
 		std::string name;
@@ -271,7 +275,6 @@ namespace Nyxis
 		Model(const std::string& filename);
 		~Model();
 
-		void destroy();
 		void loadNode(Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& model, LoaderInfo& loaderInfo, float globalscale);
 		void getNodeProps(const tinygltf::Node& node, const tinygltf::Model& model, size_t& vertexCount, size_t& indexCount);
 		void loadSkins(tinygltf::Model& gltfModel);

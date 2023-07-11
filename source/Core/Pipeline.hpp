@@ -12,7 +12,7 @@ namespace Nyxis
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
         VkPipelineRasterizationStateCreateInfo rasterizationInfo{};
         VkPipelineMultisampleStateCreateInfo multisamplingInfo{};
-        VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+        std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments{};
         VkPipelineColorBlendStateCreateInfo colorBlendInfo{};
         VkPipelineDepthStencilStateCreateInfo depthStencilInfo{};
 
@@ -25,6 +25,8 @@ namespace Nyxis
         VkPipelineLayout pipelineLayout = nullptr;
         VkRenderPass renderPass = nullptr;
         uint32_t subpass = 0;
+
+		void AddColorBlendAttachment();
     };
 
     class Pipeline

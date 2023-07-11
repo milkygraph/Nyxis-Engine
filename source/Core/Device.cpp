@@ -12,7 +12,7 @@ namespace Nyxis
         const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
         void *pUserData)
     {
-        LOG_ERROR("[Core]{}", pCallbackData->pMessage);
+        LOG_ERROR("[Core] {}", pCallbackData->pMessage);
 
         return VK_FALSE;
     }
@@ -181,6 +181,7 @@ namespace Nyxis
         deviceFeatures.samplerAnisotropy = VK_TRUE;
         deviceFeatures.fragmentStoresAndAtomics = VK_TRUE; // TODO: investigate this feature
         deviceFeatures.logicOp = VK_TRUE; // To enable logical operations in the fragment shader
+		deviceFeatures.independentBlend = VK_TRUE; // To enable independent blending in the fragment shader
 
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -443,23 +444,26 @@ namespace Nyxis
     Device::findSupportedFormat(
         const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
     {
-        for (VkFormat format : candidates)
-        {
-            VkFormatProperties props;
-            vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
+	    for (VkFormat format : candidates)
+	    {
+		    VkFormatProperties props;
+		    vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
 
-            if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
-            {
-                return format;
-            }
-            else if (
-                tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
-            {
-                return format;
-            }
-        }
-        throw std::runtime_error("failed to find supported format!");
-    }
+		    if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+		    {
+			    return format;
+		    }
+		    else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+		    {
+			    // Check if the format is suitable for depth and stencil attachment
+			    VkFormatFeatureFlags requiredFeatures = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+			    if ((props.optimalTilingFeatures & requiredFeatures) == requiredFeatures)
+			    {
+				    return format;
+			    }
+		    }
+	    }
+	    throw std::runtime_error("failed to find supported format!");    }
 
     uint32_t Device::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
     {

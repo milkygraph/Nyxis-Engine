@@ -282,59 +282,68 @@ namespace Nyxis
 		m_WorldImages.resize(m_SwapChainImages.size());
 		m_WorldImageMemories.resize(m_SwapChainImages.size());
 
-		for (size_t i = 0; i < m_WorldImages.size(); i++)
-		{
-			auto commandBuffer = device.beginSingleTimeCommands();
+		m_IDImages.resize(m_SwapChainImages.size());
+		m_IDImageMemories.resize(m_SwapChainImages.size());
 
-			VkImageCreateInfo imageInfo = {};
-			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-			imageInfo.imageType = VK_IMAGE_TYPE_2D;
-			imageInfo.format = m_SwapChainImageFormat;
-			imageInfo.extent.height = m_WorldExtent.height;
-			imageInfo.extent.width = m_WorldExtent.width;
-			imageInfo.extent.depth = 1;
-			imageInfo.mipLevels = 1;
-			imageInfo.arrayLayers = 1;
-			imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-			imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-			imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		auto func = [&](std::vector<VkImage>& images, std::vector<VkDeviceMemory>& memories, VkFormat format, VkImageUsageFlags usage) {
+			for (size_t i = 0; i < images.size(); i++) {
+				auto commandBuffer = device.beginSingleTimeCommands();
 
-			if (vkCreateImage(device.device(), &imageInfo, nullptr, &m_WorldImages[i]) != VK_SUCCESS)
-				throw std::runtime_error("failed to create world image!");
+				VkImageCreateInfo imageInfo = {};
+				imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+				imageInfo.imageType = VK_IMAGE_TYPE_2D;
+				imageInfo.format = format;
+				imageInfo.extent.height = m_WorldExtent.height;
+				imageInfo.extent.width = m_WorldExtent.width;
+				imageInfo.extent.depth = 1;
+				imageInfo.mipLevels = 1;
+				imageInfo.arrayLayers = 1;
+				imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+				imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+				imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+				imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | usage;
+				imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-			VkMemoryRequirements memoryRequirements;
-			vkGetImageMemoryRequirements(device.device(), m_WorldImages[i], &memoryRequirements);
-			VkMemoryAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			allocInfo.allocationSize = memoryRequirements.size;
-			allocInfo.memoryTypeIndex = device.findMemoryType(memoryRequirements.memoryTypeBits,
-			                                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+				if (vkCreateImage(device.device(), &imageInfo, nullptr, &images[i]) != VK_SUCCESS)
+					throw std::runtime_error("failed to create world image!");
 
-			if (vkAllocateMemory(device.device(), &allocInfo, nullptr, &m_WorldImageMemories[i]) != VK_SUCCESS)
-				throw std::runtime_error("failed to allocate world image memory!");
+				VkMemoryRequirements memoryRequirements;
+				vkGetImageMemoryRequirements(device.device(), images[i], &memoryRequirements);
+				VkMemoryAllocateInfo allocInfo = {};
+				allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+				allocInfo.allocationSize = memoryRequirements.size;
+				allocInfo.memoryTypeIndex = device.findMemoryType(memoryRequirements.memoryTypeBits,
+				                                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-			if (vkBindImageMemory(device.device(), m_WorldImages[i], m_WorldImageMemories[i], 0) != VK_SUCCESS)
-				throw std::runtime_error("failed to bind world image memory!");
-			VkImageMemoryBarrier barrier = {};
-			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			barrier.srcAccessMask = 0;
-			barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			barrier.image = m_WorldImages[i];
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			barrier.subresourceRange.baseMipLevel = 0;
-			barrier.subresourceRange.levelCount = 1;
-			barrier.subresourceRange.baseArrayLayer = 0;
-			barrier.subresourceRange.layerCount = 1;
+				if (vkAllocateMemory(device.device(), &allocInfo, nullptr, &memories[i]) != VK_SUCCESS)
+					throw std::runtime_error("failed to allocate world image memory!");
 
-			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-			device.endSingleTimeCommands(commandBuffer);
-		}
+				if (vkBindImageMemory(device.device(), images[i], memories[i], 0) != VK_SUCCESS)
+					throw std::runtime_error("failed to bind world image memory!");
+				VkImageMemoryBarrier barrier = {};
+				barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+				barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				barrier.srcAccessMask = 0;
+				barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				barrier.image = images[i];
+				barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				barrier.subresourceRange.baseMipLevel = 0;
+				barrier.subresourceRange.levelCount = 1;
+				barrier.subresourceRange.baseArrayLayer = 0;
+				barrier.subresourceRange.layerCount = 1;
+
+				vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1,
+				                     &barrier);
+				device.endSingleTimeCommands(commandBuffer);
+			}
+		};
+
+		func(m_WorldImages, m_WorldImageMemories, m_SwapChainImageFormat, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+		func(m_IDImages, m_IDImageMemories, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 	}
 
 	void SwapChain::CreateSwapChainImageViews()
@@ -366,26 +375,33 @@ namespace Nyxis
 	void SwapChain::CreateWorldImageViews()
 	{
 		m_WorldImageViews.resize(m_WorldImages.size());
+		m_IDImageViews.resize(m_IDImages.size());
 
-		for (size_t i = 0; i < m_WorldImages.size(); i++)
+		auto func = [&](std::vector<VkImage>& images, std::vector<VkImageView>& imageViews, VkFormat format)
 		{
-			VkImageViewCreateInfo viewInfo{};
-			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			viewInfo.image = m_WorldImages[i];
-			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			viewInfo.format = m_SwapChainImageFormat;
-			viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			viewInfo.subresourceRange.baseMipLevel = 0;
-			viewInfo.subresourceRange.levelCount = 1;
-			viewInfo.subresourceRange.baseArrayLayer = 0;
-			viewInfo.subresourceRange.layerCount = 1;
-
-			if (vkCreateImageView(device.device(), &viewInfo, nullptr, &m_WorldImageViews[i]) !=
-				VK_SUCCESS)
+			for (size_t i = 0; i < imageViews.size(); i++)
 			{
-				throw std::runtime_error("failed to create world image view!");
+				VkImageViewCreateInfo viewInfo{};
+				viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+				viewInfo.image = images[i];
+				viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+				viewInfo.format = format;
+				viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				viewInfo.subresourceRange.baseMipLevel = 0;
+				viewInfo.subresourceRange.levelCount = 1;
+				viewInfo.subresourceRange.baseArrayLayer = 0;
+				viewInfo.subresourceRange.layerCount = 1;
+
+				if (vkCreateImageView(device.device(), &viewInfo, nullptr, &imageViews[i]) !=
+				    VK_SUCCESS)
+				{
+					throw std::runtime_error("failed to create world image view!");
+				}
 			}
-		}
+		};
+
+		func(m_WorldImages, m_WorldImageViews, m_SwapChainImageFormat);
+		func(m_IDImages, m_IDImageViews, VK_FORMAT_R32_UINT);
 	}
 
 	void SwapChain::CreateRenderPass()
@@ -401,7 +417,7 @@ namespace Nyxis
 		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkAttachmentReference depthAttachmentRef{};
-		depthAttachmentRef.attachment = 1;
+		depthAttachmentRef.attachment = 2;
 		depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkAttachmentDescription colorAttachment = {};
@@ -414,14 +430,27 @@ namespace Nyxis
 		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-		VkAttachmentReference colorAttachmentRef = {};
-		colorAttachmentRef.attachment = 0;
-		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		VkAttachmentDescription idAttachment = {};
+		idAttachment.format = VK_FORMAT_R32_UINT;
+		idAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		idAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		idAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		idAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		idAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		idAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		idAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		std::array<VkAttachmentReference, 2> colorAttachmentRefs;
+		colorAttachmentRefs[0].attachment = 0;
+		colorAttachmentRefs[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		colorAttachmentRefs[1].attachment = 1;
+		colorAttachmentRefs[1].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkSubpassDescription subpass = {};
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorAttachmentRef;
+		subpass.colorAttachmentCount = colorAttachmentRefs.size();
+		subpass.pColorAttachments = colorAttachmentRefs.data();
 		subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
 		VkSubpassDependency dependency = {};
@@ -435,7 +464,7 @@ namespace Nyxis
 		dependency.dstAccessMask =
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-		std::array<VkAttachmentDescription, 2> mainAttachments = {colorAttachment, depthAttachment};
+		std::array<VkAttachmentDescription, 3> mainAttachments = {colorAttachment, idAttachment, depthAttachment};
 		VkRenderPassCreateInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		renderPassInfo.attachmentCount = static_cast<uint32_t>(mainAttachments.size());
@@ -454,6 +483,8 @@ namespace Nyxis
 		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorAttachmentRefs[0];
 		subpass.pDepthStencilAttachment = nullptr;
 
 		VkAttachmentDescription uiAttachments[] = {colorAttachment};
@@ -506,11 +537,11 @@ namespace Nyxis
 
     	for (size_t i = 0; i < ImageCount(); i++)
 		{
-			VkImageView attachments[2] = { m_WorldImageViews[i], m_DepthImageViews[i] };
+			VkImageView attachments[3] = { m_WorldImageViews[i], m_IDImageViews[i], m_DepthImageViews[i] };
 			VkFramebufferCreateInfo framebufferInfo{};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 			framebufferInfo.renderPass = m_MainRenderPass; // all object rendering is done in world render pass
-			framebufferInfo.attachmentCount = 2;
+			framebufferInfo.attachmentCount = 3;
 			framebufferInfo.pAttachments = attachments;
 			framebufferInfo.width = m_WorldExtent.width;
 			framebufferInfo.height = m_WorldExtent.height;

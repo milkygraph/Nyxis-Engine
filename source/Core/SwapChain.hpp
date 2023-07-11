@@ -21,8 +21,10 @@ namespace Nyxis
         [[nodiscard]] VkFramebuffer GetWorldFrameBuffer(int index) const { return m_WorldFramebuffers[index]; }
         [[nodiscard]] VkRenderPass GetMainRenderPass() const { return m_MainRenderPass; }
         [[nodiscard]] VkRenderPass GetUIRenderPass() const { return m_UIRenderPass; }
+	    [[nodiscard]] VkImageView GetIDImageView(int index) const { return m_IDImageViews[index]; }
         [[nodiscard]] VkImageView GetWorldImageView(int index) const { return m_WorldImageViews[index]; }
         [[nodiscard]] VkImage GetWorldImage(int index) const { return m_WorldImages[index]; }
+	    [[nodiscard]] VkImage GetIDImage(int index) const { return m_IDImages[index]; }
         [[nodiscard]] size_t ImageCount() const { return m_WorldImages.size(); }
         [[nodiscard]] VkFormat GetSwapChainImageFormat() const { return m_SwapChainImageFormat; }
         [[nodiscard]] VkExtent2D GetSwapChainExtent() const { return m_SwapChainExtent; }
@@ -67,15 +69,18 @@ namespace Nyxis
         VkRenderPass m_MainRenderPass;
         VkRenderPass m_UIRenderPass;
 
-        std::vector<VkImage> m_DepthImages;
-        std::vector<VkDeviceMemory> m_DepthImageMemories;
-        std::vector<VkImageView> m_DepthImageViews;
-
 		std::vector<VkDeviceMemory> m_WorldImageMemories;
+	    std::vector<VkDeviceMemory> m_IDImageMemories;
+	    std::vector<VkDeviceMemory> m_DepthImageMemories;
+
         std::vector<VkImage> m_WorldImages;
+	    std::vector<VkImage> m_IDImages;
+	    std::vector<VkImage> m_DepthImages;
 		std::vector<VkImage> m_SwapChainImages;
 
     	std::vector<VkImageView> m_WorldImageViews;
+	    std::vector<VkImageView> m_DepthImageViews;
+	    std::vector<VkImageView> m_IDImageViews;
         std::vector<VkImageView> m_SwapChainImageViews;
 
         Device &device = Device::Get();
@@ -99,4 +104,4 @@ namespace Nyxis
 
         size_t m_CurrentFrame = 0;
     };
-} // namespace lve
+}

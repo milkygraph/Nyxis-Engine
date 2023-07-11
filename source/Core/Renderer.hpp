@@ -13,6 +13,8 @@ namespace Nyxis
         static void Shutdown();
 
     	[[nodiscard]] static VkImageView GetWorldImageView(int index);
+		[[nodiscard]] static VkImageView GetIDImageView();
+		[[nodiscard]] static VkImage GetIDImage() { return m_SwapChain->GetIDImage(m_CurrentImageIndex); }
     	[[nodiscard]] static VkRenderPass GetSwapChainRenderPass() { return m_SwapChain->GetMainRenderPass(); }
         [[nodiscard]] static VkRenderPass GetUIRenderPass() { return m_SwapChain->GetUIRenderPass(); }
         [[nodiscard]] static VkExtent2D GetAspectRatio() { return m_WorldImageSize; }
@@ -21,6 +23,7 @@ namespace Nyxis
         [[nodiscard]] static int GetFrameIndex() { return m_CurrentImageIndex; }
         [[nodiscard]] static bool IsFrameInProgress() { return m_IsFrameStarted; }
 		static void SetWorldImageSize(VkExtent2D extent) { m_WorldImageSize = extent; }
+		static void SwitchImageView() { m_ShowWorldImage = !m_ShowWorldImage; }
 
         [[nodiscard]]  static VkCommandBuffer BeginWorldFrame() ;
         static void EndWorldFrame();
@@ -42,7 +45,6 @@ namespace Nyxis
         static inline Ref<SwapChain> m_SwapChain = nullptr;
 
     	static inline uint32_t m_CurrentImageIndex{};
-        static inline int m_CurrentFrameIndex{};
         static inline bool m_IsFrameStarted{ false };
 
         static inline std::vector<VkCommandBuffer> m_MainCommandBuffers;
@@ -50,5 +52,6 @@ namespace Nyxis
 
         static inline VkExtent2D m_WorldImageSize;
 		static inline VkExtent2D m_OldWorldImageSize;
+	    static inline bool m_ShowWorldImage = true;
     }; // class Renderer
 } // namespace Nyxis

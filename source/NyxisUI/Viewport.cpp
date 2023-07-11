@@ -132,7 +132,6 @@ namespace Nyxis
 		if (mousePos.y < 0 || mousePos.y > m_WindowSize.x)
 			mousePos.y = -1;
 
-		frameInfo->mousePosition = mousePos;
 	}
 
 	void Viewport::OnUpdate()
@@ -145,6 +144,7 @@ namespace Nyxis
 		m_WindowSize = ImGui::GetWindowSize();
 		m_IsFocused = ImGui::IsWindowFocused();
 		m_IsHovered = ImGui::IsWindowHovered();
+		m_IsClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left) && m_IsHovered;
 
 		UpdateViewport();
 		UpdateGizmo();

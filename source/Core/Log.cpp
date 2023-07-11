@@ -70,6 +70,7 @@ namespace Nyxis
 				default:
 					break;
 				}
+				std::cout << message << std::endl;
 			}
 		}
 	}

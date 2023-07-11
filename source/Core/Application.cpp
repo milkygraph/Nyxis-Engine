@@ -139,14 +139,14 @@ namespace Nyxis
 				ImGui::EndCombo();
 			}
 
-			if (ImGui::BeginCombo("Source Color Blend Factor", blendFactor[pipeline->pipelineConfigInfo.colorBlendAttachment.srcColorBlendFactor]))
+			if (ImGui::BeginCombo("Source Color Blend Factor", blendFactor[pipeline->pipelineConfigInfo.colorBlendAttachments[0].srcColorBlendFactor]))
 			{
 				for (int i = 0; i < blendFactor.size(); ++i)
 				{
-					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendAttachment.srcColorBlendFactor == i);
+					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendAttachments[0].srcColorBlendFactor == i);
 					if (ImGui::Selectable(blendFactor[i], is_selected))
 					{
-						pipeline->pipelineConfigInfo.colorBlendAttachment.srcColorBlendFactor = static_cast<VkBlendFactor>(i);
+						pipeline->pipelineConfigInfo.colorBlendAttachments[0].srcColorBlendFactor = static_cast<VkBlendFactor>(i);
 						pipeline->pipelineConfigInfo.renderPass = Renderer::GetSwapChainRenderPass();
 					}
 					if (is_selected)
@@ -155,14 +155,14 @@ namespace Nyxis
 				ImGui::EndCombo();
 			}
 
-			if (ImGui::BeginCombo("Destination Color Blend Factor", blendFactor[pipeline->pipelineConfigInfo.colorBlendAttachment.dstColorBlendFactor]))
+			if (ImGui::BeginCombo("Destination Color Blend Factor", blendFactor[pipeline->pipelineConfigInfo.colorBlendAttachments[0].dstColorBlendFactor]))
 			{
 				for (int i = 0; i < blendFactor.size(); ++i)
 				{
-					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendAttachment.dstColorBlendFactor == i);
+					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendAttachments[0].dstColorBlendFactor == i);
 					if (ImGui::Selectable(blendFactor[i], is_selected))
 					{
-						pipeline->pipelineConfigInfo.colorBlendAttachment.dstColorBlendFactor = static_cast<VkBlendFactor>(i);
+						pipeline->pipelineConfigInfo.colorBlendAttachments[0].dstColorBlendFactor = static_cast<VkBlendFactor>(i);
 						pipeline->pipelineConfigInfo.renderPass = Renderer::GetSwapChainRenderPass();
 					}
 					if (is_selected)
@@ -171,14 +171,14 @@ namespace Nyxis
 				ImGui::EndCombo();
 			}
 
-			if (ImGui::BeginCombo("Source Alpha Blend Factor", blendFactor[pipeline->pipelineConfigInfo.colorBlendAttachment.srcAlphaBlendFactor]))
+			if (ImGui::BeginCombo("Source Alpha Blend Factor", blendFactor[pipeline->pipelineConfigInfo.colorBlendAttachments[0].srcAlphaBlendFactor]))
 			{
 				for (int i = 0; i < blendFactor.size(); ++i)
 				{
-					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendAttachment.srcAlphaBlendFactor == i);
+					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendAttachments[0].srcAlphaBlendFactor == i);
 					if (ImGui::Selectable(blendFactor[i], is_selected))
 					{
-						pipeline->pipelineConfigInfo.colorBlendAttachment.srcAlphaBlendFactor = static_cast<VkBlendFactor>(i);
+						pipeline->pipelineConfigInfo.colorBlendAttachments[0].srcAlphaBlendFactor = static_cast<VkBlendFactor>(i);
 						pipeline->pipelineConfigInfo.renderPass = Renderer::GetSwapChainRenderPass();
 					}
 					if (is_selected)
@@ -188,14 +188,14 @@ namespace Nyxis
 			}
 
 
-			if (ImGui::BeginCombo("Destination Alpha Blend Factor", blendFactor[pipeline->pipelineConfigInfo.colorBlendAttachment.dstAlphaBlendFactor]))
+			if (ImGui::BeginCombo("Destination Alpha Blend Factor", blendFactor[pipeline->pipelineConfigInfo.colorBlendAttachments[0].dstAlphaBlendFactor]))
 			{
 				for (int i = 0; i < blendFactor.size(); ++i)
 				{
-					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendAttachment.dstAlphaBlendFactor == i);
+					const bool is_selected = (pipeline->pipelineConfigInfo.colorBlendAttachments[0].dstAlphaBlendFactor == i);
 					if (ImGui::Selectable(blendFactor[i], is_selected))
 					{
-						pipeline->pipelineConfigInfo.colorBlendAttachment.dstAlphaBlendFactor = static_cast<VkBlendFactor>(i);
+						pipeline->pipelineConfigInfo.colorBlendAttachments[0].dstAlphaBlendFactor = static_cast<VkBlendFactor>(i);
 						pipeline->pipelineConfigInfo.renderPass = Renderer::GetSwapChainRenderPass();
 					}
 					if (is_selected)
@@ -222,6 +222,7 @@ namespace Nyxis
  			EditorLayer::AddFunction([&]() {
                 ImGui::Begin("Statistics");
                 ImGui::Text("Entity Count: %d", m_Scene->GetEntityCount());
+				ImGui::Text("Selected Entity %d", EditorLayer::GetSelectedEntity());
                 ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
                 ImGui::End();
                 });
@@ -295,6 +296,26 @@ namespace Nyxis
                     AddPipelineConfigUI("Skybox", GLTFRenderer::Pipes.skybox, PipelineType::SKYBOX);
                     ImGui::End();
 				});
+
+			EditorLayer::AddFunction([&]()
+				{
+					ImGui::Begin("Debug");
+					static int entityCount = 0;
+					ImGui::DragInt("Entities to add", &entityCount, 0, 100000);
+					if(ImGui::SmallButton("Add"))
+					{
+						for(int i = 0; i < entityCount; i++) {
+							m_Scene->CreateEntity("Entity");
+						}
+					}
+
+					if(ImGui::SmallButton("Switch Image View"))
+					{
+						Renderer::SwitchImageView();
+					}
+
+					ImGui::End();
+				});
         }
 
     	auto currentTime = std::chrono::high_resolution_clock::now();
@@ -303,7 +324,9 @@ namespace Nyxis
         for(int i = 0; i < 1; i++)
         {
 			auto model = m_Scene->CreateEntity("Model");
-            m_Scene->AddComponent<RigidBody>(model);
+            auto& transform = m_Scene->GetComponent<TransformComponent>(model);
+			transform.translation.z = -5.0f;
+			m_Scene->AddComponent<RigidBody>(model);
             m_Scene->AddComponent<Model>(model, "/models/microphone/scene.gltf");
         }
 #endif

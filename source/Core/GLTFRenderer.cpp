@@ -1,9 +1,10 @@
 #include "Core/GLTFRenderer.hpp"
 
-#include "Application.hpp"
-#include "Pipeline.hpp"
+#include "Core/Application.hpp"
+#include "Core/Pipeline.hpp"
 #include "Core/Log.hpp"
 #include "Core/SwapChain.hpp"
+#include "Core/Renderer.hpp"
 #include "Scene/Components.hpp"
 #include "Scene/NyxisProject.hpp"
 
@@ -44,6 +45,81 @@ namespace Nyxis
 		auto scene = Application::GetScene();
 		auto frameInfo = Application::GetFrameInfo();
 
+		if(s_ShaderValuesScene.isMouseClicked)
+		{
+			auto commandBuffer = device->beginSingleTimeCommands();
+
+			// change the layout of the image to a redeable format
+			VkImageMemoryBarrier barrier = {};
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.image = Renderer::GetIDImage();
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.baseMipLevel = 0;
+			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.baseArrayLayer = 0;
+			barrier.subresourceRange.layerCount = 1;
+
+			// change the layout of the image to a redeable format
+			vkCmdPipelineBarrier(
+				commandBuffer,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				0,
+				0, nullptr,
+				0, nullptr,
+				1, &barrier
+			);
+
+			// copy the image to the buffer
+			VkBufferImageCopy region = {};
+			region.bufferOffset = 0;
+			region.bufferRowLength = 0;
+			region.bufferImageHeight = 0;
+			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			region.imageSubresource.mipLevel = 0;
+			region.imageSubresource.baseArrayLayer = 0;
+			region.imageSubresource.layerCount = 1;
+			region.imageOffset = { 0, 0, 0 };
+			region.imageExtent = { Viewport::GetExtent().width, Viewport::GetExtent().height, 1 };
+
+			Buffer stagingBuffer(Viewport::GetExtent().width * Viewport::GetExtent().height * 4,
+								 1,
+								 VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+								 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+			vkCmdCopyImageToBuffer(
+				commandBuffer,
+				Renderer::GetIDImage(),
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				stagingBuffer.getBuffer(),
+				1,
+				&region
+			);
+
+			device->endSingleTimeCommands(commandBuffer);
+
+			stagingBuffer.map();
+			void* mappedData = stagingBuffer.getMappedMemory();
+
+			auto mousePos = Input::GetMousePosition();
+			auto viewportPosition = Viewport::GetWindowPos();
+			auto x = mousePos.x - viewportPosition.x;
+			auto y = mousePos.y - viewportPosition.y;
+
+			uint32_t* pixels = static_cast<uint32_t*>(mappedData);
+			uint32_t pixel = pixels[static_cast<size_t>(Viewport::GetExtent().width * y + x)];
+			if(pixel != 0)
+				EditorLayer::SetSelectedEntity(static_cast<Entity>(pixel));
+			else
+				EditorLayer::DeselectEntity();
+
+			LOG_TRACE("Pixel {}", pixel);
+			LOG_TRACE("Mouse Position: {} {}", x, y);
+		}
 
 		if (s_SceneUpdated)
 		{
@@ -86,7 +162,6 @@ namespace Nyxis
 		auto frameInfo = Application::GetFrameInfo();
 		auto scene = Application::GetScene();
 
-		glm::vec2 mousePos = frameInfo->mousePosition;
 		UpdateBuffers();
 		vkCmdBindDescriptorSets(frameInfo->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &skyboxDescriptorSets[frameInfo->frameIndex], 0, nullptr);
 		Pipes.skybox->Bind(frameInfo->commandBuffer);
@@ -101,9 +176,9 @@ namespace Nyxis
 			auto& transform = scene->GetComponent<TransformComponent>(model);
 
 			s_ShaderValuesScene.model = transform.mat4();
-			s_ShaderValuesScene.mousePosX = mousePos.x;
-			s_ShaderValuesScene.mousePosY = mousePos.y;
 			s_ShaderValuesScene.entityID = static_cast<int>(model);
+			s_ShaderValuesScene.isMouseClicked = Viewport::IsClicked() && !Viewport::IsHoveredOverGizmo();
+			s_ShaderValuesScene.selectedEntityID = static_cast<uint32_t>(EditorLayer::GetSelectedEntity());
 
 			gltfModel.updateUniformBuffer(frameInfo->frameIndex, &s_ShaderValuesScene);
 			gltfModel.bind(frameInfo->commandBuffer);
@@ -334,19 +409,16 @@ namespace Nyxis
 
 	void GLTFRenderer::OnEvent(const Event& event)
 	{
-		if (event.getEventType() == EventType::MouseButtonPressed)
+		if (Viewport::IsClicked() && !Viewport::IsHoveredOverGizmo())
 		{
-			if (Viewport::IsClicked() && !Viewport::IsHoveredOverGizmo())
+			auto buffer = static_cast<ObjectPicking*>(s_ObjectPickingBuffer[Application::GetFrameInfo()->frameIndex]->getMappedMemory());
+			auto depthBuffer = buffer->depthBufferObject;
+			for (int i = 0; i < DEPTH_ARRAY_SCALE; i++)
 			{
-				auto buffer = static_cast<ObjectPicking*>(s_ObjectPickingBuffer[Application::GetFrameInfo()->frameIndex]->getMappedMemory());
-				auto depthBuffer = buffer->depthBufferObject;
-				for (int i = 0; i < DEPTH_ARRAY_SCALE; i++)
+				if (depthBuffer[i] != 0)
 				{
-					if (depthBuffer[i] != 0)
-					{
-						EditorLayer::SetSelectedEntity(static_cast<Entity>(depthBuffer[i]));
-						break;
-					}
+					EditorLayer::SetSelectedEntity(static_cast<Entity>(depthBuffer[i]));
+					break;
 				}
 			}
 		}
@@ -395,6 +467,7 @@ namespace Nyxis
 					pushConstBlockMaterial.emissiveTextureSet = primitive->material.emissiveTexture != nullptr ? primitive->material.texCoordSets.emissive : -1;
 					pushConstBlockMaterial.alphaMask = static_cast<float>(primitive->material.alphaMode == Material::ALPHAMODE_MASK);
 					pushConstBlockMaterial.alphaMaskCutoff = primitive->material.alphaCutoff;
+					pushConstBlockMaterial.nodeID = static_cast<uint32_t>(node->entityHandle);
 
 					// TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is present
 
@@ -473,6 +546,7 @@ namespace Nyxis
 
 		auto& skyboxConfig = Pipes.skybox->GetConfig();
 		skyboxConfig.renderPass = renderPass;
+		skyboxConfig.colorBlendInfo.attachmentCount = 2;
 		skyboxConfig.rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT; // Cull back faces
 		skyboxConfig.rasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		skyboxConfig.depthStencilInfo.depthWriteEnable = VK_FALSE;
@@ -507,7 +581,7 @@ namespace Nyxis
 		vkCreatePipelineLayout(device->device(), &pipelineLayoutCI, nullptr, &pipelineLayout);
 
 		skyboxConfig.pipelineLayout = pipelineLayout;
-
+		skyboxConfig.AddColorBlendAttachment();
 		Pipes.skybox->Create();
 
 		// PBR pipeline
@@ -516,9 +590,9 @@ namespace Nyxis
 			"../shaders/pbr/pbr.vert.spv",
 			"../shaders/pbr/pbr.frag.spv");
 		auto& pbrConfig = Pipes.pbr->GetConfig();
-		Pipeline::EnableBlending(pbrConfig);
-		
+
 		pbrConfig.renderPass = renderPass;
+		pbrConfig.colorBlendInfo.attachmentCount = 2;
 		pbrConfig.rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT; // Cull back faces
 		pbrConfig.rasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		pbrConfig.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
@@ -531,6 +605,9 @@ namespace Nyxis
 			{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
 			{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 }
 		};
+
+		pbrConfig.AddColorBlendAttachment();
+		Pipeline::EnableBlending(pbrConfig);
 
 		setLayouts.push_back(depthBufferLayout);
 		pipelineLayoutCI.pSetLayouts = setLayouts.data();

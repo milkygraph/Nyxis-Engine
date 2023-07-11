@@ -93,6 +93,7 @@ namespace Nyxis
 						if (current_item != -1)
 						{
 							EditorLayer::DeselectMaterial();
+							EditorLayer::DeselectEntity();
 							scene->LoadModel(selectedEntity, path + models[current_item]);
 							current_item = -1;
 						}
