@@ -34,7 +34,6 @@ layout (set = 0, binding = 1) uniform UBOParams {
 	float scaleIBLAmbient;
 	float debugViewInputs;
 	float debugViewEquation;
-	uint nodeID;
 } uboParams;
 
 layout (set = 0, binding = 2) uniform samplerCube samplerIrradiance;
@@ -72,6 +71,7 @@ layout (push_constant) uniform Material {
 	float roughnessFactor;	
 	float alphaMask;	
 	float alphaMaskCutoff;
+	uint nodeID;
 } material;
 
 layout (location = 0) out vec4 outColor;
@@ -435,8 +435,8 @@ void main()
 	outColorID = ubo.entityID;
 
 	// if the object is selected tint it with an orange color
-	if(ubo.selectedEntityID == uboParams.nodeID) {
-		outColor.rgb = mix(outColor.rgb, vec3(1.0, 0.5, 0.0), 0.5);
-		outColorID = uboParams.nodeID;
+	if(ubo.selectedEntityID == ubo.entityID || ubo.selectedEntityID == material.nodeID) {
+		outColor.rgb = mix(outColor.rgb, vec3(1.0, 0.5, 0.0), 0.3);
+		outColorID = material.nodeID;
 	}
 }

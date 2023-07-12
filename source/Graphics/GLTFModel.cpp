@@ -353,11 +353,6 @@ namespace Nyxis
 	}
 
 	// Node
-	Node::Node(Entity entityHandle)
-	{
-		this->entityHandle = entityHandle;
-	}
-
 	glm::mat4 Node::localMatrix()
 	{
 		return glm::translate(glm::mat4(1.0f), translation) * glm::mat4(rotation) * glm::scale(glm::mat4(1.0f), scale) * matrix;
@@ -403,12 +398,6 @@ namespace Nyxis
 
 	Node::~Node()
 	{
-		// if (mesh != nullptr)
-		// 	delete mesh;
-
-		// for (auto& child : children)
-		// 	if(child != nullptr)
-		// 		delete child;
 	}
 
 	// Model
@@ -445,19 +434,13 @@ namespace Nyxis
 
 	Model::~Model()
 	{
-		auto scene = Application::GetScene();
 		for (auto texture : textures) {
 			texture.destroy();
 		}
 		textures.resize(0);
 		textureSamplers.resize(0);
-		for(auto node : nodes) {
-			scene->DestroyEntity(node->entityHandle);
-		}
 		materials.resize(0);
 		animations.resize(0);
-		nodes.resize(0);
-		linearNodes.resize(0);
 		extensions.resize(0);
 		for (auto skin : skins) {
 			delete skin;
@@ -470,8 +453,10 @@ namespace Nyxis
 	void Model::loadNode(Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& model, LoaderInfo& loaderInfo, float globalscale)
 	{
 		auto scene = Application::GetScene();
-		auto entity = scene->CreateEntity(node.name);
-		Node* newNode = &scene->AddComponent<Node>(entity, entity);
+		auto entityID = scene->CreateEntity("defaultNode");
+		auto& transform = scene->GetComponent<TransformComponent>(entityID);
+		Node* newNode = &scene->AddComponent<Node>(entityID);
+		newNode->entityID = static_cast<uint32_t>(scene->CreateEntity("defaultNode"));
 		newNode->index = nodeIndex;
 		newNode->parent = parent;
 		newNode->name = node.name;
@@ -483,20 +468,23 @@ namespace Nyxis
 		if (node.translation.size() == 3) {
 			translation = glm::make_vec3(node.translation.data());
 			newNode->translation = translation;
+			transform.translation = translation;
 		}
 		glm::mat4 rotation = glm::mat4(1.0f);
 		if (node.rotation.size() == 4) {
 			glm::quat q = glm::make_quat(node.rotation.data());
 			newNode->rotation = glm::mat4(q);
+			transform.rotation = glm::eulerAngles(q);
 		}
 		glm::vec3 scale = glm::vec3(1.0f);
 		if (node.scale.size() == 3) {
 			scale = glm::make_vec3(node.scale.data());
 			newNode->scale = scale;
+			transform.scale = scale;
 		}
 		if (node.matrix.size() == 16) {
 			newNode->matrix = glm::make_mat4x4(node.matrix.data());
-		};
+		}
 
 		// Node with children
 		if (node.children.size() > 0) {

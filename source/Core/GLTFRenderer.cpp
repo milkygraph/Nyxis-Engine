@@ -467,7 +467,7 @@ namespace Nyxis
 					pushConstBlockMaterial.emissiveTextureSet = primitive->material.emissiveTexture != nullptr ? primitive->material.texCoordSets.emissive : -1;
 					pushConstBlockMaterial.alphaMask = static_cast<float>(primitive->material.alphaMode == Material::ALPHAMODE_MASK);
 					pushConstBlockMaterial.alphaMaskCutoff = primitive->material.alphaCutoff;
-					pushConstBlockMaterial.nodeID = static_cast<uint32_t>(node->entityHandle);
+					pushConstBlockMaterial.nodeID = node->entityID;
 
 					// TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is present
 

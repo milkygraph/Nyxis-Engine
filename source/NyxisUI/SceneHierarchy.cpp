@@ -49,7 +49,10 @@ namespace Nyxis
 			ImGui::EndPopup();
 		}
 
-		scene->m_Registry.each([&](auto entityID){ DrawEntityNode(entityID); });
+		scene->m_Registry.view<Model>().each([&](auto entity, auto& model)
+		{
+			DrawEntityNode(entity);
+		});
 
 		ImGui::End();
 	}
@@ -120,12 +123,13 @@ namespace Nyxis
 
 	void SceneHierarchyPanel::DrawNode(Node* node)
 	{
-		ImGuiTreeNodeFlags flags = ((m_SelectedNode == node) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+		ImGuiTreeNodeFlags flags = ((static_cast<uint32_t>(EditorLayer::GetSelectedEntity()) == node->entityID) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 		if (ImGui::TreeNodeEx(node->name.c_str(), flags))
 		{
+			if(ImGui::IsItemClicked())
+				EditorLayer::SetSelectedEntity(static_cast<Entity>(node->entityID));
 			for (auto* child : node->children)
 				DrawNode(child);
-			m_SelectedNode = node;
 			ImGui::TreePop();
 		}
 	}

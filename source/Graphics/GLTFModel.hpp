@@ -5,7 +5,6 @@
 #include "Core/Descriptors.hpp"
 #include "Graphics/Texture.hpp"
 #include "Scene/Components.hpp"
-#include "Scene/Scene.hpp"
 
 #include <tinygltf/tiny_gltf.h>
 
@@ -177,10 +176,9 @@ namespace Nyxis
 	};
 
 	struct Node {
-		Node(Entity entityHandle);
 		Node* parent;
 		uint32_t index;
-		Entity entityHandle;
+		uint32_t entityID;
 		std::vector<Node*> children;
 		glm::mat4 matrix;
 		std::string name;
