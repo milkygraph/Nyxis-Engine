@@ -309,11 +309,6 @@ namespace Nyxis
 						}
 					}
 
-					if(ImGui::SmallButton("Switch Image View"))
-					{
-						Renderer::SwitchImageView();
-					}
-
 					ImGui::End();
 				});
         }

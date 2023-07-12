@@ -1,13 +1,16 @@
 # Nyxis Engine
 
-![Screenshot](screenshots/robot.png)
+## Warning: This project is not maintained anymore.
 
-Nyxis is an application and rendering engine based on Vulkan API. The main goal of the project is for me to learn graphics programming techniques. Nyxis supports platforms including Windows, Linux, and Mac. The supported and planned features are listed below:
+![Screenshot](screenshots/screenshot.png)
+
+**Nyxis** is an application and rendering engine based on Vulkan API. The main goal of the project is for me to learn graphics programming techniques. Nyxis supports platforms including Windows, Linux, and Mac. The supported and planned features are listed below:
 - [x] PBR based rendering
 - [x] Entity-Component System
 - [x] Model loading
 - [x] Animations
 - [x] Scene graph
+- [x] Pipeline hot-loading
 - [ ] Scripting/C# support
 - [ ] PhysX integration
 - [ ] Custom shaders
@@ -15,24 +18,24 @@ Nyxis is an application and rendering engine based on Vulkan API. The main goal 
 
 Clone repository using 
 ```
-    git clone https://github.com/itu-itis21-bandaliyev21/Nyxis-Engine.git --recursive
+git clone https://github.com/itu-itis21-bandaliyev21/Nyxis-Engine.git --recursive
 ```
 
 ## Unix
 - Install dependencies using your package manager
 For example, 
 ```
-    sudo apt install libvulkan-dev
-    sudo apt install libglfw3-dev
-    sudo apt install libglm-dev
-    sudo apt install cmake
+sudo apt install libvulkan-dev
+sudo apt install libglfw3-dev
+sudo apt install libglm-dev
+sudo apt install cmake
 ```
 - [Install glslc](https://github.com/google/shaderc#downloads)
 - To Build:
 ```
-    cd Vulkan_Engine
-    chmod +x UnixBuild.sh
-    ./UnixBuild.sh
+cd Vulkan_Engine
+chmod +x UnixBuild.sh
+./UnixBuild.sh
 ```
 The generated app will be in bin folder.
 
@@ -44,15 +47,15 @@ The generated app will be in bin folder.
 - [Download and install Homebrew](https://brew.sh/)
 - Install libraries
 ```
-    brew install cmake
-    brew install glfw
-    brew install glm
+brew install cmake
+brew install glfw
+brew install glm
 ```
 To Build:
 ```
-    cd Vulkan_Engine
-    chmod +x UnixBuild.sh
-    ./UnixBuild.sh
+cd Vulkan_Engine
+chmod +x UnixBuild.sh
+./UnixBuild.sh
 ```
 
 ### Windows
@@ -68,21 +71,21 @@ To Build:
 
 - Install glfw:
  ```
-    vcpkg install glfw3:x64-windows
+vcpkg install glfw3:x64-windows
  ```
 - Install glm:
 ```
-    vcpkg install glm:x64-windows
+vcpkg install glm:x64-windows
 ```
 - Install vulkan headers:
 ```
-    vcpkg install vulkan:x64-windows
+vcpkg install vulkan:x64-windows
 ```
 
 Then clone clone repository and build using provided build script:
 ```
-    cd Vulkan_Engine
-    .\WindowsBuild.ps1
+cd Vulkan_Engine
+.\WindowsBuild.ps1
 ```
 
 The generated app will be in bin folder.

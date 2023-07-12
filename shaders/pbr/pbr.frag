@@ -436,7 +436,7 @@ void main()
 
 	// if the object is selected tint it with an orange color
 	if(ubo.selectedEntityID == ubo.entityID || ubo.selectedEntityID == material.nodeID) {
-		outColor.rgb = mix(outColor.rgb, vec3(1.0, 0.5, 0.0), 0.3);
+		outColor.rgb = mix(outColor.rgb, vec3(1.0, 0.5, 0.0), 0.05);
 		outColorID = material.nodeID;
 	}
 }
