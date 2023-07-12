@@ -1,9 +1,0 @@
-﻿  Building Custom Rule D:/source/Nyxis-Engine/libs/spdlog/CMakeLists.txt
-  spdlog.cpp
-  stdout_sinks.cpp
-  color_sinks.cpp
-  file_sinks.cpp
-  async.cpp
-  cfg.cpp
-  bundled_fmtlib_format.cpp
-  spdlog.vcxproj -> D:\source\Nyxis-Engine\Visual Studio\libs\spdlog\Release\spdlog.lib
