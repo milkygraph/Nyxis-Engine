@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(TBB REQUIRED)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file (GLOB_RECURSE SOURCES source/*.cpp libs/entt/*.cpp libs/stbimage/*.cpp libs/tinyobjloader/*.cpp libs/imgui/imgui.cpp 
         libs/imgui/imgui_demo.cpp libs/imgui/imgui_draw.cpp libs/imgui/imgui_tables.cpp libs/imgui/imgui_widgets.cpp 
@@ -45,7 +47,7 @@ option(GLI_TEST_ENABLE "Build unit tests" OFF)
 add_subdirectory(libs/spdlog)
 add_subdirectory(libs/gli)
 add_subdirectory(libs/assimp)
-target_link_libraries(${PROJECT} PRIVATE spdlog gli assimp)
+target_link_libraries(${PROJECT} PRIVATE spdlog gli assimp TBB::tbb)
 
 set_property(TARGET ${PROJECT} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT})
